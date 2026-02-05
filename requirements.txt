@@ -1,0 +1,20 @@
+# Dash UI
+dash>=3.4,<4
+dash-bootstrap-components>=2.0,<3
+dash-extensions>=1.0,<3
+plotly>=6.5,<7
+
+# Server
+gunicorn>=22,<24
+
+# HTTP client (for calling FastAPI backend)
+requests>=2.31,<3
+
+# Environment config
+python-dotenv>=1.0,<2
+
+# Viz
+matplotlib==3.9.2
+pandas==2.2.3
+seaborn==0.13.2
+numpy==1.26.4
