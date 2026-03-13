@@ -3,20 +3,50 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 def get_pypi_layout(pypi_details, total_packages):
+    """
+    Returns the PyPI page layout.
+    """
+    if isinstance(pypi_details, list):
+        pypi_details = pd.DataFrame(pypi_details)
+    if pypi_details is None or pypi_details.empty:
+        pypi_details = pd.DataFrame(columns=[
+            "project_name", "description", "author_name",
+            "author_email", "category", "versions_count"
+        ])
+
+    # Get unique values for filters
+    author_options = [{"label": x, "value": x} for x in sorted(pypi_details["author_name"].dropna().unique())]
+    email_options = [{"label": x, "value": x} for x in sorted(pypi_details["author_email"].dropna().unique())]
+    category_options = [{"label": x, "value": x} for x in sorted(pypi_details["category"].dropna().unique())]
+    
+    display_columns_pypi = ["project_name", "category"]
     
     return dbc.Container(
         [
+            html.H1(
+                "PyPI Analytics Dashboard",
+                style={
+                    "textAlign": "center",
+                    "marginTop": "20px",
+                    "marginBottom": "10px",
+                    "fontSize": "60px",
+                    "fontWeight": "bold",
+                    "color": "#2C3E50",
+                    "textShadow": "2px 2px #BDC3C7"
+                }
+            ),
+                        
             html.H2(
                 f"Total PyPI Packages: {total_packages}",
                 style={'textAlign': 'center', 'margin-bottom': '20px', 'color': "#9DAAB8"}
             ),
             
-            # Search box for global search - filters across all columns
+            # Search box for DataTable
             dcc.Input(
                 id='table-search',
                 type='text',
                 placeholder='Search projects...',
-                debounce=False,   # keystroke-based search (change to True for enter-based search)
+                debounce=False,
                 style={
                     'margin-bottom': '15px',
                     'width': '350px',
@@ -25,35 +55,116 @@ def get_pypi_layout(pypi_details, total_packages):
                     'border': '1px solid #ccc'
                 }
             ),
+            
+            dbc.Row([
+                dbc.Row([
+                    dbc.Col(
+                        dash_table.DataTable(
+                            id="projects-table",
+                            columns=[
+                                {"name": "Project", "id": "project_name"},
+                                {"name": "Category", "id": "category"},
+                            ],
+                            data=pypi_details[["project_name", "category"]].to_dict("records"),
+                            row_selectable="single",
+                            page_size=10,
+                            sort_action="native",
+                            style_table={"overflowX": "auto"},
+                            style_cell={
+                                "textAlign": "left",
+                                "padding": "10px",
+                                "whiteSpace": "normal",
+                            },
+                            style_header={
+                                "backgroundColor": "#2c3e50",
+                                "color": "white",
+                                "fontWeight": "bold"
+                            }
+                        ),
+                        width=6
+                    ),
 
-            # Interactive DataTable
-            dash_table.DataTable(
-                id='projects-table',
-                columns=[{"name": i, "id": i} for i in pypi_details.reset_index().columns],
+                    dbc.Col(
+                        html.Div(id="pypi-project-details"),
+                        width=6
+                    )
+                ])
 
-                data=pypi_details.reset_index().to_dict('records'),
-                page_size=10,
-                sort_action='native', # enable sorting by column
-                filter_action='native',  # native per-column filter
+            ]),
 
-                # Styling options
-                style_table={'overflowX': 'auto', 'border': '1px solid #ccc', 'border-radius': '5px'},
-                style_header={'backgroundColor': '#34495E', 'color': 'white', 'fontWeight': 'bold'},
-                style_cell={
-                    'textAlign': 'left',
-                    'padding': '8px',
-                    'minWidth': '100px', 'width': '150px', 'maxWidth': '250px',
-                    'whiteSpace': 'nowrap',
-                    'overflow': 'hidden',
-                    'textOverflow': 'ellipsis',
-                    'border-bottom': '1px solid #ddd'
-                },
-                style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': '#f9f9f9'}]
-            ),
+            html.Div(
+            [
+                # Row 1
+                html.Div(
+                    [
+                        html.Div([
+                            html.Label("Author"),
+                            dcc.Dropdown(
+                                id="filter-author",
+                                options=author_options,
+                                multi=True,
+                                placeholder="Select authors"
+                            )
+                        ], style={"width": "48%"}),
 
+                        html.Div([
+                            html.Label("Email"),
+                            dcc.Dropdown(
+                                id="filter-email",
+                                options=email_options,
+                                multi=True,
+                                placeholder="Select emails"
+                            )
+                        ], style={"width": "48%"})
+                    ],
+                    style={
+                        "display": "flex",
+                        "justifyContent": "space-between",
+                        "margin-bottom": "15px"
+                    }
+                ),
+
+                # Row 2
+                html.Div(
+                    [
+                        html.Div([
+                            html.Label("Category"),
+                            dcc.Dropdown(
+                                id="filter-category",
+                                options=category_options,
+                                multi=True,
+                                placeholder="Select categories"
+                            )
+                        ], style={"width": "48%"}),
+
+                        html.Div([
+                            html.Label("Top N Packages"),
+                            dcc.Slider(
+                                id="top-n-slider",
+                                min=5,
+                                max=50,
+                                step=5,
+                                value=10,
+                                marks={i: str(i) for i in range(5, 55, 5)},
+                                tooltip={"placement": "bottom", "always_visible": True}
+                            )
+                        ], style={"width": "48%"})
+                    ],
+                    style={
+                        "display": "flex",
+                        "justifyContent": "space-between"
+                    }
+                ),
+            ],
+            style={
+                "margin-top": "20px",
+                "margin-bottom": "20px"
+            }
+        ),
             # Graphs
             dcc.Graph(id='datatable-bar'),
-            dcc.Graph(id='category-distribution')
+            dcc.Graph(id='category-distribution'),
+            
         ],
         fluid=True,
     )

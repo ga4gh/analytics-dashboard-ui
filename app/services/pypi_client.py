@@ -10,6 +10,7 @@ def get_json(endpoint):
     Returns:
         dict: JSON response from the API
     """
+    print(f"Calling API: {endpoint}")
     resp = requests.get(endpoint)
     resp.raise_for_status()
     return resp.json()
@@ -58,3 +59,10 @@ def get_pypi_details():
 
     df = pd.DataFrame(rows)
     return df
+
+def get_first_releases():
+    """
+    Returns the first release date for each PyPI project.
+    """
+    first_releases = get_json(api_constants.FIRST_RELEASES_API)
+    return first_releases

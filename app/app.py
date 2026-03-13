@@ -1,20 +1,27 @@
 from dash import Dash
 import dash_bootstrap_components as dbc
-from app.layouts.pypi_layout import get_pypi_layout
+from dash import html, page_container
 from app.callbacks.pypi_callbacks import register_pypi_callbacks
-from app.services.pypi_client import get_all_packages, get_pypi_details, get_total_packages
-from app.normalizers.pypi_normalizer import normalize_pypi_packages
+from app.callbacks.github_callbacks import register_github_callbacks
+from app.callbacks.home_callbacks import register_home_callbacks
 
 def create_app():
-    app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
-    all_packages = get_all_packages()
-    pypi_version_details = get_pypi_details()
-    total_packages = get_total_packages()
+    app = Dash(__name__,
+               use_pages=True, 
+               suppress_callback_exceptions=True,
+               external_stylesheets=[dbc.themes.BOOTSTRAP],
+               health_endpoint="/health",
+               title="GA4GH Analytics Dashboard",
+               description="Welcome to the GA4GH Analytics Dashboard")
     
-    app.layout = get_pypi_layout(pypi_version_details, total_packages)
-    register_pypi_callbacks(app, pypi_version_details)
-
+    app.layout = html.Div([
+        page_container
+    ])
+    
+    register_home_callbacks(app)
+    register_pypi_callbacks(app)
+    register_github_callbacks(app)
+    
     return app
 
 app = create_app()
