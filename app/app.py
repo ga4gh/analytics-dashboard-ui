@@ -4,6 +4,7 @@ from dash import html, page_container
 from app.callbacks.pypi_callbacks import register_pypi_callbacks
 from app.callbacks.github_callbacks import register_github_callbacks
 from app.callbacks.home_callbacks import register_home_callbacks
+from app.callbacks.epmc_callbacks import register_epmc_callbacks
 
 def create_app():
     app = Dash(__name__,
@@ -21,6 +22,7 @@ def create_app():
     register_home_callbacks(app)
     register_pypi_callbacks(app)
     register_github_callbacks(app)
+    register_epmc_callbacks(app)
     
     return app
 

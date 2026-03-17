@@ -1,6 +1,7 @@
 # app/pages/home.py
 
 from dash import html
+import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import register_page
 
@@ -9,6 +10,51 @@ from app.services.overview_client import (
     gh_df,
     pypi_df,
 )
+
+# EPMC metrics
+from app.services.epmc_client import prepare_epmc_data, get_unique_citations
+from app.constants.constants import COUNTRIES_WHITELIST
+
+# Prepare EPMC data once for the layout
+_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries = prepare_epmc_data()
+
+# Total unique authors: try common column names, fallback to first column
+def _count_unique_authors(df):
+    if df is None or df.empty:
+        return 0
+    cols = list(df.columns)
+    # look for typical author column names
+    for candidate in ("author", "name", "full_name", "author_name"):
+        for c in cols:
+            if c.lower() == candidate:
+                return int(df[c].dropna().astype(str).nunique())
+    # fallback: use first column
+    return int(df.iloc[:, 0].dropna().astype(str).nunique())
+
+_epmc_unique_authors = _count_unique_authors(_epmc_authors_df)
+_epmc_total_citations = get_unique_citations()
+
+# Compute countries stats limited to whitelist
+def _countries_stats_whitelist(df, whitelist):
+    if df is None or df.empty:
+        return 0, 0
+    cols = list(df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col = next(c for c in cols if c.lower() == "count")
+        tmp = df[[country_col, count_col]].copy()
+        tmp.columns = ["country", "count"]
+    else:
+        tmp = df.iloc[:, :2].copy()
+        tmp.columns = ["country", "count"]
+    tmp["country_norm"] = tmp["country"].astype(str).str.strip()
+    whitelist_set = {c.strip().lower() for c in whitelist}
+    tmp = tmp[tmp["country_norm"].str.lower().isin(whitelist_set)]
+    num_countries = int(tmp["country_norm"].nunique())
+    total_counts = int(pd.to_numeric(tmp["count"], errors="coerce").fillna(0).sum())
+    return num_countries, total_counts
+
+_epmc_unique_countries, _epmc_countries_entries = _countries_stats_whitelist(_epmc_countries_df, COUNTRIES_WHITELIST)
 
 register_page(
     __name__,
@@ -180,30 +226,30 @@ layout = dbc.Container(
                         ),
                         md=2,
                     ),
-                    
+
                     dbc.Col(
                         indicator_card(
-                            f"{len(pm_df):,}",
-                            "PubMed Records",
-                            "#1B75BB",
+                            f"{_epmc_unique_authors:,}",
+                            "EPMC Unique Authors",
+                            "#7B2CBF",
                         ),
                         md=2,
                     ),
 
                     dbc.Col(
                         indicator_card(
-                            f"{len(gh_df):,}",
-                            "GitHub Repositories",
-                            "#4FAEDC",
+                            f"{_epmc_total_citations:,}",
+                            "EPMC Unique Citations",
+                            "#2ECC71",
                         ),
                         md=2,
                     ),
 
                     dbc.Col(
                         indicator_card(
-                            f"{len(pypi_df):,}",
-                            "PyPI Packages",
-                            "#FAA633",
+                            f"{_epmc_unique_countries:,}",
+                            "EPMC Unique Countries",
+                            "#E67E22",
                         ),
                         md=2,
                     ),
@@ -228,7 +274,7 @@ layout = dbc.Container(
                         className="shadow-sm",
                         style={"textAlign": "center", "height": "250px"},
                     ),
-                    md=4,
+                    md=3,
                 ),
 
                 dbc.Col(
@@ -243,7 +289,7 @@ layout = dbc.Container(
                         className="shadow-sm",
                         style={"textAlign": "center", "height": "250px"},
                     ),
-                    md=4,
+                    md=3,
                 ),
 
                 dbc.Col(
@@ -258,7 +304,22 @@ layout = dbc.Container(
                         className="shadow-sm",
                         style={"textAlign": "center", "height": "250px"},
                     ),
-                    md=4,
+                    md=3,
+                ),
+
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H3("EPMC Test"),
+                                html.P("Europe PMC entries, authors & affiliations"),
+                                dbc.Button("Open", id="open-epmc", color="danger", size="lg"),
+                            ]
+                        ),
+                        className="shadow-sm",
+                        style={"textAlign": "center", "height": "250px"},
+                    ),
+                    md=3,
                 ),
 
             ],

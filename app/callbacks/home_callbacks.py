@@ -19,6 +19,9 @@ from app.services.pypi_client import get_pypi_details, get_total_packages
 from app.layouts.github_layout import get_github_layout
 from app.services.github_client import prepare_github_data
 
+from app.layouts.epmc_layout import get_epmc_layout
+from app.services.epmc_client import prepare_epmc_data
+
 def register_home_callbacks(app):
 
     @app.callback(
@@ -26,12 +29,14 @@ def register_home_callbacks(app):
         Output("open-pypi", "children"),
         Output("open-github", "children"),
         Output("open-pubmed", "children"),
+        Output("open-epmc", "children"),
         Input("open-pypi", "n_clicks"),
         Input("open-github", "n_clicks"),
         Input("open-pubmed", "n_clicks"),
+        Input("open-epmc", "n_clicks"),
         prevent_initial_call=True
     )
-    def display_module(pypi_click, github_click, pubmed_click):
+    def display_module(pypi_click, github_click, pubmed_click, epmc_click):
 
         trigger = ctx.triggered_id
         
@@ -40,6 +45,7 @@ def register_home_callbacks(app):
         pypi_text = "Open"
         github_text = "Open"
         pubmed_text = "Open"
+        epmc_text = "Open"
         
         if trigger == "open-pypi":
             content = get_pypi_layout(
@@ -57,6 +63,16 @@ def register_home_callbacks(app):
 
         elif trigger == "open-pubmed":
             pubmed_text = "Close"
-            return html.Div("PubMed module coming soon")
+            return html.Div("PubMed module coming soon"), pypi_text, github_text, pubmed_text, epmc_text
+
+        elif trigger == "open-epmc":
+            epmc_data = prepare_epmc_data()
+            content = get_epmc_layout(
+                epmc_data[0],  # entries_df
+                epmc_data[1],  # countries_df
+                epmc_data[2],  # authors_df
+                epmc_data[3],  # total_entries
+            )
+            epmc_text = "Close"
         
-        return content, pypi_text, github_text, pubmed_text
+        return content, pypi_text, github_text, pubmed_text, epmc_text
