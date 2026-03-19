@@ -84,20 +84,47 @@ def fig_epmc_top_authors_bar(authors_df, top_n=30):
     """Bar chart – top N authors by publication count."""
     if authors_df is None or authors_df.empty:
         return go.Figure().update_layout(title="No author data available")
+    # Prefer firstname + lastname when available (fall back to fullname or first col)
+    df = authors_df.copy()
+    cols_lower = {c.lower(): c for c in df.columns}
+    fname_col = None
+    lname_col = None
+    fullname_col = None
+    # common name variants
+    for key in ("firstname", "first_name", "givenname", "given_name"):
+        if key in cols_lower:
+            fname_col = cols_lower[key]
+            break
+    for key in ("lastname", "last_name", "surname"):
+        if key in cols_lower:
+            lname_col = cols_lower[key]
+            break
+    for key in ("fullname", "full_name", "name"):
+        if key in cols_lower:
+            fullname_col = cols_lower[key]
+            break
 
-    # chen needs to fix this – adjust column names to match the real data
-    # Assumes a column that can be value-counted to get per-author totals
-    author_col = authors_df.columns[0]  # first column assumed to be author name
+    if fname_col and lname_col:
+        df["author_name"] = (
+            df[fname_col].fillna("").astype(str).str.strip()
+            + " "
+            + df[lname_col].fillna("").astype(str).str.strip()
+        ).str.strip()
+    elif fullname_col:
+        df["author_name"] = df[fullname_col].fillna("").astype(str).str.strip()
+    else:
+        # fallback: use first column as name
+        first_col = df.columns[0]
+        df["author_name"] = df[first_col].fillna("").astype(str).str.strip()
 
-    # Build a clean author series: drop NA, strip whitespace, remove empty strings
-    author_series = authors_df[author_col].dropna().astype(str).str.strip()
-    author_series = author_series[author_series != ""]
+    # Remove empty / blank names
+    df = df[df["author_name"] != ""].copy()
+    if df.empty:
+        return go.Figure().update_layout(title="No author names available")
 
-    # Compute counts and take top_n — this automatically removes entries with no name
-    counts = author_series.value_counts().head(top_n).reset_index()
+    # Count occurrences per author_name and take top_n
+    counts = df["author_name"].value_counts().head(top_n).reset_index()
     counts.columns = ["author", "count"]
-    # For a sideways bar chart: y=author, x=count, orientation='h'
-    # Sort smallest->largest so largest appears at top
     counts = counts.sort_values("count", ascending=True)
 
     fig = px.bar(
