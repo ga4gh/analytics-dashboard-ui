@@ -21,3 +21,11 @@ REPO_OWNER_ENPOINT = f"{BASE_API}/github/owner/" # fetches repos based on repo o
 
 # PubMed Endpoints
 PM_KEYWORD = f"{BASE_API}/pubmed/articles/GA4GH"
+
+# EPMC API endpoint
+
+EPMC_BASE_API = "http://0.0.0.0:8000" # local test url
+EPMC_ALL_LATEST_ENTRIES = BASE_API + "/epmc/all-latest-entries"
+EPMC_AFFILIATION_COUNTRIES_COUNT = BASE_API + "/epmc/affiliation-countries-count"
+EPMC_ALL_PMC_AUTHORS = BASE_API + "/epmc/all-pmc-authors"
+EPMC_UNIQUE_CITATIONS = BASE_API + "/epmc/unique-citations"
