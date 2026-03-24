@@ -117,10 +117,17 @@ def get_unique_citations():
     Returns an integer when possible, otherwise 0.
     """
     # Citations endpoint returns a list of citation records; count unique citations
-    data = get_all_paginated(api_constants.EPMC_UNIQUE_CITATIONS)
-    if isinstance(data, list):
-        return len(data)
-    return 0
+    data = get_json(api_constants.EPMC_UNIQUE_CITATIONS)
+    return data.get("citation_count", 0) if isinstance(data, dict) else 0
+
+def get_unique_authors_count():
+    """
+    Fetch the total unique authors count from the backend.
+    Returns an integer when possible, otherwise 0.
+    """
+    # Unique authors endpoint returns a dict with 'unique_authors_count' key
+    data = get_json(api_constants.EPMC_UNIQUE_AUTHOR_COUNT)
+    return data.get("unique_authors", 0) if isinstance(data, dict) else 0
 
 
 # ---------------------------------------------------------------------------

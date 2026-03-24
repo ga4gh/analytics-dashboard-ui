@@ -12,7 +12,7 @@ from app.services.overview_client import (
 )
 
 # EPMC metrics
-from app.services.epmc_client import prepare_epmc_data, get_unique_citations
+from app.services.epmc_client import prepare_epmc_data, get_unique_citations, get_unique_authors_count
 from app.constants.constants import COUNTRIES_WHITELIST
 
 # Prepare EPMC data once for the layout
@@ -31,7 +31,7 @@ def _count_unique_authors(df):
     # fallback: use first column
     return int(df.iloc[:, 0].dropna().astype(str).nunique())
 
-_epmc_unique_authors = _count_unique_authors(_epmc_authors_df)
+_epmc_unique_authors = get_unique_authors_count()
 _epmc_total_citations = get_unique_citations()
 
 # Compute countries stats limited to whitelist
