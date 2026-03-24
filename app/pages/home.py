@@ -105,6 +105,7 @@ layout = dbc.Container(
                 "marginBottom": "25px",
                 "marginTop": "30px",
             },
+            className="text"
         ),
 
         # ---------- DESCRIPTION + LOGO ----------
@@ -203,7 +204,7 @@ layout = dbc.Container(
                     dbc.Col(
                         indicator_card(
                             f"{len(pm_df):,}",
-                            "PubMed Records",
+                            "EuropePMC Articles",
                             "#1B75BB",
                         ),
                         md=2,
@@ -230,7 +231,7 @@ layout = dbc.Container(
                     dbc.Col(
                         indicator_card(
                             f"{_epmc_unique_authors:,}",
-                            "EPMC Unique Authors",
+                            "Total Authors",
                             "#7B2CBF",
                         ),
                         md=2,
@@ -239,7 +240,7 @@ layout = dbc.Container(
                     dbc.Col(
                         indicator_card(
                             f"{_epmc_total_citations:,}",
-                            "EPMC Unique Citations",
+                            "Total Citations",
                             "#2ECC71",
                         ),
                         md=2,
@@ -248,7 +249,7 @@ layout = dbc.Container(
                     dbc.Col(
                         indicator_card(
                             f"{_epmc_unique_countries:,}",
-                            "EPMC Unique Countries",
+                            "Total Countries",
                             "#E67E22",
                         ),
                         md=2,

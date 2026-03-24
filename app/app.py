@@ -13,7 +13,8 @@ def create_app():
                external_stylesheets=[dbc.themes.BOOTSTRAP],
                health_endpoint="/health",
                title="GA4GH Analytics Dashboard",
-               description="Welcome to the GA4GH Analytics Dashboard")
+               description="Welcome to the GA4GH Analytics Dashboard"
+            )
     
     app.layout = html.Div([
         page_container
