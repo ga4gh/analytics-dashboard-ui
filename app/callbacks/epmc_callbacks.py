@@ -8,7 +8,7 @@ import dash_bootstrap_components as dbc
 from dash import html
 import pandas as pd
 
-from app.services.epmc_client import prepare_epmc_data
+from app.services.epmc_client import prepare_epmc_data, get_top_authors
 from app.layouts.epmc_layout import (
     fig_epmc_countries_pie,
     fig_epmc_top_authors_bar,
@@ -84,5 +84,7 @@ def register_epmc_callbacks(app):
     )
     def update_epmc_graphs(top_n):
         fig_pie = fig_epmc_countries_pie(countries_df)
-        fig_bar = fig_epmc_top_authors_bar(authors_df, top_n=top_n)
+        # Fetch top authors from backend with the requested count
+        top_authors_data = get_top_authors(count=top_n)
+        fig_bar = fig_epmc_top_authors_bar(top_authors_data, top_n=top_n)
         return fig_pie, fig_bar

@@ -80,56 +80,23 @@ def fig_epmc_countries_pie(countries_df):
     return fig
 
 
-def fig_epmc_top_authors_bar(authors_df, top_n=30):
+def fig_epmc_top_authors_bar(authors_data, top_n=30):
     """Bar chart – top N authors by publication count."""
-    if authors_df is None or authors_df.empty:
+    if not authors_data:
         return go.Figure().update_layout(title="No author data available")
-    # Prefer firstname + lastname when available (fall back to fullname or first col)
-    df = authors_df.copy()
-    cols_lower = {c.lower(): c for c in df.columns}
-    fname_col = None
-    lname_col = None
-    fullname_col = None
-    # common name variants
-    for key in ("firstname", "first_name", "givenname", "given_name"):
-        if key in cols_lower:
-            fname_col = cols_lower[key]
-            break
-    for key in ("lastname", "last_name", "surname"):
-        if key in cols_lower:
-            lname_col = cols_lower[key]
-            break
-    for key in ("fullname", "full_name", "name"):
-        if key in cols_lower:
-            fullname_col = cols_lower[key]
-            break
 
-    if fname_col and lname_col:
-        df["author_name"] = (
-            df[fname_col].fillna("").astype(str).str.strip()
-            + " "
-            + df[lname_col].fillna("").astype(str).str.strip()
-        ).str.strip()
-    elif fullname_col:
-        df["author_name"] = df[fullname_col].fillna("").astype(str).str.strip()
-    else:
-        # fallback: use first column as name
-        first_col = df.columns[0]
-        df["author_name"] = df[first_col].fillna("").astype(str).str.strip()
-
-    # Remove empty / blank names
-    df = df[df["author_name"] != ""].copy()
+    # Convert to DataFrame, take top_n, and sort ascending for horizontal bar
+    df = pd.DataFrame(authors_data)
     if df.empty:
-        return go.Figure().update_layout(title="No author names available")
+        return go.Figure().update_layout(title="No author data available")
 
-    # Count occurrences per author_name and take top_n
-    counts = df["author_name"].value_counts().head(top_n).reset_index()
-    counts.columns = ["author", "count"]
-    counts = counts.sort_values("count", ascending=True)
+    # Take top_n and sort ascending so largest appears at top
+    df = df.head(top_n).copy()
+    df = df.sort_values("author_count", ascending=True)
 
     fig = px.bar(
-        counts,
-        x="count",
+        df,
+        x="author_count",
         y="author",
         orientation="h",
         title=f"Top {top_n} PMC Authors",
@@ -144,7 +111,7 @@ def fig_epmc_top_authors_bar(authors_df, top_n=30):
         ),
         xaxis=dict(title="count"),
         margin=dict(l=240, r=40, t=60, b=40),
-        height=max(400, 25 * len(counts)),
+        height=max(400, 25 * len(df)),
     )
 
     return fig

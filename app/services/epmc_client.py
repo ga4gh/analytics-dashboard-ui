@@ -130,6 +130,39 @@ def get_unique_authors_count():
     return data.get("unique_authors", 0) if isinstance(data, dict) else 0
 
 
+def get_top_authors(count=30):
+    """
+    Fetch top authors by publication count from the backend.
+    Returns:
+        list[dict]: pre-computed top authors sorted by count, each with 'author', 'author_count', 'author_id'.
+    """
+    endpoint = api_constants.EPMC_TOP_AUTHORS
+    params = {"count": count}
+    print(f"Calling API: {endpoint} with count={count}")
+    resp = requests.get(endpoint, params=params, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    return data if isinstance(data, list) else []
+
+
+def get_all_articles():
+    """
+    Fetch all articles summary from the backend.
+    Returns the raw JSON (expected dict with keys 'article_count' and 'articles').
+    """
+    data = get_json(api_constants.EPMC_ALL_ARTICLES)
+    return data if isinstance(data, dict) else {}
+
+
+def get_epmc_article_count():
+    """
+    Convenience helper to return the integer article_count from the
+    `epmc/all-articles` endpoint.
+    """
+    data = get_all_articles()
+    return int(data.get("article_count", 0)) if isinstance(data, dict) else 0
+
+
 # ---------------------------------------------------------------------------
 # Convenience: prepare a DataFrame ready for the layout / callbacks
 # ---------------------------------------------------------------------------

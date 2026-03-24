@@ -12,7 +12,12 @@ from app.services.overview_client import (
 )
 
 # EPMC metrics
-from app.services.epmc_client import prepare_epmc_data, get_unique_citations, get_unique_authors_count
+from app.services.epmc_client import (
+    prepare_epmc_data,
+    get_unique_citations,
+    get_unique_authors_count,
+    get_epmc_article_count,
+)
 from app.constants.constants import COUNTRIES_WHITELIST
 
 # Prepare EPMC data once for the layout
@@ -33,6 +38,7 @@ def _count_unique_authors(df):
 
 _epmc_unique_authors = get_unique_authors_count()
 _epmc_total_citations = get_unique_citations()
+_epmc_article_count = get_epmc_article_count()
 
 # Compute countries stats limited to whitelist
 def _countries_stats_whitelist(df, whitelist):
@@ -94,23 +100,49 @@ def indicator_card(value, label, color, small=False):
 
 layout = dbc.Container(
     [
-
-        # ---------- TITLE ----------
-        html.H1(
-            "GA4GH Analytics Dashboard",
-            style={
-                "fontSize": "56px",
-                "fontWeight": "700",
-                "color": "#2C3E50",
-                "marginBottom": "25px",
-                "marginTop": "30px",
-            },
-            className="text"
-        ),
-
-        # ---------- DESCRIPTION + LOGO ----------
         dbc.Row(
             [
+                # ---------- LOGO ----------
+                dbc.Col(
+                    html.Img(
+                        src="/assets/logo-full-color.svg",
+                        style={
+                            "width": "100%",
+                            "maxHeight": "120px",
+                            "objectFit": "contain",
+                        },
+                    ),
+                    md=3,
+                    className="d-flex align-items-center",
+                ),
+
+                # ---------- TITLE ----------
+                dbc.Col(
+                    html.H1(
+                        "GA4GH Analytics Dashboard",
+                        style={
+                            "fontSize": "56px",
+                            "fontWeight": "700",
+                            "color": "#2C3E50",
+                            "marginBottom": "25px",
+                            "marginTop": "30px",
+                        },
+                        className="text",
+                    ),
+                    md=9,
+                    className="d-flex align-items-center",
+                ),
+            ],
+            align="center",
+        ),
+
+        
+
+        # ---------- DESCRIPTION ----------
+        dbc.Row(
+            [
+
+
 
                 dbc.Col(
                     [
@@ -142,18 +174,7 @@ layout = dbc.Container(
                     md=8,
                 ),
 
-                dbc.Col(
-                    html.Img(
-                        src="/assets/logo-full-color.svg",
-                        style={
-                            "width": "100%",
-                            "maxHeight": "220px",
-                            "objectFit": "contain",
-                        },
-                    ),
-                    md=4,
-                    style={"textAlign": "center"},
-                ),
+                
 
             ],
             align="center",
@@ -203,10 +224,10 @@ layout = dbc.Container(
                 [
                     dbc.Col(
                         indicator_card(
-                            f"{len(pm_df):,}",
-                            "EuropePMC Articles",
-                            "#1B75BB",
-                        ),
+                                f"{_epmc_article_count:,}",
+                                "EuropePMC Articles",
+                                "#1B75BB",
+                            ),
                         md=2,
                     ),
 
@@ -275,7 +296,7 @@ layout = dbc.Container(
                         className="shadow-sm",
                         style={"textAlign": "center", "height": "250px"},
                     ),
-                    md=3,
+                    md=4,
                 ),
 
                 dbc.Col(
@@ -290,29 +311,14 @@ layout = dbc.Container(
                         className="shadow-sm",
                         style={"textAlign": "center", "height": "250px"},
                     ),
-                    md=3,
+                    md=4,
                 ),
 
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
                             [
-                                html.H3("PubMed"),
-                                html.P("View publication trends and metrics"),
-                                dbc.Button("Open", id="open-pubmed", color="warning", size="lg"),
-                            ]
-                        ),
-                        className="shadow-sm",
-                        style={"textAlign": "center", "height": "250px"},
-                    ),
-                    md=3,
-                ),
-
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H3("EPMC Test"),
+                                html.H3("EPMC Analytics"),
                                 html.P("Europe PMC entries, authors & affiliations"),
                                 dbc.Button("Open", id="open-epmc", color="danger", size="lg"),
                             ]
@@ -320,7 +326,7 @@ layout = dbc.Container(
                         className="shadow-sm",
                         style={"textAlign": "center", "height": "250px"},
                     ),
-                    md=3,
+                    md=4,
                 ),
 
             ],

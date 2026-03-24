@@ -28,23 +28,20 @@ def register_home_callbacks(app):
         Output("module-content", "children"),
         Output("open-pypi", "children"),
         Output("open-github", "children"),
-        Output("open-pubmed", "children"),
         Output("open-epmc", "children"),
         Input("open-pypi", "n_clicks"),
         Input("open-github", "n_clicks"),
-        Input("open-pubmed", "n_clicks"),
         Input("open-epmc", "n_clicks"),
         prevent_initial_call=True
     )
-    def display_module(pypi_click, github_click, pubmed_click, epmc_click):
+    def display_module(pypi_click, github_click, epmc_click):
 
         trigger = ctx.triggered_id
-        
+
         button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         # Default button text
         pypi_text = "Open"
         github_text = "Open"
-        pubmed_text = "Open"
         epmc_text = "Open"
         
         if trigger == "open-pypi":
@@ -61,10 +58,6 @@ def register_home_callbacks(app):
             )
             github_text = "Close"
 
-        elif trigger == "open-pubmed":
-            pubmed_text = "Close"
-            return html.Div("PubMed module coming soon"), pypi_text, github_text, pubmed_text, epmc_text
-
         elif trigger == "open-epmc":
             epmc_data = prepare_epmc_data()
             content = get_epmc_layout(
@@ -75,4 +68,4 @@ def register_home_callbacks(app):
             )
             epmc_text = "Close"
         
-        return content, pypi_text, github_text, pubmed_text, epmc_text
+        return content, pypi_text, github_text, epmc_text
