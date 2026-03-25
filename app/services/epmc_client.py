@@ -5,6 +5,7 @@ Mirrors the pattern used by pypi_client.py and github_client.py.
 
 import requests
 import pandas as pd
+import json
 import app.constants.api as api_constants
 
 
@@ -174,12 +175,34 @@ def prepare_epmc_data():
     Returns:
         tuple: (entries_df, countries_df, authors_df, total_entries)
     """
-    raw_entries = get_all_latest_entries()
+    # Prefer the consolidated all-articles endpoint when available (contains
+    # article_count and articles list). Fall back to the paginated latest-entries
+    # endpoint for older deployments.
+    all_articles_resp = get_all_articles()
+    if isinstance(all_articles_resp, dict) and "articles" in all_articles_resp:
+        raw_entries = all_articles_resp.get("articles", [])
+        total_entries = int(all_articles_resp.get("article_count", len(raw_entries)))
+    else:
+        raw_entries = get_all_latest_entries()
     raw_countries = get_affiliation_countries_count()
     raw_authors = get_all_pmc_authors()
 
-    # Entries: expect a list of dicts
-    entries_df = pd.DataFrame.from_records(raw_entries) if raw_entries and isinstance(raw_entries, list) else pd.DataFrame()
+    # Entries: only use the consolidated `all-articles` response when available.
+    # Build a sanitized list of flat records that the DataTable can render.
+    entries_df = pd.DataFrame()
+    if isinstance(all_articles_resp, dict) and isinstance(raw_entries, list):
+        sanitized = []
+        for e in raw_entries:
+            # Extract only simple scalar fields. If missing, use empty string or None.
+            record = {
+                "title": e.get("title") or "",
+                "doi": e.get("doi") or "",
+                "pub_year": e.get("pub_year") or e.get("year") or "",
+                # keep a serialized copy of the full article record for details view
+                "raw_json": json.dumps(e, ensure_ascii=False),
+            }
+            sanitized.append(record)
+        entries_df = pd.DataFrame.from_records(sanitized)
 
     # Countries: expect a dict mapping country -> count
     if isinstance(raw_countries, dict):
@@ -191,6 +214,9 @@ def prepare_epmc_data():
     # Authors: expect a list of dicts with 'fullname' etc.
     authors_df = pd.DataFrame.from_records(raw_authors) if raw_authors and isinstance(raw_authors, list) else pd.DataFrame()
 
-    total_entries = len(entries_df)
+    # If total_entries wasn't derived from all-articles response above, compute
+    # from the entries dataframe length.
+    if 'total_entries' not in locals():
+        total_entries = len(entries_df)
 
     return entries_df, countries_df, authors_df, total_entries

@@ -20,6 +20,17 @@ from app.services.epmc_client import (
 )
 from app.constants.constants import COUNTRIES_WHITELIST
 
+# PyPI module
+from app.layouts.pypi_layout import get_pypi_layout
+from app.services.pypi_client import get_pypi_details, get_total_packages
+
+# GitHub module
+from app.layouts.github_layout import get_github_layout
+from app.services.github_client import prepare_github_data
+
+# EPMC module
+from app.layouts.epmc_layout import get_epmc_layout
+
 # Prepare EPMC data once for the layout
 _epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries = prepare_epmc_data()
 
@@ -61,6 +72,27 @@ def _countries_stats_whitelist(df, whitelist):
     return num_countries, total_counts
 
 _epmc_unique_countries, _epmc_countries_entries = _countries_stats_whitelist(_epmc_countries_df, COUNTRIES_WHITELIST)
+
+# Prepare PyPI module data
+_pypi_details = get_pypi_details()
+_pypi_total = get_total_packages()
+
+# Prepare GitHub module data
+_gh_df, _, _, _, _gh_total = prepare_github_data()
+
+# Prepare EPMC layout (already done above, just build it)
+_epmc_layout = get_epmc_layout(
+    _epmc_entries_df,
+    _epmc_countries_df,
+    _epmc_authors_df,
+    _epmc_total_entries,
+)
+
+# Prepare PyPI layout
+_pypi_layout = get_pypi_layout(_pypi_details, _pypi_total)
+
+# Prepare GitHub layout
+_github_layout = get_github_layout(_gh_df, _gh_total)
 
 register_page(
     __name__,
@@ -208,7 +240,7 @@ layout = dbc.Container(
 
                 dbc.Col(
                     dbc.Badge(
-                        "Data Source: GitHub, PyPI, EuropePMC",
+                        "Data Source: GitHub, PyPI, Europe PMC",
                         color="light",
                         text_color="dark",
                         className="p-2",
@@ -226,7 +258,7 @@ layout = dbc.Container(
                     dbc.Col(
                         indicator_card(
                                 f"{_epmc_article_count:,}",
-                                "EuropePMC Articles",
+                                "Europe PMC Publications",
                                 "#1B75BB",
                             ),
                         md=2,
@@ -281,62 +313,32 @@ layout = dbc.Container(
             ),
     
 
-        # ---------- MODULE CARDS ----------
-        dbc.Row(
-            [
+        # ---------- MODULE CARDS REMOVED: Charts now display by default ----------
+        
 
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H3("PyPI Analytics"),
-                                html.P("View package trends, categories, and versions"),
-                                dbc.Button("Open", id="open-pypi", color="primary", size="lg"),
-                            ]
-                        ),
-                        className="shadow-sm",
-                        style={"textAlign": "center", "height": "250px"},
-                    ),
-                    md=4,
-                ),
-
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H3("GitHub Analytics"),
-                                html.P("Repository activity and metrics"),
-                                dbc.Button("Open", id="open-github", color="success", size="lg"),
-                            ]
-                        ),
-                        className="shadow-sm",
-                        style={"textAlign": "center", "height": "250px"},
-                    ),
-                    md=4,
-                ),
-
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H3("EPMC Analytics"),
-                                html.P("Europe PMC entries, authors & affiliations"),
-                                dbc.Button("Open", id="open-epmc", color="danger", size="lg"),
-                            ]
-                        ),
-                        className="shadow-sm",
-                        style={"textAlign": "center", "height": "250px"},
-                    ),
-                    md=4,
-                ),
-
-            ],
-            justify="center",
+        # ---------- EPMC ANALYTICS ----------
+        dbc.Card(
+            dbc.CardBody(_epmc_layout),
+            className="mb-4 shadow-sm",
+            style={"borderRadius": "12px"},
         ),
-
         html.Br(),
 
-        html.Div(id="module-content", style={"marginTop": "40px"}),
+        # ---------- GITHUB ANALYTICS ----------
+        dbc.Card(
+            dbc.CardBody(_github_layout),
+            className="mb-4 shadow-sm",
+            style={"borderRadius": "12px"},
+        ),
+        html.Br(),
+
+        # ---------- PYPI ANALYTICS ----------
+        dbc.Card(
+            dbc.CardBody(_pypi_layout),
+            className="mb-4 shadow-sm",
+            style={"borderRadius": "12px"},
+        ),
+        html.Br(),
 
         # ---------- FOOTER ----------
         html.Div(

@@ -1,5 +1,5 @@
 """
-Dash layout for the EPMC Test analytics page.
+Dash layout for the EPMC analytics page.
 Mirrors the pattern used by pypi_layout.py and github_layout.py.
 """
 
@@ -51,7 +51,14 @@ def fig_epmc_countries_pie(countries_df):
     if total <= 0:
         return go.Figure().update_layout(title="No country data available (zero total)")
 
-    percents = counts / total * 100.0
+    # Attach numeric counts to dataframe and sort descending so the largest
+    # slices appear first (decreasing size). We set sort=False on the Pie
+    # trace so Plotly preserves the order we supply.
+    df = df.copy()
+    df["count"] = counts
+    df = df.sort_values("count", ascending=False).reset_index(drop=True)
+
+    percents = df["count"] / total * 100.0
     # text: show country name only for slices > 5%, otherwise empty string
     text_labels = [cn if p > 5.0 else "" for cn, p in zip(df["country_normalized"], percents)]
     # textposition: put text outside for labeled slices, inside for unlabeled (will only show percent)
@@ -61,7 +68,7 @@ def fig_epmc_countries_pie(countries_df):
         data=[
             go.Pie(
                 labels=df["country_normalized"],
-                values=counts,
+                values=df["count"],
                 hole=0.2,  # smaller hole → bigger pie
                 text=text_labels,
                 textinfo="percent+text",
@@ -99,7 +106,7 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
         x="author_count",
         y="author",
         orientation="h",
-        title=f"Top {top_n} PMC Authors",
+        title=f"Top {top_n} Europe PMC Authors",
         template="simple_white",
     )
 
@@ -123,20 +130,17 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
 
 def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
     """
-    Build and return the full EPMC Test page layout.
+    Build and return the full EPMC page layout.
     """
     # Ensure we have a DataFrame even if data is missing
     if entries_df is None or (isinstance(entries_df, pd.DataFrame) and entries_df.empty):
-        entries_df = pd.DataFrame(columns=[
-            "pmcid", "title", "author", "journal", "publish_date", "affiliation_country"
-        ])
-        # chen needs to fix this – update column list once schema is finalised
+        entries_df = pd.DataFrame(columns=["title", "doi", "pub_year"])
 
     return dbc.Container(
         [
             # ---------- TITLE ----------
             html.H1(
-                "EPMC Test Dashboard",
+                "Europe PMC Dashboard",
                 style={
                     "textAlign": "center",
                     "marginTop": "20px",
@@ -149,7 +153,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
             ),
 
             html.H2(
-                f"Total EPMC Entries: {total_entries}",
+                f"Total Europe PMC Publications: {total_entries}",
                 style={
                     "textAlign": "center",
                     "margin-bottom": "20px",
@@ -157,58 +161,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
                 },
             ),
 
-            # ---------- SEARCH ----------
-            dcc.Input(
-                id="epmc-table-search",
-                type="text",
-                placeholder="Search entries...",
-                debounce=False,
-                style={
-                    "margin-bottom": "15px",
-                    "width": "350px",
-                    "padding": "8px",
-                    "border-radius": "5px",
-                    "border": "1px solid #ccc",
-                },
-            ),
-
-            # ---------- TABLE + DETAILS ----------
-            dbc.Row(
-                [
-                    # LEFT: table
-                    dbc.Col(
-                        [
-                            dash_table.DataTable(
-                                id="epmc-entries-table",
-                                # chen needs to fix this – update columns to match real schema
-                                columns=[
-                                    {"name": "PMC ID", "id": "pmcid"},
-                                    {"name": "Title", "id": "title"},
-                                    {"name": "Journal", "id": "journal"},
-                                ],
-                                data=entries_df.to_dict("records") if not entries_df.empty else [],
-                                row_selectable="single",
-                                page_size=10,
-                                sort_action="native",
-                                style_table={"overflowX": "auto"},
-                                style_cell={
-                                    "textAlign": "left",
-                                    "padding": "10px",
-                                    "whiteSpace": "normal",
-                                },
-                                style_header={
-                                    "backgroundColor": "#2c3e50",
-                                    "color": "white",
-                                    "fontWeight": "bold",
-                                },
-                            )
-                        ],
-                        width=6,
-                    ),
-                    # RIGHT: detail card
-                    dbc.Col(html.Div(id="epmc-entry-details"), width=6),
-                ],
-            ),
+            # Table + details will be rendered after the graphs 
 
             # ---------- FILTERS ----------
             html.Div(
@@ -240,17 +193,78 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
                 },
             ),
 
-            # ---------- GRAPHS ----------
-            dbc.Card(
-                dbc.CardBody(dcc.Graph(id="epmc-authors-bar")),
-                className="mb-4 shadow-sm",
-                style={"borderRadius": "12px"},
+            # ---------- GRAPHS  ----------
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id="epmc-authors-bar")),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                ]
             ),
-            dbc.Card(
-                dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
-                className="mb-4 shadow-sm",
-                style={"borderRadius": "12px"},
-            ),            
+
+            # ---------- SEARCH ----------
+            dcc.Input(
+                id="epmc-table-search",
+                type="text",
+                placeholder="Search Publications...",
+                debounce=False,
+                style={
+                    "margin-bottom": "15px",
+                    "width": "350px",
+                    "padding": "8px",
+                    "border-radius": "5px",
+                    "border": "1px solid #ccc",
+                },
+            ),
+
+            # ---------- TABLE + DETAILS  ----------
+            dbc.Row(
+                [
+                    # LEFT: table
+                    dbc.Col(
+                        [
+                            dash_table.DataTable(
+                                id="epmc-entries-table",
+                                columns=[
+                                    {"name": "Title", "id": "title"},
+                                    {"name": "Year", "id": "pub_year"},
+                                ],
+                                data=entries_df.to_dict("records") if not entries_df.empty else [],
+                                row_selectable="single",
+                                page_size=10,
+                                sort_action="native",
+                                style_table={"overflowX": "auto"},
+                                style_cell={
+                                    "textAlign": "left",
+                                    "padding": "10px",
+                                    "whiteSpace": "normal",
+                                },
+                                style_header={
+                                    "backgroundColor": "#2c3e50",
+                                    "color": "white",
+                                    "fontWeight": "bold",
+                                },
+                            )
+                        ],
+                        width=6,
+                    ),
+                    # RIGHT: detail card
+                    dbc.Col(html.Div(id="epmc-entry-details"), width=6),
+                ],
+            ),
         ],
         fluid=True,
     )

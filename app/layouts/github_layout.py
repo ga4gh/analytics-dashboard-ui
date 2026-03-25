@@ -120,59 +120,9 @@ def get_github_layout(gh_df, total_repositories):
                 style={'textAlign': 'center', 'margin-bottom': '20px', 'color': "#9DAAB8"}
             ),
             
-            # Search box for DataTable
-            dcc.Input(
-                id='github-table-search',
-                type='text',
-                placeholder='Search repositories...',
-                debounce=False,
-                style={
-                    'margin-bottom': '15px',
-                    'width': '350px',
-                    'padding': '8px',
-                    'border-radius': '5px',
-                    'border': '1px solid #ccc'
-                }
-            ),
-            
-                dbc.Row([
+                # Table + details will be rendered after the graphs 
 
-            # LEFT: TABLE
-            dbc.Col([
-
-                dash_table.DataTable(
-                    id="github-projects-table",
-                    columns=[
-                        {"name": "Project", "id": "name"},
-                        #{"name": "Description", "id": "description"},
-                        {"name": "Archived", "id": "is_archived"},
-                    ],
-                    data=gh_df[display_columns].to_dict("records"),
-                    row_selectable="single",
-                    page_size=10,
-                    style_table={"overflowX": "auto"},
-                    style_cell={
-                        "textAlign": "left",
-                        "padding": "10px",
-                        "whiteSpace": "normal",
-                    },
-                    style_header={
-                        "backgroundColor": "#2c3e50",
-                        "color": "white",
-                        "fontWeight": "bold"
-                    }
-                )
-
-            ], width=6),
-
-            # RIGHT: DETAILS PANEL
-            dbc.Col([
-                html.Div(id="repo-details")
-            ], width=6)
-
-        ]),
-
-        # ---------- FILTERS ----------
+            # ---------- FILTERS ----------
             html.Div(
                 [     
                     # Dummy filter (30%)
@@ -225,30 +175,94 @@ def get_github_layout(gh_df, total_repositories):
                 },
             ),
 
-            # ---------- GRAPHS ----------
-            dbc.Card(
-                dbc.CardBody(
-                    dcc.Graph(id="gh-activity-status-graph")
-                ),
-                className="mb-4 shadow-sm",
-                style={"borderRadius": "12px"},
+            # ---------- GRAPHS  ----------
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id="gh-activity-status-graph")),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id="gh-activity-bar-graph")),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                ]
             ),
 
-            dbc.Card(
-                dbc.CardBody(
-                    dcc.Graph(id="gh-activity-bar-graph")
-                ),
-                className="mb-4 shadow-sm",
-                style={"borderRadius": "12px"},
+            # If odd number of graphs, render the remaining one full-width on its own row
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id="gh-interest-graph")),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=12,
+                    )
+                ]
             ),
 
-            dbc.Card(
-                dbc.CardBody(
-                    dcc.Graph(id="gh-interest-graph")
-                ),
-                className="mb-4 shadow-sm",
-                style={"borderRadius": "12px"},
+            # Search box for DataTable
+            dcc.Input(
+                id='github-table-search',
+                type='text',
+                placeholder='Search repositories...',
+                debounce=False,
+                style={
+                    'margin-bottom': '15px',
+                    'width': '350px',
+                    'padding': '8px',
+                    'border-radius': '5px',
+                    'border': '1px solid #ccc'
+                }
             ),
+
+            # ---------- TABLE + DETAILS  ----------
+            dbc.Row([
+
+            # LEFT: TABLE
+            dbc.Col([
+
+                dash_table.DataTable(
+                    id="github-projects-table",
+                    columns=[
+                        {"name": "Project", "id": "name"},
+                        #{"name": "Description", "id": "description"},
+                        {"name": "Archived", "id": "is_archived"},
+                    ],
+                    data=gh_df[display_columns].to_dict("records"),
+                    row_selectable="single",
+                    page_size=10,
+                    style_table={"overflowX": "auto"},
+                    style_cell={
+                        "textAlign": "left",
+                        "padding": "10px",
+                        "whiteSpace": "normal",
+                    },
+                    style_header={
+                        "backgroundColor": "#2c3e50",
+                        "color": "white",
+                        "fontWeight": "bold"
+                    }
+                )
+
+            ], width=6),
+
+            # RIGHT: DETAILS PANEL
+            dbc.Col([
+                html.Div(id="repo-details")
+            ], width=6)
+
+        ]),
 
         ],
         fluid=True,

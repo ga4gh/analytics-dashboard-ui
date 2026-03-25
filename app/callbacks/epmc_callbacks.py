@@ -1,5 +1,5 @@
 """
-Dash callbacks for the EPMC Test analytics page.
+Dash callbacks for the EPMC analytics page.
 Mirrors the pattern used by pypi_callbacks.py and github_callbacks.py.
 """
 
@@ -7,6 +7,7 @@ from dash import Input, Output
 import dash_bootstrap_components as dbc
 from dash import html
 import pandas as pd
+import json
 
 from app.services.epmc_client import prepare_epmc_data, get_top_authors
 from app.layouts.epmc_layout import (
@@ -54,25 +55,47 @@ def register_epmc_callbacks(app):
     def show_epmc_details(selected_rows):
         if not selected_rows or entries_df.empty:
             return dbc.Alert("Select an entry to see details", color="info")
-
         entry = entries_df.iloc[selected_rows[0]]
 
-        # chen needs to fix this – update fields to match real schema
-        return dbc.Card(
-            [
-                dbc.CardHeader(html.H4(entry.get("title", "N/A"))),
-                dbc.CardBody(
-                    [
-                        html.P(f"PMC ID: {entry.get('pmcid', 'N/A')}"),
-                        html.P(f"Author: {entry.get('author', 'N/A')}"),
-                        html.P(f"Journal: {entry.get('journal', 'N/A')}"),
-                        html.P(f"Published: {entry.get('publish_date', 'N/A')}"),
-                        html.P(f"Country: {entry.get('affiliation_country', 'N/A')}"),
-                    ]
+        # Parse the stored raw JSON object for richer fields
+        raw = entry.get("raw_json") or "{}"
+        try:
+            parsed = json.loads(raw) if isinstance(raw, str) else raw
+        except Exception:
+            parsed = {}
+
+        # Extract desired fields with sensible fallbacks
+        abstract = parsed.get("abstract_text") or parsed.get("abstract") or "No abstract available"
+        pub_year = entry.get("pub_year") or parsed.get("pub_year") or parsed.get("year") or "N/A"
+        # affiliation may be a string or list
+        aff = parsed.get("affiliation") or parsed.get("affiliations") or ""
+        if isinstance(aff, list):
+            affiliation = "; ".join([str(a) for a in aff if a]) or "N/A"
+        else:
+            affiliation = aff or "N/A"
+        language = parsed.get("language") or parsed.get("lang") or "N/A"
+        doi = entry.get("doi") or parsed.get("doi") or ""
+        doi_url = f"https://doi.org/{doi}" if doi else None
+
+        return dbc.Card([
+            dbc.CardHeader(html.H4(entry.get("title", "N/A"))),
+            dbc.CardBody([
+                html.P(abstract),
+                html.Hr(),
+                html.P(f"Year: {pub_year}"),
+                html.P(f"Affiliation: {affiliation}"),
+                html.P(f"Language: {language}"),
+                html.Br(),
+                dbc.Button(
+                    "View Article",
+                    href=doi_url,
+                    target="_blank",
+                    color="primary",
+                    className="me-2",
+                    disabled=not doi_url,
                 ),
-            ],
-            style={"boxShadow": "0 4px 10px rgba(0,0,0,0.1)"},
-        )
+            ]),
+        ], style={"boxShadow": "0 4px 10px rgba(0,0,0,0.1)"})
 
     # -----------------------
     # Charts

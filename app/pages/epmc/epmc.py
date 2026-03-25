@@ -1,5 +1,5 @@
 """
-Page module for EPMC Test – wires layout + data together.
+Page module for EPMC – wires layout + data together.
 Mirrors the pattern in pages/pypi/pypi.py and pages/github/github.py.
 """
 

@@ -41,56 +41,7 @@ def get_pypi_layout(pypi_details, total_packages):
                 style={'textAlign': 'center', 'margin-bottom': '20px', 'color': "#9DAAB8"}
             ),
             
-            # Search box for DataTable
-            dcc.Input(
-                id='table-search',
-                type='text',
-                placeholder='Search projects...',
-                debounce=False,
-                style={
-                    'margin-bottom': '15px',
-                    'width': '350px',
-                    'padding': '8px',
-                    'border-radius': '5px',
-                    'border': '1px solid #ccc'
-                }
-            ),
-            
-            dbc.Row([
-                dbc.Row([
-                    dbc.Col(
-                        dash_table.DataTable(
-                            id="projects-table",
-                            columns=[
-                                {"name": "Project", "id": "project_name"},
-                                {"name": "Category", "id": "category"},
-                            ],
-                            data=pypi_details[["project_name", "category"]].to_dict("records"),
-                            row_selectable="single",
-                            page_size=10,
-                            sort_action="native",
-                            style_table={"overflowX": "auto"},
-                            style_cell={
-                                "textAlign": "left",
-                                "padding": "10px",
-                                "whiteSpace": "normal",
-                            },
-                            style_header={
-                                "backgroundColor": "#2c3e50",
-                                "color": "white",
-                                "fontWeight": "bold"
-                            }
-                        ),
-                        width=6
-                    ),
-
-                    dbc.Col(
-                        html.Div(id="pypi-project-details"),
-                        width=6
-                    )
-                ])
-
-            ]),
+            # Table + details will be rendered after the graphs 
 
             html.Div(
             [
@@ -161,9 +112,79 @@ def get_pypi_layout(pypi_details, total_packages):
                 "margin-bottom": "20px"
             }
         ),
-            # Graphs
-            dcc.Graph(id='datatable-bar'),
-            dcc.Graph(id='category-distribution'),
+            # ---------- GRAPHS  ----------
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id='datatable-bar')),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id='category-distribution')),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                ]
+            ),
+
+            # Search box for DataTable
+            dcc.Input(
+                id='table-search',
+                type='text',
+                placeholder='Search projects...',
+                debounce=False,
+                style={
+                    'margin-bottom': '15px',
+                    'width': '350px',
+                    'padding': '8px',
+                    'border-radius': '5px',
+                    'border': '1px solid #ccc'
+                }
+            ),
+
+            # ---------- TABLE + DETAILS  ----------
+            dbc.Row([
+                dbc.Row([
+                    dbc.Col(
+                        dash_table.DataTable(
+                            id="projects-table",
+                            columns=[
+                                {"name": "Project", "id": "project_name"},
+                                {"name": "Category", "id": "category"},
+                            ],
+                            data=pypi_details[["project_name", "category"]].to_dict("records"),
+                            row_selectable="single",
+                            page_size=10,
+                            sort_action="native",
+                            style_table={"overflowX": "auto"},
+                            style_cell={
+                                "textAlign": "left",
+                                "padding": "10px",
+                                "whiteSpace": "normal",
+                            },
+                            style_header={
+                                "backgroundColor": "#2c3e50",
+                                "color": "white",
+                                "fontWeight": "bold"
+                            }
+                        ),
+                        width=6
+                    ),
+
+                    dbc.Col(
+                        html.Div(id="pypi-project-details"),
+                        width=6
+                    )
+                ])
+
+            ]),
             
         ],
         fluid=True,
