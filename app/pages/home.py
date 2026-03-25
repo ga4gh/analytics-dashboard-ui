@@ -103,18 +103,7 @@ layout = dbc.Container(
         dbc.Row(
             [
                 # ---------- LOGO ----------
-                dbc.Col(
-                    html.Img(
-                        src="/assets/logo-full-color.svg",
-                        style={
-                            "width": "100%",
-                            "maxHeight": "120px",
-                            "objectFit": "contain",
-                        },
-                    ),
-                    md=3,
-                    className="d-flex align-items-center",
-                ),
+                
 
                 # ---------- TITLE ----------
                 dbc.Col(
@@ -130,6 +119,18 @@ layout = dbc.Container(
                         className="text",
                     ),
                     md=9,
+                    className="d-flex align-items-center",
+                ),
+                dbc.Col(
+                    html.Img(
+                        src="/assets/logo-full-color.svg",
+                        style={
+                            "width": "100%",
+                            "maxHeight": "120px",
+                            "objectFit": "contain",
+                        },
+                    ),
+                    md=3,
                     className="d-flex align-items-center",
                 ),
             ],
