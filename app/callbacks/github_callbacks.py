@@ -2,9 +2,9 @@ from dash import Input, Output
 from app import app
 from app.services.github_client import prepare_github_data
 from app.layouts.github_layout import (
-    fig_github_activity_status_pie,
     fig_github_activity_bar,
     fig_github_interest_metrics,
+    fig_github_workstream_pie,
 )
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
@@ -93,8 +93,8 @@ def register_github_callbacks(app):
         return filtered_df[display_columns].to_dict("records")
     
     @app.callback(
-        Output("gh-activity-status-graph", "figure"),
         Output("gh-activity-bar-graph", "figure"),
+        Output("gh-workstream-pie", "figure"),
         Output("gh-interest-graph", "figure"),
         Input("gh-top-n-slider", "value"),
         Input("gh-repo-filter", "value"),
@@ -102,28 +102,32 @@ def register_github_callbacks(app):
     def update_github_graphs(top_n, repo_filter):
 
         df = gh_df.copy()
+        # Start with a copy and apply repo filter; the Top-N selection
+        # should only affect the activity bar chart, not the pie or interest metrics.
+        df_filtered = gh_df.copy()
 
         if repo_filter == "active":
-            df = df[df["is_archived"] == False]
+            df_filtered = df_filtered[df_filtered["is_archived"] == False]
 
         elif repo_filter == "archived":
-            df = df[df["is_archived"] == True]
+            df_filtered = df_filtered[df_filtered["is_archived"] == True]
 
-        # Top N filter
-        df_top = df.sort_values("activity_score", ascending=False).head(top_n)
+        # Top N applies only to bar chart
+        df_top = df_filtered.sort_values("activity_score", ascending=False).head(top_n)
 
-        # PIE CHART (now based on top N)
+        # PIE CHART should be computed from the filtered full set (not top_n)
         gh_activity_counts = (
-            df_top.assign(
-                Category=df_top["is_archived"].map({True: "Archived", False: "Active"})
+            df_filtered.assign(
+                Category=df_filtered["is_archived"].map({True: "Archived", False: "Active"})
             )
             .groupby("Category")
             .size()
             .reset_index(name="Count")
         )
 
-        fig1 = fig_github_activity_status_pie(gh_activity_counts)
         fig2 = fig_github_activity_bar(df_top)
-        fig3 = fig_github_interest_metrics(df_top)
+        # Workstream pie and interest metrics use the filtered dataset
+        fig_ws = fig_github_workstream_pie(df_filtered)
+        fig3 = fig_github_interest_metrics(df_filtered)
 
-        return fig1, fig2, fig3
+        return fig2, fig_ws, fig3

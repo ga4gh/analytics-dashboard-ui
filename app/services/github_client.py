@@ -46,8 +46,9 @@ def prepare_github_data(fetch_date="2025-10-01"):
 
     target_date = pd.to_datetime(fetch_date, utc=True)
 
-    gh_df["days_since_pushed_at"] = (target_date - gh_df["pushed_at"]).dt.days
-    gh_df["days_since_last_updated"] = (target_date - gh_df["last_updated"]).dt.days
+    # Use absolute timedeltas so days-since values are never negative
+    gh_df["days_since_pushed_at"] = (target_date - gh_df["pushed_at"]).abs().dt.days
+    gh_df["days_since_last_updated"] = (target_date - gh_df["last_updated"]).abs().dt.days
 
     gh_df["activity_score"] = (
         1 / (1 + gh_df["days_since_pushed_at"])
