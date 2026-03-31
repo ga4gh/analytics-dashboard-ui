@@ -229,6 +229,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
                                 ],
                                 data=entries_df.to_dict("records") if not entries_df.empty else [],
                                 row_selectable="single",
+                                selected_rows=[0],
                                 page_size=10,
                                 sort_action="native",
                                 style_table={"overflowX": "auto"},

@@ -31,47 +31,65 @@ def fig_github_activity_status_pie(gh_activity_counts):
     return fig
 '''
 
-def fig_github_activity_bar(gh_activity_df):
-    # Accept list-like or DataFrame and prepare formatted date strings for hover
+def fig_github_activity_bar(gh_activity_df, color_map=None):
+    # New signature: accept DataFrame or list-like and optional color_map produced
+    # by the workstream pie so colors/legend match. Keep template/layout consistent
+    # with other figures (simple_white) and match pie legend coloring.
     df = gh_activity_df.copy() if isinstance(gh_activity_df, pd.DataFrame) else pd.DataFrame(gh_activity_df)
     if df.empty:
         return go.Figure().update_layout(title="No activity data available")
 
-    # Ensure pushed_at / last_updated string columns exist for hover display
+    # Accept an explicit color_map mapping workstream -> color (preferred)
+
+    # Ensure formatted date strings exist for hover display
     for col in ("pushed_at", "last_updated"):
         if col in df.columns:
             df[col + "_str"] = pd.to_datetime(df[col], utc=True, errors="coerce").dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
             df[col + "_str"] = "N/A"
 
-    # Build the bar chart with customdata including the formatted date strings
-    fig = px.bar(
-        df,
-        x="name",
-        y="activity_score",
-        title="Most Recently Updated GA4GH-Related Repositories",
-        custom_data=["days_since_pushed_at", "days_since_last_updated", "pushed_at_str", "last_updated_str"],
-        template="simple_white",
-    )
+    # Order repos by activity_score descending
+    df = df.sort_values("activity_score", ascending=False).reset_index(drop=True)
+    ordered_names = df["name"].tolist()
 
-    hovertemplate = (
-        "Repo: %{x}<br>"
-        "Activity Score: %{y:.4f}<br>"
-        "Days since last commit: %{customdata[0]}<br>"
-        "Days since last repo update: %{customdata[1]}<br>"
-        "Last Pushed: %{customdata[2]}<br>"
-        "Last Updated: %{customdata[3]}<extra></extra>"
-    )
+    # Build one trace per workstream but use ordered_names as x so ordering is preserved
+    fig = go.Figure()
+    workstreams = df["workstream"].fillna("none").astype(str)
+    unique_ws = list(dict.fromkeys(workstreams.tolist()))
 
-    fig.update_traces(hovertemplate=hovertemplate)
+    for ws in unique_ws:
+        y_values = [row["activity_score"] if (str(row.get("workstream", "none")) == ws) else None for _, row in df.iterrows()]
+        color = None
+        if color_map and ws in color_map:
+            color = color_map[ws]
+
+        fig.add_trace(
+            go.Bar(
+                x=ordered_names,
+                y=y_values,
+                name=ws,
+                marker=dict(color=color) if color is not None else None,
+                hovertemplate=(
+                    "Repo: %{x}<br>"
+                    "Activity Score: %{y:.4f}<br>"
+                    "<extra></extra>"
+                ),
+            )
+        )
 
     fig.update_layout(
-        xaxis_tickangle=-45,
+        template="simple_white",
+        title={"text": "Most Recently Updated GA4GH-Related Repositories", "x": 0.0},
+        barmode="overlay",
+        xaxis=dict(categoryorder="array", categoryarray=ordered_names, tickangle=-45),
         margin=dict(l=40, r=20, t=80, b=150),
         height=650,
         xaxis_title="Repo Name",
         yaxis_title="Activity Score",
+        legend_title_text="Workstream",
     )
+
+    fig.update_traces(marker_line_width=0)
 
     return fig
 
@@ -145,36 +163,68 @@ def fig_github_interest_metrics(gh_interest_df):
 
 
 def fig_github_workstream_pie(gh_df):
-    """Pie chart of repository counts by `workstream` field (ignore null/empty)."""
-    if gh_df is None or gh_df.empty:
+    """Pie chart of repository counts by `workstream` field (ignore null/empty).
+    Accepts optional `color_map` and `labels_order` supplied by caller to ensure
+    consistent color/label mapping between figures.
+    """
+    def _empty_fig():
         return go.Figure().update_layout(title="No workstream data available")
+
+    if gh_df is None:
+        return _empty_fig()
 
     # Accept either DataFrame or list-like
     df = gh_df.copy() if isinstance(gh_df, pd.DataFrame) else pd.DataFrame(gh_df)
     if "workstream" not in df.columns:
-        return go.Figure().update_layout(title="No workstream data available")
+        return _empty_fig()
 
     # Filter out null/empty values
     ws = df["workstream"].dropna().astype(str).str.strip()
     ws = ws[ws != ""]
     if ws.empty:
-        return go.Figure().update_layout(title="No workstream data available")
+        return _empty_fig()
 
     counts = ws.value_counts().reset_index()
     counts.columns = ["workstream", "count"]
 
+    # Compute labels in descending count order
+    labels = counts["workstream"].tolist()
+
+    # Allow caller to request specific colors via DataFrame.attrs
+    provided_color_map = None
+    if hasattr(df, "attrs") and isinstance(df.attrs, dict):
+        provided_color_map = df.attrs.get("color_map")
+
+    # Build color list aligned to labels. Use provided_color_map when available,
+    # otherwise use Plotly qualitative palette.
+    palette = px.colors.qualitative.Plotly
+    colors = []
+    for i, lab in enumerate(labels):
+        if provided_color_map and lab in provided_color_map:
+            colors.append(provided_color_map[lab])
+        else:
+            colors.append(palette[i % len(palette)])
+
     fig = go.Figure(
         data=[
             go.Pie(
-                labels=counts["workstream"],
+                labels=labels,
                 values=counts["count"],
                 hole=0.3,
                 textinfo="label+percent",
                 hoverinfo="label+value+percent",
+                marker=dict(colors=colors),
             )
         ]
     )
-    fig.update_layout(title={"text": "Repository Workstreams", "x": 0.5}, template="simple_white", height=550)
+
+    fig.update_layout(
+        title={"text": "Repository Workstreams", "x": 0.5},
+        template="simple_white",
+        height=550,
+        legend=dict(traceorder="normal"),
+    )
+
     return fig
 
 
@@ -323,6 +373,7 @@ def get_github_layout(gh_df, total_repositories):
                     ],
                     data=gh_df[display_columns].to_dict("records"),
                     row_selectable="single",
+                    selected_rows=[0],
                     page_size=10,
                     style_table={"overflowX": "auto"},
                     style_cell={

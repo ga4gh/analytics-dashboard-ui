@@ -125,9 +125,26 @@ def register_github_callbacks(app):
             .reset_index(name="Count")
         )
 
-        fig2 = fig_github_activity_bar(df_top)
-        # Workstream pie and interest metrics use the filtered dataset
+        # Compute deterministic workstream color_map (labels ordered by descending count)
+        ws_series = df_filtered["workstream"].dropna().astype(str).str.strip() if "workstream" in df_filtered.columns else pd.Series([], dtype=str)
+        ws_series = ws_series[ws_series != ""]
+        labels = ws_series.value_counts().index.tolist()
+
+        palette = px.colors.qualitative.Plotly
+        color_map = {lab: palette[i % len(palette)] for i, lab in enumerate(labels)}
+
+        # build color map deterministically from filtered df and store in attrs
+        # store on DataFrame.attrs so pandas won't warn
+        if not hasattr(df_top, "attrs"):
+            df_top.attrs = {}
+        df_top.attrs["color_map"] = color_map
+        if not hasattr(df_filtered, "attrs"):
+            df_filtered.attrs = {}
+        df_filtered.attrs["color_map"] = color_map
+
+        # Build figures using the shared color_map so legends/colors match 1:1
         fig_ws = fig_github_workstream_pie(df_filtered)
         fig3 = fig_github_interest_metrics(df_filtered)
+        fig2 = fig_github_activity_bar(df_top, color_map=color_map)
 
         return fig2, fig_ws, fig3

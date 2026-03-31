@@ -144,6 +144,7 @@ def get_pypi_layout(pypi_details, total_packages):
                             ],
                             data=pypi_details[["project_name", "category"]].to_dict("records"),
                             row_selectable="single",
+                            selected_rows=[0],
                             page_size=10,
                             sort_action="native",
                             style_table={"overflowX": "auto"},
