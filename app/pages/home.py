@@ -313,7 +313,7 @@ layout = dbc.Container(
         ),
             
         # ---------- MODULE CONTENT ----------
-        layout = dbc.Row(
+        dbc.Row(
             [
                 _epmc_layout,
                 _github_layout,
