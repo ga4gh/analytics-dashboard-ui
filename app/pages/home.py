@@ -253,93 +253,76 @@ layout = dbc.Container(
         ),
 
         # ---------- KPI INDICATORS ----------
-            dbc.Row(
-                [
-                    dbc.Col(
-                        indicator_card(
-                                f"{_epmc_article_count:,}",
-                                "Europe PMC Publications",
-                                "#1B75BB",
-                            ),
-                        md=2,
-                    ),
-
-                    dbc.Col(
-                        indicator_card(
-                            f"{len(gh_df):,}",
-                            "GitHub Repositories",
-                            "#4FAEDC",
+        dbc.Row(
+            [
+                dbc.Col(
+                    indicator_card(
+                            f"{_epmc_article_count:,}",
+                            "Europe PMC Publications",
+                            "#1B75BB",
                         ),
-                        md=2,
-                    ),
+                    md=2,
+                ),
 
-                    dbc.Col(
-                        indicator_card(
-                            f"{len(pypi_df):,}",
-                            "PyPI Packages",
-                            "#FAA633",
-                        ),
-                        md=2,
+                dbc.Col(
+                    indicator_card(
+                        f"{len(gh_df):,}",
+                        "GitHub Repositories",
+                        "#4FAEDC",
                     ),
+                    md=2,
+                ),
 
-                    dbc.Col(
-                        indicator_card(
-                            f"{_epmc_unique_authors:,}",
-                            "Total Authors",
-                            "#7B2CBF",
-                        ),
-                        md=2,
+                dbc.Col(
+                    indicator_card(
+                        f"{len(pypi_df):,}",
+                        "PyPI Packages",
+                        "#FAA633",
                     ),
+                    md=2,
+                ),
 
-                    dbc.Col(
-                        indicator_card(
-                            f"{_epmc_total_citations:,}",
-                            "Total Citations",
-                            "#2ECC71",
-                        ),
-                        md=2,
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_unique_authors:,}",
+                        "Total Authors",
+                        "#7B2CBF",
                     ),
+                    md=2,
+                ),
 
-                    dbc.Col(
-                        indicator_card(
-                            f"{_epmc_unique_countries:,}",
-                            "Total Countries",
-                            "#E67E22",
-                        ),
-                        md=2,
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_total_citations:,}",
+                        "Total Citations",
+                        "#2ECC71",
                     ),
-                ],
-                className="mb-4",
-            ),
-    
+                    md=2,
+                ),
 
-        # ---------- MODULE CARDS REMOVED: Charts now display by default ----------
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_unique_countries:,}",
+                        "Total Countries",
+                        "#E67E22",
+                    ),
+                    md=2,
+                ),
+            ],
+            className="mb-4",
+        ),
+            
+        # ---------- MODULE CONTENT ----------
+        layout = dbc.Row(
+            [
+                _epmc_layout,
+                _github_layout,
+                _pypi_layout,
+            ],
+            className="mb-4",
+            style={"gap": "20px"}  # optional spacing between sections
+        )
         
-
-        # ---------- EPMC ANALYTICS ----------
-        dbc.Card(
-            dbc.CardBody(_epmc_layout),
-            className="mb-4 shadow-sm",
-            style={"borderRadius": "12px"},
-        ),
-        html.Br(),
-
-        # ---------- GITHUB ANALYTICS ----------
-        dbc.Card(
-            dbc.CardBody(_github_layout),
-            className="mb-4 shadow-sm",
-            style={"borderRadius": "12px"},
-        ),
-        html.Br(),
-
-        # ---------- PYPI ANALYTICS ----------
-        dbc.Card(
-            dbc.CardBody(_pypi_layout),
-            className="mb-4 shadow-sm",
-            style={"borderRadius": "12px"},
-        ),
-        html.Br(),
-
         # ---------- FOOTER ----------
         html.Div(
             "© 2026 GA4GH Analytics Dashboard",
