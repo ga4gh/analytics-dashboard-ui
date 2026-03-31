@@ -101,6 +101,11 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
     df = df.head(top_n).copy()
     df = df.sort_values("author_count", ascending=True)
 
+    labels = {
+        "author_count": "Total Publication",
+        "author": "Author Name",
+    }
+
     fig = px.bar(
         df,
         x="author_count",
@@ -108,6 +113,7 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
         orientation="h",
         title=f"Top {top_n} Europe PMC Authors",
         template="simple_white",
+        labels=labels,
     )
 
     fig.update_traces(marker_line_width=0)
@@ -119,6 +125,8 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
         xaxis=dict(title="count"),
         margin=dict(l=240, r=40, t=60, b=40),
         height=max(400, 25 * len(df)),
+        xaxis_title = "Publication Count",
+        yaxis_title = "Author",
     )
 
     return fig

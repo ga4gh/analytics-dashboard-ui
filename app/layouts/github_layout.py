@@ -69,6 +69,8 @@ def fig_github_activity_bar(gh_activity_df):
         xaxis_tickangle=-45,
         margin=dict(l=40, r=20, t=80, b=150),
         height=650,
+        xaxis_title="Repo Name",
+        yaxis_title="Activity Score",
     )
 
     return fig
@@ -114,7 +116,7 @@ def fig_github_interest_metrics(gh_interest_df):
     # Axis and legend titles
     fig.update_layout(
         xaxis_title="Repo Name",
-        yaxis_title="Metrics",
+        yaxis_title="Total Interest",
         legend_title_text="Metric",
     )
 
