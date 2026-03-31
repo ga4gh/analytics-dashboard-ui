@@ -321,7 +321,7 @@ layout = dbc.Container(
             ],
             className="mb-4",
             style={"gap": "20px"}  # optional spacing between sections
-        )
+        ),
         
         # ---------- FOOTER ----------
         html.Div(
