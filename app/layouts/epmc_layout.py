@@ -103,8 +103,8 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
 
     fig = px.bar(
         df,
-        x="author_count",
-        y="author",
+        x="Total Publications",
+        y="Author Name",
         orientation="h",
         title=f"Top {top_n} Europe PMC Authors",
         template="simple_white",
@@ -159,7 +159,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
                                 },
                             ),
                         ],
-                        style={"width": "60%"},
+                        style={"width": "45%"},
                     ),
                 ],
                 style={
