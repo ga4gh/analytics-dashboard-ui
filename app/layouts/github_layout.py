@@ -198,24 +198,6 @@ def get_github_layout(gh_df, total_repositories):
     ]
     return dbc.Container(
         [
-
-            html.H1(
-                "GitHub Analytics Dashboard",
-                style={
-                    "textAlign": "center",
-                    "marginTop": "20px",
-                    "marginBottom": "10px",
-                    "fontSize": "60px",
-                    "fontWeight": "bold",
-                    "color": "#2C3E50",
-                    "textShadow": "2px 2px #BDC3C7"
-                }
-            ),
-
-            html.H2(
-                f"Total GitHub Repositories: {total_repositories}",
-                style={'textAlign': 'center', 'margin-bottom': '20px', 'color': "#9DAAB8"}
-            ),
             
                 # Table + details will be rendered after the graphs 
 

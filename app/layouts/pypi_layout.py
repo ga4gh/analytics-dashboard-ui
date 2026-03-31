@@ -23,23 +23,6 @@ def get_pypi_layout(pypi_details, total_packages):
     
     return dbc.Container(
         [
-            html.H1(
-                "PyPI Analytics Dashboard",
-                style={
-                    "textAlign": "center",
-                    "marginTop": "20px",
-                    "marginBottom": "10px",
-                    "fontSize": "60px",
-                    "fontWeight": "bold",
-                    "color": "#2C3E50",
-                    "textShadow": "2px 2px #BDC3C7"
-                }
-            ),
-                        
-            html.H2(
-                f"Total PyPI Packages: {total_packages}",
-                style={'textAlign': 'center', 'margin-bottom': '20px', 'color': "#9DAAB8"}
-            ),
             
             # Table + details will be rendered after the graphs 
 
