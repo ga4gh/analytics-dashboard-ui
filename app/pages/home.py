@@ -294,7 +294,7 @@ layout = dbc.Container(
 
                 dbc.Col(
                     indicator_card(
-                        f"{citations.get("citation_count", 0):,}",
+                        f"{citations.get('citation_count', 0):,}",
                         "Total Citations",
                         "#2ECC71",
                     ),
