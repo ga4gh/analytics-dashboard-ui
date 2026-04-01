@@ -277,7 +277,7 @@ def get_github_layout(gh_df, total_repositories):
                     ),  
                     html.Div(
                         [
-                            html.Label("Top N Repositories"),
+                            html.Label("Top Repositories"),
                             dcc.Slider(
                                 id="gh-top-n-slider",
                                 min=5,

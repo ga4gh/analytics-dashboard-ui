@@ -12,12 +12,7 @@ from app.services.overview_client import (
 )
 
 # EPMC metrics
-from app.services.epmc_client import (
-    prepare_epmc_data,
-    get_unique_citations,
-    get_unique_authors_count,
-    get_epmc_article_count,
-)
+from app.services.epmc_client import prepare_epmc_data
 from app.constants.constants import COUNTRIES_WHITELIST
 
 # PyPI module
@@ -31,25 +26,28 @@ from app.services.github_client import prepare_github_data
 # EPMC module
 from app.layouts.epmc_layout import get_epmc_layout
 
-# Prepare EPMC data once for the layout
-_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries, _epmc_citations_df = prepare_epmc_data()
+# Prepare all EPMC data once (calls consolidated prepare_epmc_data which fetches all APIs in one pass)
+(_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries, 
+ _epmc_citations_df, _epmc_unique_authors, _epmc_top_authors_data) = prepare_epmc_data()
 
-# Total unique authors: try common column names, fallback to first column
-def _count_unique_authors(df):
-    if df is None or df.empty:
+# Total citations: robust count from cached payload (list or dict containing list)
+def _count_citations_payload(cit):
+    if cit is None:
         return 0
-    cols = list(df.columns)
-    # look for typical author column names
-    for candidate in ("author", "name", "full_name", "author_name"):
-        for c in cols:
-            if c.lower() == candidate:
-                return int(df[c].dropna().astype(str).nunique())
-    # fallback: use first column
-    return int(df.iloc[:, 0].dropna().astype(str).nunique())
+    if isinstance(cit, list):
+        return len(cit)
+    if isinstance(cit, dict):
+        for k in ("results", "items", "citations", "data"):
+            if k in cit and isinstance(cit[k], list):
+                return len(cit[k])
+        # fallback: if dict directly contains a numeric summary
+        if "citation_count" in cit and isinstance(cit["citation_count"], (int, float)):
+            return int(cit["citation_count"])
+        return 0
+    return 0
 
-_epmc_unique_authors = get_unique_authors_count()
-citations = get_unique_citations()
-_epmc_article_count = get_epmc_article_count()
+_epmc_total_citations = _count_citations_payload(_epmc_citations_df)
+_epmc_article_count = _epmc_total_entries
 
 # Compute countries stats limited to whitelist
 def _countries_stats_whitelist(df, whitelist):
@@ -80,7 +78,7 @@ _pypi_total = get_total_packages()
 # Prepare GitHub module data
 _gh_df, _, _, _, _gh_total = prepare_github_data()
 
-# Prepare EPMC layout (already done above, just build it)
+# Build EPMC layout using consolidated data
 _epmc_layout = get_epmc_layout(
     _epmc_entries_df,
     _epmc_countries_df,
@@ -241,7 +239,7 @@ layout = dbc.Container(
 
                 dbc.Col(
                     dbc.Badge(
-                        "Data Source: GitHub, PyPI, Europe PMC",
+                        "Data Sources: GitHub, PyPI, Europe PMC",
                         color="light",
                         text_color="dark",
                         className="p-2",
@@ -267,6 +265,33 @@ layout = dbc.Container(
 
                 dbc.Col(
                     indicator_card(
+                        f"{_epmc_unique_authors:,}",
+                        "Total Authors",
+                        "#7B2CBF",
+                    ),
+                    md=2,
+                ),
+
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_total_citations:,}",
+                        "Total Citations",
+                        "#2ECC71",
+                    ),
+                    md=2,
+                ),
+
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_unique_countries:,}",
+                        "Total Countries",
+                        "#E67E22",
+                    ),
+                    md=2,
+                ),
+
+                dbc.Col(
+                    indicator_card(
                         f"{len(gh_df):,}",
                         "GitHub Repositories",
                         "#4FAEDC",
@@ -282,33 +307,7 @@ layout = dbc.Container(
                     ),
                     md=2,
                 ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{_epmc_unique_authors:,}",
-                        "Total Authors",
-                        "#7B2CBF",
-                    ),
-                    md=2,
-                ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{citations.get('citation_count', 0):,}",
-                        "Total Citations",
-                        "#2ECC71",
-                    ),
-                    md=2,
-                ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{_epmc_unique_countries:,}",
-                        "Total Countries",
-                        "#E67E22",
-                    ),
-                    md=2,
-                ),
+               
             ],
             className="mb-4",
         ),

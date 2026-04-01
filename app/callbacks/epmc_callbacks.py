@@ -10,7 +10,7 @@ import pandas as pd
 import json
 import re
 
-from app.services.epmc_client import prepare_epmc_data, get_top_authors
+from app.services.epmc_client import prepare_epmc_data
 from app.layouts.epmc_layout import (
     fig_epmc_countries_pie,
     fig_epmc_top_authors_bar,
@@ -20,8 +20,9 @@ from app.layouts.epmc_layout import (
 def register_epmc_callbacks(app):
     """Register all EPMC-related Dash callbacks."""
 
-    # Cache data at import-time so every callback shares the same frames.
-    entries_df, countries_df, authors_df, total_entries, citations = prepare_epmc_data()
+    # Cache all data at import-time; prepare_epmc_data() fetches all APIs in one pass
+    (entries_df, countries_df, authors_df, total_entries, 
+     citations, unique_authors_count, top_authors_default) = prepare_epmc_data()
 
     # chen needs to fix this – update column references once the real schema is known
     # These are the columns we expect to exist on entries_df for search / display.
@@ -154,16 +155,15 @@ def register_epmc_callbacks(app):
         ], style={"boxShadow": "0 4px 10px rgba(0,0,0,0.1)"})
 
     # -----------------------
-    # Charts
+    # Build initial charts from cached data
     # -----------------------
     @app.callback(
         Output("epmc-countries-pie", "figure"),
         Output("epmc-authors-bar", "figure"),
-        Input("epmc-top-n-slider", "value"),
+        Input("epmc-top-n-slider", "value"),  # Responds to slider but uses same cached authors
     )
     def update_epmc_graphs(top_n):
         fig_pie = fig_epmc_countries_pie(countries_df)
-        # Fetch top authors from backend with the requested count
-        top_authors_data = get_top_authors(count=top_n)
-        fig_bar = fig_epmc_top_authors_bar(top_authors_data, top_n=top_n)
+        # Use pre-fetched top_authors_default (no API call needed)
+        fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n=min(top_n, len(top_authors_default)))
         return fig_pie, fig_bar

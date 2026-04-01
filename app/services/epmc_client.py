@@ -112,56 +112,7 @@ def get_all_pmc_authors():
     return data if isinstance(data, list) else []
 
 
-def get_unique_citations():
-    """
-    Fetch the total unique citations value from the backend.
-    Returns an integer when possible, otherwise 0.
-    """
-    # Citations endpoint returns a list of citation records; count unique citations
-    data = get_json(api_constants.EPMC_UNIQUE_CITATIONS)
-    return data
 
-def get_unique_authors_count():
-    """
-    Fetch the total unique authors count from the backend.
-    Returns an integer when possible, otherwise 0.
-    """
-    # Unique authors endpoint returns a dict with 'unique_authors_count' key
-    data = get_json(api_constants.EPMC_UNIQUE_AUTHOR_COUNT)
-    return data.get("unique_authors", 0) if isinstance(data, dict) else 0
-
-
-def get_top_authors(count=30):
-    """
-    Fetch top authors by publication count from the backend.
-    Returns:
-        list[dict]: pre-computed top authors sorted by count, each with 'author', 'author_count', 'author_id'.
-    """
-    endpoint = api_constants.EPMC_TOP_AUTHORS
-    params = {"count": count}
-    print(f"Calling API: {endpoint} with count={count}")
-    resp = requests.get(endpoint, params=params, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    return data if isinstance(data, list) else []
-
-
-def get_all_articles():
-    """
-    Fetch all articles summary from the backend.
-    Returns the raw JSON (expected dict with keys 'article_count' and 'articles').
-    """
-    data = get_json(api_constants.EPMC_ALL_ARTICLES)
-    return data if isinstance(data, dict) else {}
-
-
-def get_epmc_article_count():
-    """
-    Convenience helper to return the integer article_count from the
-    `epmc/all-articles` endpoint.
-    """
-    data = get_all_articles()
-    return int(data.get("article_count", 0)) if isinstance(data, dict) else 0
 
 
 # ---------------------------------------------------------------------------
@@ -170,55 +121,58 @@ def get_epmc_article_count():
 
 def prepare_epmc_data():
     """
-    Fetch and lightly process all EPMC data needed by the dashboard page.
+    Fetch and process all EPMC data in a single pass to avoid redundant API calls.
+    Returns all data needed for the dashboard: DataFrames, counts, and metadata.
 
     Returns:
-        tuple: (entries_df, countries_df, authors_df, total_entries)
+        tuple: (entries_df, countries_df, authors_df, total_entries, citations,
+                unique_authors_count, top_authors_data)
     """
-    # Prefer the consolidated all-articles endpoint when available (contains
-    # article_count and articles list). Fall back to the paginated latest-entries
-    # endpoint for older deployments.
-    all_articles_resp = get_all_articles()
+    # Fetch all API data upfront (7 calls total, no redundancy)
+    all_articles_resp = get_json(api_constants.EPMC_ALL_ARTICLES) if hasattr(api_constants, 'EPMC_ALL_ARTICLES') else {}
+    if not isinstance(all_articles_resp, dict):
+        all_articles_resp = {}
+    
     if isinstance(all_articles_resp, dict) and "articles" in all_articles_resp:
         raw_entries = all_articles_resp.get("articles", [])
         total_entries = int(all_articles_resp.get("article_count", len(raw_entries)))
     else:
         raw_entries = get_all_latest_entries()
+        total_entries = len(raw_entries)
+    
     raw_countries = get_affiliation_countries_count()
     raw_authors = get_all_pmc_authors()
+    
+    unique_authors_resp = get_json(api_constants.EPMC_UNIQUE_AUTHOR_COUNT) if hasattr(api_constants, 'EPMC_UNIQUE_AUTHOR_COUNT') else {}
+    unique_authors_count = unique_authors_resp.get("unique_authors", 0) if isinstance(unique_authors_resp, dict) else 0
+    
+    top_authors_resp = get_json(api_constants.EPMC_TOP_AUTHORS) if hasattr(api_constants, 'EPMC_TOP_AUTHORS') else []
+    top_authors_data = top_authors_resp if isinstance(top_authors_resp, list) else []
+    
+    citations = get_json(api_constants.EPMC_UNIQUE_CITATIONS) if hasattr(api_constants, 'EPMC_UNIQUE_CITATIONS') else []
 
-    # Entries: only use the consolidated `all-articles` response when available.
-    # Build a sanitized list of flat records that the DataTable can render.
+    # Build entries DataFrame
     entries_df = pd.DataFrame()
-    if isinstance(all_articles_resp, dict) and isinstance(raw_entries, list):
+    if isinstance(raw_entries, list):
         sanitized = []
         for e in raw_entries:
-            # Extract only simple scalar fields. If missing, use empty string or None.
             record = {
                 "title": e.get("title") or "",
                 "doi": e.get("doi") or "",
                 "pub_year": e.get("pub_year") or e.get("year") or "",
-                # keep a serialized copy of the full article record for details view
                 "raw_json": json.dumps(e, ensure_ascii=False),
             }
             sanitized.append(record)
-        entries_df = pd.DataFrame.from_records(sanitized)
+        entries_df = pd.DataFrame.from_records(sanitized) if sanitized else pd.DataFrame()
 
-    # Countries: expect a dict mapping country -> count
+    # Build countries DataFrame
     if isinstance(raw_countries, dict):
         items = [{"country": k, "count": v} for k, v in raw_countries.items()]
         countries_df = pd.DataFrame.from_records(items)
     else:
         countries_df = pd.DataFrame()
 
-    # Authors: expect a list of dicts with 'fullname' etc.
+    # Build authors DataFrame
     authors_df = pd.DataFrame.from_records(raw_authors) if raw_authors and isinstance(raw_authors, list) else pd.DataFrame()
 
-    # If total_entries wasn't derived from all-articles response above, compute
-    # from the entries dataframe length.
-    if 'total_entries' not in locals():
-        total_entries = len(entries_df)
-        
-    citations = get_unique_citations()
-
-    return entries_df, countries_df, authors_df, total_entries, citations
+    return entries_df, countries_df, authors_df, total_entries, citations, unique_authors_count, top_authors_data

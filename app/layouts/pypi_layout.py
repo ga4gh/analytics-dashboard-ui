@@ -72,7 +72,7 @@ def get_pypi_layout(pypi_details, total_packages):
                         ], style={"width": "48%"}),
 
                         html.Div([
-                            html.Label("Top N Packages"),
+                            html.Label("Top Packages"),
                             dcc.Slider(
                                 id="top-n-slider",
                                 min=5,

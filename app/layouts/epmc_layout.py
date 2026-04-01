@@ -3,14 +3,12 @@ Dash layout for the EPMC analytics page.
 Mirrors the pattern used by pypi_layout.py and github_layout.py.
 """
 
-from collections import defaultdict
-
-import dash_bootstrap_components as dbc
-from plotly import data
+import json
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html, dcc, dash_table
-import pandas as pd
+import dash_bootstrap_components as dbc
 
 # whitelist of countries to display
 from app.constants.constants import COUNTRIES_WHITELIST
@@ -82,7 +80,7 @@ def fig_epmc_countries_pie(countries_df):
         ]
     )
     fig.update_layout(
-        title={"text": "Affiliation Countries Distribution", "x": 0.5},
+        title={"text": "Affiliation Countries Represented", "x": 0.5},
         template="simple_white",
         height=700,
         margin=dict(l=20, r=20, t=80, b=20),
@@ -129,37 +127,26 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
         margin=dict(l=240, r=40, t=60, b=40),
         height=max(400, 25 * len(df)),
         xaxis_title = "Publication Count",
-        yaxis_title = "Author",
+        yaxis_title = "Author Name",
     )
 
     return fig
 
 
 def get_citations_by_year(data: dict) -> list[dict]:
-    from collections import defaultdict
+    """Aggregate citations by pub_year, counting entries per year."""
+    citations = data.get("citations", []) if isinstance(data, dict) else []
+    if not citations:
+        return []
+    
+    counts_by_year = {}
+    for row in citations:
+        py = row.get("pub_year")
+        if py is not None:
+            counts_by_year[py] = counts_by_year.get(py, 0) + 1
+    
+    return [{"pub_year": year, "total_citations": count} for year, count in sorted(counts_by_year.items())]
 
-    citations = data["citations"]
-
-    # Subquery: deduplicate on (article_id, citation_id, pub_year, citation_count)
-    seen = set()
-    refined_citations = []
-    for row in sorted(citations, key=lambda x: (x["article_id"], x["citation_id"])):
-        key = (row["article_id"], row["citation_id"], row["pub_year"], row["citation_count"])
-        if key not in seen:
-            seen.add(key)
-            refined_citations.append(row)
-
-    # GROUP BY pub_year + SUM(citation_count), excluding NULL pub_year
-    totals = defaultdict(int)
-    for row in refined_citations:
-        if row.get("pub_year") is not None:
-            totals[row["pub_year"]] += row["citation_count"]
-
-    # ORDER BY pub_year
-    return [
-        {"pub_year": year, "total_citations": total}
-        for year, total in sorted(totals.items())
-    ]
 
 def make_citations_figure(data):
     result = get_citations_by_year(data)
@@ -179,13 +166,14 @@ def make_citations_figure(data):
     )
 
     fig.update_layout(
-        title="Citations Over Years",
+        title="Europe PMC Citations Per Year",
         xaxis_title="Year",
-        yaxis_title="Total Citations",
-        template="plotly_white"
+        yaxis_title="Citations Count",
+        template="simple_white"
     )
 
     return fig
+
 
 # ---------------------------------------------------------------------------
 # Page layout
@@ -193,12 +181,53 @@ def make_citations_figure(data):
 
 def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citations):
     """
-    Build and return the full EPMC page layout.
+    Build and return the full EPMC page layout using cached data (no additional API calls).
     """
-    # Ensure we have a DataFrame even if data is missing
-    if entries_df is None or (isinstance(entries_df, pd.DataFrame) and entries_df.empty):
-        entries_df = pd.DataFrame(columns=["title", "doi", "pub_year"])
+    # Compute most-cited publications inline (no separate helper function)
+    most_cited_children = []
+    # Normalize citations payload (accept list or dict containing list)
+    uc_list = []
+    if isinstance(citations, list):
+        uc_list = citations
+    elif isinstance(citations, dict):
+        for k in ("results", "items", "citations", "data"):
+            if k in citations and isinstance(citations[k], list):
+                uc_list = citations[k]
+                break
+
+    uc_df = pd.DataFrame.from_records(uc_list) if uc_list else pd.DataFrame()
+    if not uc_df.empty and "article_id" in uc_df.columns:
+            # Count unique citations per article_id (prefer unique citation_id)
+            if "citation_id" in uc_df.columns:
+                counts = uc_df.groupby(uc_df["article_id"].astype(str))["citation_id"].nunique()
+            else:
+                counts = uc_df["article_id"].astype(str).value_counts()
+            counts_df = counts.reset_index()
+            counts_df.columns = ["article_id", "citation_count"]
+            
+            # Map article_id to title from entries_df
+            titles_map = {}
+            if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
+                for raw in entries_df["raw_json"]:
+                    try:
+                        obj = json.loads(raw)
+                        aid = str(obj.get("id") or obj.get("article_id") or "")
+                        if aid:
+                            titles_map[aid] = obj.get("title") or obj.get("name") or aid
+                    except Exception:
+                        pass
+            
+            counts_df["title"] = counts_df["article_id"].map(lambda x: titles_map.get(x, x))
+            counts_df = counts_df.sort_values("citation_count", ascending=False).head(20)
+            
+            for _, r in counts_df.iterrows():
+                most_cited_children.append(
+                    html.Div(f"{r['title']} — {int(r['citation_count'])}", 
+                            style={"marginBottom": "8px", "fontSize": "14px"})
+                )
     
+    if not most_cited_children:
+        most_cited_children.append(html.Div("No citation data available", style={"fontSize": "14px"}))
     return dbc.Container(
         [
             # Table + details will be rendered after the graphs 
@@ -208,7 +237,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                 [
                     html.Div(
                         [
-                            html.Label("Top N Authors"),
+                            html.Label("Top Authors"),
                             dcc.Slider(
                                 id="epmc-top-n-slider",
                                 min=5,
@@ -257,13 +286,32 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                     ),
                 ]
             ),
-            
-            # ---------- GRAPHS  ----------
+            # Countries pie + Most-cited publications side-by-side
             dbc.Row(
-                [ 
+                [
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                # build a simple vertical list of "Title — count"
+                                html.Div(
+                                    [
+                                        html.H5("Most Cited GA4GH Publications", style={"marginBottom": "12px"}),
+                                        html.Div(
+                                            most_cited_children,
+                                            id="epmc-most-cited-list",
+                                            style={"maxHeight": "420px", "overflowY": "auto"},
+                                        ),
+                                    ]
+                                )
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
