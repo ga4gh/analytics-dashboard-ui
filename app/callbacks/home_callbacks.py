@@ -64,7 +64,8 @@ def register_home_callbacks(app):
                 epmc_data[0],  # entries_df
                 epmc_data[1],  # countries_df
                 epmc_data[2],  # authors_df
-                epmc_data[3],  # total_entries
+                epmc_data[3],  # total_entries,
+                epmc_data[4],  # citations
             )
             epmc_text = "Close"
         

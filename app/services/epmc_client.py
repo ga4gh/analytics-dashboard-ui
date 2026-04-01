@@ -119,7 +119,7 @@ def get_unique_citations():
     """
     # Citations endpoint returns a list of citation records; count unique citations
     data = get_json(api_constants.EPMC_UNIQUE_CITATIONS)
-    return data.get("citation_count", 0) if isinstance(data, dict) else 0
+    return data
 
 def get_unique_authors_count():
     """
@@ -218,5 +218,7 @@ def prepare_epmc_data():
     # from the entries dataframe length.
     if 'total_entries' not in locals():
         total_entries = len(entries_df)
+        
+    citations = get_unique_citations()
 
-    return entries_df, countries_df, authors_df, total_entries
+    return entries_df, countries_df, authors_df, total_entries, citations

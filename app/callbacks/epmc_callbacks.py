@@ -21,7 +21,7 @@ def register_epmc_callbacks(app):
     """Register all EPMC-related Dash callbacks."""
 
     # Cache data at import-time so every callback shares the same frames.
-    entries_df, countries_df, authors_df, total_entries = prepare_epmc_data()
+    entries_df, countries_df, authors_df, total_entries, citations = prepare_epmc_data()
 
     # chen needs to fix this – update column references once the real schema is known
     # These are the columns we expect to exist on entries_df for search / display.

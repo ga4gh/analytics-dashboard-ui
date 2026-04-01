@@ -32,7 +32,7 @@ from app.services.github_client import prepare_github_data
 from app.layouts.epmc_layout import get_epmc_layout
 
 # Prepare EPMC data once for the layout
-_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries = prepare_epmc_data()
+_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries, _epmc_citations_df = prepare_epmc_data()
 
 # Total unique authors: try common column names, fallback to first column
 def _count_unique_authors(df):
@@ -48,7 +48,7 @@ def _count_unique_authors(df):
     return int(df.iloc[:, 0].dropna().astype(str).nunique())
 
 _epmc_unique_authors = get_unique_authors_count()
-_epmc_total_citations = get_unique_citations()
+citations = get_unique_citations()
 _epmc_article_count = get_epmc_article_count()
 
 # Compute countries stats limited to whitelist
@@ -86,6 +86,7 @@ _epmc_layout = get_epmc_layout(
     _epmc_countries_df,
     _epmc_authors_df,
     _epmc_total_entries,
+    _epmc_citations_df,
 )
 
 # Prepare PyPI layout
@@ -293,7 +294,7 @@ layout = dbc.Container(
 
                 dbc.Col(
                     indicator_card(
-                        f"{_epmc_total_citations:,}",
+                        f"{citations.get("citation_count", 0):,}",
                         "Total Citations",
                         "#2ECC71",
                     ),

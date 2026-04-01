@@ -3,7 +3,10 @@ Dash layout for the EPMC analytics page.
 Mirrors the pattern used by pypi_layout.py and github_layout.py.
 """
 
+from collections import defaultdict
+
 import dash_bootstrap_components as dbc
+from plotly import data
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html, dcc, dash_table
@@ -132,18 +135,70 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
     return fig
 
 
+def get_citations_by_year(data: dict) -> list[dict]:
+    from collections import defaultdict
+
+    citations = data["citations"]
+
+    # Subquery: deduplicate on (article_id, citation_id, pub_year, citation_count)
+    seen = set()
+    refined_citations = []
+    for row in sorted(citations, key=lambda x: (x["article_id"], x["citation_id"])):
+        key = (row["article_id"], row["citation_id"], row["pub_year"], row["citation_count"])
+        if key not in seen:
+            seen.add(key)
+            refined_citations.append(row)
+
+    # GROUP BY pub_year + SUM(citation_count), excluding NULL pub_year
+    totals = defaultdict(int)
+    for row in refined_citations:
+        if row.get("pub_year") is not None:
+            totals[row["pub_year"]] += row["citation_count"]
+
+    # ORDER BY pub_year
+    return [
+        {"pub_year": year, "total_citations": total}
+        for year, total in sorted(totals.items())
+    ]
+
+def make_citations_figure(data):
+    result = get_citations_by_year(data)
+    print(result)
+    years = [r["pub_year"] for r in result]
+    totals = [r["total_citations"] for r in result]
+    
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=years,
+            y=totals,
+            mode="lines+markers",
+            name="Citations"
+        )
+    )
+
+    fig.update_layout(
+        title="Citations Over Years",
+        xaxis_title="Year",
+        yaxis_title="Total Citations",
+        template="plotly_white"
+    )
+
+    return fig
+
 # ---------------------------------------------------------------------------
 # Page layout
 # ---------------------------------------------------------------------------
 
-def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
+def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citations):
     """
     Build and return the full EPMC page layout.
     """
     # Ensure we have a DataFrame even if data is missing
     if entries_df is None or (isinstance(entries_df, pd.DataFrame) and entries_df.empty):
         entries_df = pd.DataFrame(columns=["title", "doi", "pub_year"])
-
+    
     return dbc.Container(
         [
             # Table + details will be rendered after the graphs 
@@ -189,6 +244,23 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
                         ),
                         md=6,
                     ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(
+                                id = "epmc-citations-over-years",
+                                figure = make_citations_figure(citations)
+                            )),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                ]
+            ),
+            
+            # ---------- GRAPHS  ----------
+            dbc.Row(
+                [ 
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
