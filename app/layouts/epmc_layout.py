@@ -230,7 +230,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
         most_cited_children.append(html.Div("No citation data available", style={"fontSize": "14px"}))
     return dbc.Container(
         [
-            # Table + details will be rendered after the graphs 
+
 
             # ---------- FILTERS ----------
             html.Div(
@@ -320,57 +320,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                 ]
             ),
 
-            # ---------- SEARCH ----------
-            dcc.Input(
-                id="epmc-table-search",
-                type="text",
-                placeholder="Search Publications...",
-                debounce=False,
-                style={
-                    "margin-bottom": "15px",
-                    "width": "350px",
-                    "padding": "8px",
-                    "border-radius": "5px",
-                    "border": "1px solid #ccc",
-                },
-            ),
 
-            # ---------- TABLE + DETAILS  ----------
-            dbc.Row(
-                [
-                    # LEFT: table
-                    dbc.Col(
-                        [
-                            dash_table.DataTable(
-                                id="epmc-entries-table",
-                                columns=[
-                                    {"name": "Title", "id": "title"},
-                                    {"name": "Year", "id": "pub_year"},
-                                ],
-                                data=entries_df.to_dict("records") if not entries_df.empty else [],
-                                row_selectable="single",
-                                selected_rows=[0],
-                                page_size=10,
-                                sort_action="native",
-                                style_table={"overflowX": "auto"},
-                                style_cell={
-                                    "textAlign": "left",
-                                    "padding": "10px",
-                                    "whiteSpace": "normal",
-                                },
-                                style_header={
-                                    "backgroundColor": "#2c3e50",
-                                    "color": "white",
-                                    "fontWeight": "bold",
-                                },
-                            )
-                        ],
-                        width=6,
-                    ),
-                    # RIGHT: detail card
-                    dbc.Col(html.Div(id="epmc-entry-details"), width=6),
-                ],
-            ),
         ],
         fluid=True,
     )

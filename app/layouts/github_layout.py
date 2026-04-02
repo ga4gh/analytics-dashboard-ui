@@ -234,24 +234,10 @@ def get_github_layout(gh_df, total_repositories):
     """
     Returns the GitHub page layout.
     """
-    display_columns = [
-        "name",
-        "owner",
-        "repo_link",
-        "description",
-        "stargazers_count",
-        "forks_count",
-        "is_archived",
-        "watchers_count",
-        "subscribers_count",
-        "open_issues_count",
-        "last_updated",
-        "pushed_at",
-    ]
     return dbc.Container(
         [
             
-                # Table + details will be rendered after the graphs 
+
 
             # ---------- FILTERS ----------
             html.Div(
@@ -343,59 +329,7 @@ def get_github_layout(gh_df, total_repositories):
             ),
 
 
-            # Search box for DataTable
-            dcc.Input(
-                id='github-table-search',
-                type='text',
-                placeholder='Search repositories...',
-                debounce=False,
-                style={
-                    'margin-bottom': '15px',
-                    'width': '350px',
-                    'padding': '8px',
-                    'border-radius': '5px',
-                    'border': '1px solid #ccc'
-                }
-            ),
 
-            # ---------- TABLE + DETAILS  ----------
-            dbc.Row([
-
-            # LEFT: TABLE
-            dbc.Col([
-
-                dash_table.DataTable(
-                    id="github-projects-table",
-                    columns=[
-                        {"name": "Project", "id": "name"},
-                        #{"name": "Description", "id": "description"},
-                        {"name": "Archived", "id": "is_archived"},
-                    ],
-                    data=gh_df[display_columns].to_dict("records"),
-                    row_selectable="single",
-                    selected_rows=[0],
-                    page_size=10,
-                    style_table={"overflowX": "auto"},
-                    style_cell={
-                        "textAlign": "left",
-                        "padding": "10px",
-                        "whiteSpace": "normal",
-                    },
-                    style_header={
-                        "backgroundColor": "#2c3e50",
-                        "color": "white",
-                        "fontWeight": "bold"
-                    }
-                )
-
-            ], width=6),
-
-            # RIGHT: DETAILS PANEL
-            dbc.Col([
-                html.Div(id="repo-details")
-            ], width=6)
-
-        ]),
 
         ],
         fluid=True,

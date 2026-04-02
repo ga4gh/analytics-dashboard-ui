@@ -24,7 +24,7 @@ def get_pypi_layout(pypi_details, total_packages):
     return dbc.Container(
         [
             
-            # Table + details will be rendered after the graphs 
+
 
             html.Div(
             [
@@ -117,58 +117,7 @@ def get_pypi_layout(pypi_details, total_packages):
                 ]
             ),
 
-            # Search box for DataTable
-            dcc.Input(
-                id='table-search',
-                type='text',
-                placeholder='Search projects...',
-                debounce=False,
-                style={
-                    'margin-bottom': '15px',
-                    'width': '350px',
-                    'padding': '8px',
-                    'border-radius': '5px',
-                    'border': '1px solid #ccc'
-                }
-            ),
 
-            # ---------- TABLE + DETAILS  ----------
-            dbc.Row([
-                dbc.Row([
-                    dbc.Col(
-                        dash_table.DataTable(
-                            id="projects-table",
-                            columns=[
-                                {"name": "Project", "id": "project_name"},
-                                {"name": "Category", "id": "category"},
-                            ],
-                            data=pypi_details[["project_name", "category"]].to_dict("records"),
-                            row_selectable="single",
-                            selected_rows=[0],
-                            page_size=10,
-                            sort_action="native",
-                            style_table={"overflowX": "auto"},
-                            style_cell={
-                                "textAlign": "left",
-                                "padding": "10px",
-                                "whiteSpace": "normal",
-                            },
-                            style_header={
-                                "backgroundColor": "#2c3e50",
-                                "color": "white",
-                                "fontWeight": "bold"
-                            }
-                        ),
-                        width=6
-                    ),
-
-                    dbc.Col(
-                        html.Div(id="pypi-project-details"),
-                        width=6
-                    )
-                ])
-
-            ]),
             
         ],
         fluid=True,

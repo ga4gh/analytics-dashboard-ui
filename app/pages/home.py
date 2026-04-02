@@ -26,6 +26,9 @@ from app.services.github_client import prepare_github_data
 # EPMC module
 from app.layouts.epmc_layout import get_epmc_layout
 
+# Data tables layout (moved to bottom of page)
+from app.layouts.datatables_layout import get_datatables_layout
+
 # Prepare all EPMC data once (calls consolidated prepare_epmc_data which fetches all APIs in one pass)
 (_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries, 
  _epmc_citations_df, _epmc_unique_authors, _epmc_top_authors_data) = prepare_epmc_data()
@@ -312,15 +315,16 @@ layout = dbc.Container(
             className="mb-4",
         ),
             
-        # ---------- MODULE CONTENT ----------
-        dbc.Row(
-            [
-                _epmc_layout,
-                _github_layout,
-                _pypi_layout,
-            ],
-            className="mb-4",
-            style={"gap": "20px"}  # optional spacing between sections
+        # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
+        dbc.Row([dbc.Col(_epmc_layout, md=12)], className="mt-4"),
+        dbc.Row([dbc.Col(_github_layout, md=12)], className="mt-4"),
+        dbc.Row([dbc.Col(_pypi_layout, md=12)], className="mt-4"),
+
+        # ---------- DATA TABLES (at bottom) ----------
+        get_datatables_layout(
+            _epmc_entries_df,
+            _gh_df,
+            _pypi_details,
         ),
         
         # ---------- FOOTER ----------

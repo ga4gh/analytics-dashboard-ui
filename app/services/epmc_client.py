@@ -112,6 +112,29 @@ def get_all_pmc_authors():
     return data if isinstance(data, list) else []
 
 
+def get_authors_by_article(pm_id):
+    """
+    Fetch authors for a specific article by PM id using the configured API endpoint.
+    Returns a list of author dicts (may be empty).
+    """
+    if not pm_id:
+        return []
+    try:
+        endpoint = api_constants.EPMC_GET_AUTHORS_BY_ARTICLE + str(pm_id)
+        data = get_json(endpoint)
+        if isinstance(data, list):
+            return data
+        # If API returns a dict with 'results' or 'items'
+        if isinstance(data, dict):
+            if "results" in data and isinstance(data["results"], list):
+                return data["results"]
+            if "items" in data and isinstance(data["items"], list):
+                return data["items"]
+        return []
+    except Exception:
+        return []
+
+
 
 
 
