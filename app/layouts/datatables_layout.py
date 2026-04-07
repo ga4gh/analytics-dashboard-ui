@@ -109,9 +109,9 @@ def get_datatables_layout(
                         id="github-projects-table",
                         columns=[
                             {"name": "Project", "id": "name"},
-                            {"name": "Archived", "id": "is_archived"},
+                            {"name": "Work Stream", "id": "workstream"},
                         ],
-                        data=gh_df[["name", "is_archived"]].to_dict("records") if not gh_df.empty and "name" in gh_df.columns else [],
+                        data=gh_df[["name", "workstream"]].to_dict("records") if not gh_df.empty and "name" in gh_df.columns else [],
                         row_selectable="single",
                         selected_rows=[0],
                         page_size=10,

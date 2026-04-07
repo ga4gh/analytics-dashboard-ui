@@ -50,11 +50,39 @@ def register_github_callbacks(app):
 
                 html.P(repo["description"], className="mb-3"),
 
-                dbc.Row([
-                    dbc.Col(dbc.Badge(f"⭐ Stars: {repo['stargazers_count']}", color="primary", className="me-2")),
-                    dbc.Col(dbc.Badge(f"🍴 Forks: {repo['forks_count']}", color="secondary", className="me-2")),
-                    dbc.Col(dbc.Badge(f"👀 Watchers: {repo['watchers_count']}", color="dark", className="me-2")),
-                ], className="mb-3"),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dbc.Badge(
+                                f"⭐ Stars: {repo['stargazers_count']}",
+                                color="primary",
+                                className="me-3 fs-4 p-2",
+                                pill=True,
+                            ),
+                            width="auto",
+                        ),
+                        dbc.Col(
+                            dbc.Badge(
+                                f"🍴 Forks: {repo['forks_count']}",
+                                color="secondary",
+                                className="me-3 fs-4 p-2",
+                                pill=True,
+                            ),
+                            width="auto",
+                        ),
+                        dbc.Col(
+                            dbc.Badge(
+                                f"👀 Watchers: {repo['watchers_count']}",
+                                color="dark",
+                                className="fs-4 p-2",
+                                pill=True,
+                            ),
+                            width="auto",
+                        ),
+                    ],
+                    className="mb-3 justify-content-center",
+                    align="center",  # vertically center if row height increases
+                ),
 
                 html.Hr(),
 
@@ -62,7 +90,7 @@ def register_github_callbacks(app):
                 html.P(f"Subscribers: {repo['subscribers_count']}"),
                 html.P(f"Last Updated: {repo['last_updated'].strftime('%Y-%m-%d %H:%M')}"),
                 html.P(f"Pushed At: {repo['pushed_at'].strftime('%Y-%m-%d %H:%M')}"),
-                html.P(f"Archived: {repo['is_archived']}"),
+                #html.P(f"Archived: {repo['is_archived']}"),
 
                 html.Br(),
 

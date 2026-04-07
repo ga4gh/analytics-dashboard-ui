@@ -189,7 +189,8 @@ def fig_github_workstream_pie(gh_df):
 
     # Compute labels in descending count order
     labels = counts["workstream"].tolist()
-
+    print(counts)
+    print(labels)
     # Allow caller to request specific colors via DataFrame.attrs
     provided_color_map = None
     if hasattr(df, "attrs") and isinstance(df.attrs, dict):
@@ -219,7 +220,7 @@ def fig_github_workstream_pie(gh_df):
     )
 
     fig.update_layout(
-        title={"text": "Repository Workstreams", "x": 0.5},
+        title={"text": "Repository Work Streams", "x": 0.5},
         template="simple_white",
         height=550,
         legend=dict(traceorder="normal"),
