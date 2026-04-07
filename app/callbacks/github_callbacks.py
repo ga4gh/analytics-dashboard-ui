@@ -1,3 +1,4 @@
+from datetime import datetime
 from dash import Input, Output
 from app import app
 from app.services.github_client import prepare_github_data
@@ -13,7 +14,7 @@ from dash import html, dcc, dash_table
 import pandas as pd
 
 def register_github_callbacks(app):
-    gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories = prepare_github_data()
+    gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories, workstreams = prepare_github_data()
     search_columns = ["name", "description"]
     display_columns = [
         "name",
@@ -39,7 +40,7 @@ def register_github_callbacks(app):
             return dbc.Alert("Select a repository to see details", color="info")
         
         repo = gh_df.iloc[selected_rows[0]]
-
+        
         return dbc.Card([
             dbc.CardHeader(
                 html.H4(repo["name"])
@@ -59,8 +60,8 @@ def register_github_callbacks(app):
 
                 html.P(f"Open Issues: {repo['open_issues_count']}"),
                 html.P(f"Subscribers: {repo['subscribers_count']}"),
-                html.P(f"Last Updated: {repo['last_updated']}"),
-                html.P(f"Pushed At: {repo['pushed_at']}"),
+                html.P(f"Last Updated: {repo['last_updated'].strftime('%Y-%m-%d %H:%M')}"),
+                html.P(f"Pushed At: {repo['pushed_at'].strftime('%Y-%m-%d %H:%M')}"),
                 html.P(f"Archived: {repo['is_archived']}"),
 
                 html.Br(),

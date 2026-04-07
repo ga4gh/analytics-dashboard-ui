@@ -59,7 +59,7 @@ def fig_epmc_countries_pie(countries_df):
     df["count"] = counts
     df = df.sort_values("count", ascending=False).reset_index(drop=True)
 
-    percents = df["count"] / total * 100.0
+    percents = (df["count"] / total * 100).round(1)
     # text: show country name only for slices > 5%, otherwise empty string
     text_labels = [cn if p > 5.0 else "" for cn, p in zip(df["country_normalized"], percents)]
     # textposition: put text outside for labeled slices, inside for unlabeled (will only show percent)

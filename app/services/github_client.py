@@ -81,5 +81,7 @@ def prepare_github_data(fetch_date="2025-10-01"):
     gh_df['total_interest'] = gh_df['subscribers_count'] + gh_df['stargazers_count'] + gh_df['forks_count']
     gh_interest_df = gh_df.sort_values('total_interest', ascending=False).head(10).reset_index(drop=True)
     total_repositories = len(gh_df)
+    
+    workstreams = gh_df["workstream"].dropna().unique().tolist()
 
-    return gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories
+    return gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories, workstreams

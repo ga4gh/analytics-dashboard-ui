@@ -54,7 +54,8 @@ def register_home_callbacks(app):
         elif trigger == "open-github":
             content = get_github_layout(
                 prepare_github_data()[0],  # gh_df
-                prepare_github_data()[4]   # total_repositories
+                prepare_github_data()[4],   # total_repositories,
+                prepare_github_data()[5]   # workstreams
             )
             github_text = "Close"
 

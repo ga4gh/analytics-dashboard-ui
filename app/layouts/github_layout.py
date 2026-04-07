@@ -230,31 +230,24 @@ def fig_github_workstream_pie(gh_df):
 
 # ---------- LAYOUT ----------
 
-def get_github_layout(gh_df, total_repositories):
+def get_github_layout(gh_df, total_repositories, workstreams):
     """
     Returns the GitHub page layout.
     """
+    dropdown_options = [{"label": str(item), "value": item} for item in workstreams]
     return dbc.Container(
         [
-            
-
-
             # ---------- FILTERS ----------
             html.Div(
                 [     
                     # Dummy filter (30%)
                     html.Div(
                         [
-                            html.Label("Repository Type"),
+                            html.Label("Work Stream"),
 
                             dcc.Dropdown(
                                 id="gh-repo-filter",
-                                options=[
-                                    {"label": "All", "value": "all"},
-                                    {"label": "Active", "value": "active"},
-                                    {"label": "Archived", "value": "archived"},
-                                    {"label": "Experimental", "value": "experimental"},
-                                ],
+                                options=dropdown_options,
                                 value="all",
                                 clearable=False,
                             ),
@@ -280,7 +273,7 @@ def get_github_layout(gh_df, total_repositories):
                                 tooltip={"placement": "bottom", "always_visible": True},
                             )
                         ],
-                        style={"width": "70%"},
+                        style={"width": "50%"},
                     ),
                 ],
                 style={
