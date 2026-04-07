@@ -50,39 +50,39 @@ def register_github_callbacks(app):
 
                 html.P(repo["description"], className="mb-3"),
 
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            dbc.Badge(
-                                f"⭐ Stars: {repo['stargazers_count']}",
-                                color="primary",
-                                className="me-3 fs-4 p-2",
-                                pill=True,
-                            ),
-                            width="auto",
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Badge(
+                            f"⭐ Stars: {repo['stargazers_count']}",
+                            color="primary",
+                            className="me-3 fs-4 p-2",
+                            pill=True,
                         ),
-                        dbc.Col(
-                            dbc.Badge(
-                                f"🍴 Forks: {repo['forks_count']}",
-                                color="secondary",
-                                className="me-3 fs-4 p-2",
-                                pill=True,
-                            ),
-                            width="auto",
+                        width="auto",
+                    ),
+                    dbc.Col(
+                        dbc.Badge(
+                            f"🍴 Forks: {repo['forks_count']}",
+                            color="secondary",
+                            className="me-3 fs-4 p-2",
+                            pill=True,
                         ),
-                        dbc.Col(
-                            dbc.Badge(
-                                f"👀 Watchers: {repo['watchers_count']}",
-                                color="dark",
-                                className="fs-4 p-2",
-                                pill=True,
-                            ),
-                            width="auto",
+                        width="auto",
+                    ),
+                    dbc.Col(
+                        dbc.Badge(
+                            f"👀 Watchers: {repo['watchers_count']}",
+                            color="dark",
+                            className="fs-4 p-2",
+                            pill=True,
                         ),
-                    ],
-                    className="mb-3 justify-content-center",
-                    align="center",  # vertically center if row height increases
-                ),
+                        width="auto",
+                    ),
+                ],
+                className="mb-3 justify-content-center",
+                align="center",  # vertically center if row height increases
+            ),
 
                 html.Hr(),
 
@@ -122,29 +122,23 @@ def register_github_callbacks(app):
         return filtered_df[display_columns].to_dict("records")
     
     @app.callback(
-        Output("gh-activity-bar-graph", "figure"),
-        Output("gh-workstream-pie", "figure"),
-        Output("gh-interest-graph", "figure"),
-        Input("gh-top-n-slider", "value"),
-        Input("gh-repo-filter", "value"),
+    Output("gh-activity-bar-graph", "figure"),
+    Output("gh-workstream-pie", "figure"),
+    Output("gh-interest-graph", "figure"),
+    Input("gh-top-n-slider", "value"),
+    Input("gh-workstream-filter", "value"),  # Only the dropdown now
     )
-    def update_github_graphs(top_n, repo_filter):
-
-        df = gh_df.copy()
-        # Start with a copy and apply repo filter; the Top-N selection
-        # should only affect the activity bar chart, not the pie or interest metrics.
+    def update_github_graphs(top_n, workstream_filter):
         df_filtered = gh_df.copy()
 
-        if repo_filter == "active":
-            df_filtered = df_filtered[df_filtered["is_archived"] == False]
-
-        elif repo_filter == "archived":
-            df_filtered = df_filtered[df_filtered["is_archived"] == True]
+        # Apply workstream filter (if not "all")
+        if workstream_filter != "all":
+            df_filtered = df_filtered[df_filtered["workstream"] == workstream_filter]
 
         # Top N applies only to bar chart
         df_top = df_filtered.sort_values("activity_score", ascending=False).head(top_n)
 
-        # PIE CHART should be computed from the filtered full set (not top_n)
+        # PIE CHART should be computed from the filtered set
         gh_activity_counts = (
             df_filtered.assign(
                 Category=df_filtered["is_archived"].map({True: "Archived", False: "Active"})
@@ -154,7 +148,7 @@ def register_github_callbacks(app):
             .reset_index(name="Count")
         )
 
-        # Compute deterministic workstream color_map (labels ordered by descending count)
+        # Workstream color map (deterministic)
         ws_series = df_filtered["workstream"].dropna().astype(str).str.strip() if "workstream" in df_filtered.columns else pd.Series([], dtype=str)
         ws_series = ws_series[ws_series != ""]
         labels = ws_series.value_counts().index.tolist()
@@ -162,16 +156,11 @@ def register_github_callbacks(app):
         palette = px.colors.qualitative.Plotly
         color_map = {lab: palette[i % len(palette)] for i, lab in enumerate(labels)}
 
-        # build color map deterministically from filtered df and store in attrs
-        # store on DataFrame.attrs so pandas won't warn
-        if not hasattr(df_top, "attrs"):
-            df_top.attrs = {}
+        # Store color_map in DataFrame.attrs
         df_top.attrs["color_map"] = color_map
-        if not hasattr(df_filtered, "attrs"):
-            df_filtered.attrs = {}
         df_filtered.attrs["color_map"] = color_map
 
-        # Build figures using the shared color_map so legends/colors match 1:1
+        # Build figures
         fig_ws = fig_github_workstream_pie(df_filtered)
         fig3 = fig_github_interest_metrics(df_filtered)
         fig2 = fig_github_activity_bar(df_top, color_map=color_map)

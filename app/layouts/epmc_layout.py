@@ -68,22 +68,31 @@ def fig_epmc_countries_pie(countries_df):
     fig = go.Figure(
         data=[
             go.Pie(
-                labels=df["country_normalized"],
-                values=df["count"],
-                hole=0.2,  # smaller hole → bigger pie
-                text=text_labels,
-                textinfo="percent+text",
-                hoverinfo="label+value+percent",
-                sort=False,
-                textposition=text_positions,
-            )
+            labels=df["country_normalized"],
+            values=df["count"],
+            hole=0.2,
+            text=text_labels,
+            textinfo="percent+text",
+            hoverinfo="label+value+percent",
+            sort=False,
+            textposition=text_positions,
+            # make pie larger inside figure
+            domain=dict(x=[0, 1], y=[0, 0.9])  # y max < 1 to leave space for legend
+        )
         ]
     )
     fig.update_layout(
         title={"text": "Affiliation Countries Represented", "x": 0.5},
         template="simple_white",
         height=700,
-        margin=dict(l=20, r=20, t=80, b=20),
+        margin=dict(l=20, r=20, t=80, b=80),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.1,
+            xanchor="center",
+            x=0.5
+        )
     )
     return fig
 

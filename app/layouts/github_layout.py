@@ -32,46 +32,40 @@ def fig_github_activity_status_pie(gh_activity_counts):
 '''
 
 def fig_github_activity_bar(gh_activity_df, color_map=None):
-    # New signature: accept DataFrame or list-like and optional color_map produced
-    # by the workstream pie so colors/legend match. Keep template/layout consistent
-    # with other figures (simple_white) and match pie legend coloring.
     df = gh_activity_df.copy() if isinstance(gh_activity_df, pd.DataFrame) else pd.DataFrame(gh_activity_df)
     if df.empty:
         return go.Figure().update_layout(title="No activity data available")
 
-    # Accept an explicit color_map mapping workstream -> color (preferred)
-
-    # Ensure formatted date strings exist for hover display
+    # Format dates
     for col in ("pushed_at", "last_updated"):
         if col in df.columns:
             df[col + "_str"] = pd.to_datetime(df[col], utc=True, errors="coerce").dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
             df[col + "_str"] = "N/A"
 
-    # Order repos by activity_score descending
+    # Sort
     df = df.sort_values("activity_score", ascending=False).reset_index(drop=True)
-    ordered_names = df["name"].tolist()
 
-    # Build one trace per workstream but use ordered_names as x so ordering is preserved
+    # Fill missing workstreams
+    df["workstream"] = df["workstream"].fillna("none").astype(str)
+
     fig = go.Figure()
-    workstreams = df["workstream"].fillna("none").astype(str)
-    unique_ws = list(dict.fromkeys(workstreams.tolist()))
 
-    for ws in unique_ws:
-        y_values = [row["activity_score"] if (str(row.get("workstream", "none")) == ws) else None for _, row in df.iterrows()]
-        color = None
-        if color_map and ws in color_map:
-            color = color_map[ws]
+    for _, row in df.iterrows():
+        ws = row["workstream"]
+        color = color_map.get(ws) if color_map and ws in color_map else None
 
         fig.add_trace(
             go.Bar(
-                x=ordered_names,
-                y=y_values,
+                x=[row["name"]],
+                y=[row["activity_score"]],
                 name=ws,
-                marker=dict(color=color) if color is not None else None,
+                marker=dict(color=color) if color else None,
+                legendgroup=ws,
+                showlegend=not any(t.name == ws for t in fig.data),  # show legend once per ws
                 hovertemplate=(
-                    "Repo: %{x}<br>"
-                    "Activity Score: %{y:.4f}<br>"
+                    f"Repo: {row['name']}<br>"
+                    f"Activity Score: {row['activity_score']:.4f}<br>"
                     "<extra></extra>"
                 ),
             )
@@ -80,8 +74,8 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
     fig.update_layout(
         template="simple_white",
         title={"text": "Most Recently Updated GA4GH-Related Repositories", "x": 0.0},
-        barmode="overlay",
-        xaxis=dict(categoryorder="array", categoryarray=ordered_names, tickangle=-45),
+        barmode="group",
+        xaxis=dict(tickangle=-45),
         margin=dict(l=40, r=20, t=80, b=150),
         height=650,
         xaxis_title="Repo Name",
@@ -162,23 +156,22 @@ def fig_github_interest_metrics(gh_interest_df):
     return fig
 
 
+import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
+
 def fig_github_workstream_pie(gh_df):
-    """Pie chart of repository counts by `workstream` field (ignore null/empty).
-    Accepts optional `color_map` and `labels_order` supplied by caller to ensure
-    consistent color/label mapping between figures.
-    """
+    """Pie chart with short labels on slices, full name in legend & hover, consistent 1-decimal %."""
     def _empty_fig():
         return go.Figure().update_layout(title="No workstream data available")
 
     if gh_df is None:
         return _empty_fig()
 
-    # Accept either DataFrame or list-like
     df = gh_df.copy() if isinstance(gh_df, pd.DataFrame) else pd.DataFrame(gh_df)
     if "workstream" not in df.columns:
         return _empty_fig()
 
-    # Filter out null/empty values
     ws = df["workstream"].dropna().astype(str).str.strip()
     ws = ws[ws != ""]
     if ws.empty:
@@ -187,33 +180,42 @@ def fig_github_workstream_pie(gh_df):
     counts = ws.value_counts().reset_index()
     counts.columns = ["workstream", "count"]
 
-    # Compute labels in descending count order
-    labels = counts["workstream"].tolist()
-    print(counts)
-    print(labels)
-    # Allow caller to request specific colors via DataFrame.attrs
-    provided_color_map = None
-    if hasattr(df, "attrs") and isinstance(df.attrs, dict):
-        provided_color_map = df.attrs.get("color_map")
+    # Precompute percent to ensure 1 decimal
+    counts["percent"] = counts["count"] / counts["count"].sum() * 100
 
-    # Build color list aligned to labels. Use provided_color_map when available,
-    # otherwise use Plotly qualitative palette.
+    # Short form mapping
+    short_map = {
+        "Genomic Knowledge Standards": "GKS",
+        "Cloud": "Cloud",
+        "Tech/TASC": "TT",
+        "Large Scale Genomics": "LSG",
+        "Clinical and Phenotypic": "Clin-Pheno",
+        "Data Discovery":"DD",
+        "Regulatory and Ethics":"RE",
+        "Data Security":"DS",
+        "Data Use and Researcher Identity":"DURI",
+    }
+
+    # Labels
+    slice_labels = [short_map.get(lab, lab) for lab in counts["workstream"]]  # on slices
+    legend_labels = counts["workstream"].tolist()  # full name in legend
+    hover_labels = [f"{lab}: {pct:.1f}%" for lab, pct in zip(counts["workstream"], counts["percent"])]  # hover
+
+    # Colors
     palette = px.colors.qualitative.Plotly
-    colors = []
-    for i, lab in enumerate(labels):
-        if provided_color_map and lab in provided_color_map:
-            colors.append(provided_color_map[lab])
-        else:
-            colors.append(palette[i % len(palette)])
+    provided_color_map = getattr(df, "attrs", {}).get("color_map", {})
+    colors = [provided_color_map.get(lab, palette[i % len(palette)]) for i, lab in enumerate(counts["workstream"])]
 
     fig = go.Figure(
         data=[
             go.Pie(
-                labels=labels,
+                labels=legend_labels,             # legend uses full names
                 values=counts["count"],
                 hole=0.3,
-                textinfo="label+percent",
-                hoverinfo="label+value+percent",
+                text=[f"{lab}<br>{pct:.1f}%" for lab, pct in zip(slice_labels, counts["percent"])],  # short + percent
+                textinfo="text",
+                hovertext=hover_labels,           # hover shows full name + percent
+                hoverinfo="text",
                 marker=dict(colors=colors),
             )
         ]
@@ -235,7 +237,10 @@ def get_github_layout(gh_df, total_repositories, workstreams):
     """
     Returns the GitHub page layout.
     """
-    dropdown_options = [{"label": str(item), "value": item} for item in workstreams]
+    dropdown_options = [{"label": "All", "value": "all"}] + [
+        {"label": ws, "value": ws} for ws in workstreams
+    ]
+    
     return dbc.Container(
         [
             # ---------- FILTERS ----------
@@ -247,7 +252,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                             html.Label("Work Stream"),
 
                             dcc.Dropdown(
-                                id="gh-repo-filter",
+                                id="gh-workstream-filter",
                                 options=dropdown_options,
                                 value="all",
                                 clearable=False,
