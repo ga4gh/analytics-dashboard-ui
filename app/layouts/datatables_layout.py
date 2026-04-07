@@ -1,3 +1,5 @@
+import json
+
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -27,23 +29,83 @@ def get_datatables_layout(
         gh_df = pd.DataFrame(columns=["name", "is_archived"])
     if pypi_details is None or pypi_details.empty:
         pypi_details = pd.DataFrame(columns=["project_name", "category"])
+
+    # Build dropdown options from EPMC data
+    epmc_year_options = []
+    epmc_affiliation_options = []
+
+    if not epmc_entries_df.empty:
+        if "pub_year" in epmc_entries_df.columns:
+            epmc_year_options = [
+                {"label": str(y), "value": str(y)}
+                for y in sorted(epmc_entries_df["pub_year"].dropna().unique(), reverse=True)
+            ]
+
+        if "raw_json" in epmc_entries_df.columns:
+            affiliations = set()
+            for raw in epmc_entries_df["raw_json"].dropna():
+                try:
+                    parsed = json.loads(raw) if isinstance(raw, str) else raw
+                except (json.JSONDecodeError, TypeError):
+                    parsed = {}
+                if not isinstance(parsed, dict):
+                    continue
+                aff_val = parsed.get("affiliation") or parsed.get("affiliations") or ""
+                aff_list = aff_val if isinstance(aff_val, list) else [aff_val]
+                for item in aff_list:
+                    if isinstance(item, dict):
+                        text = item.get("name") or item.get("text") or item.get("label") or ""
+                    else:
+                        text = str(item) if item else ""
+                    text = text.strip() if text else ""
+                    if text:
+                        affiliations.add(text)
+            epmc_affiliation_options = [
+                {"label": html.Span(a, title=a, className="epmc-affiliation-option"), "value": a, "search": a}
+                for a in sorted(affiliations)
+            ]
     
     return dbc.Container(
         [
             # ========== EPMC TABLE SECTION ==========
             html.H4("Europe PMC Publications", style={"marginTop": "40px", "marginBottom": "15px"}),
             
-            dcc.Input(
-                id="epmc-table-search",
-                type="text",
-                placeholder="Search Publications...",
-                debounce=False,
+            html.Div(
+                [
+                    dcc.Input(
+                        id="epmc-table-search",
+                        type="text",
+                        placeholder="Search Publications...",
+                        debounce=False,
+                        style={
+                            "width": "350px",
+                            "padding": "8px",
+                            "border-radius": "5px",
+                            "border": "1px solid #ccc",
+                        },
+                    ),
+                    dcc.Dropdown(
+                        id="epmc-year-filter",
+                        options=epmc_year_options,
+                        placeholder="Filter by Year",
+                        clearable=True,
+                        style={"width": "160px"},
+                    ),
+                    dcc.Dropdown(
+                        id="epmc-affiliation-filter",
+                        options=epmc_affiliation_options,
+                        placeholder="Filter by Affiliation",
+                        clearable=True,
+                        optionHeight=96,
+                        maxHeight=420,
+                        style={"width": "520px"},
+                    ),
+                ],
                 style={
-                    "margin-bottom": "15px",
-                    "width": "350px",
-                    "padding": "8px",
-                    "border-radius": "5px",
-                    "border": "1px solid #ccc",
+                    "display": "flex",
+                    "gap": "12px",
+                    "alignItems": "center",
+                    "marginBottom": "15px",
                 },
             ),
 

@@ -24,11 +24,23 @@ def register_epmc_callbacks(app):
     (entries_df, countries_df, authors_df, total_entries, 
      citations, unique_authors_count, top_authors_default) = prepare_epmc_data()
 
-    # chen needs to fix this – update column references once the real schema is known
-    # These are the columns we expect to exist on entries_df for search / display.
     search_columns = [c for c in entries_df.columns] if not entries_df.empty else []
 
-    def get_filtered_sorted_df(search_value):
+    def normalize_affiliation_values(value):
+        """Normalize affiliation value (string/list/dict) to list of strings."""
+        aff_list = value if isinstance(value, list) else [value]
+        normalized = []
+        for item in aff_list:
+            if isinstance(item, dict):
+                text = item.get("name") or item.get("text") or item.get("label") or ""
+            else:
+                text = str(item) if item else ""
+            text = text.strip() if isinstance(text, str) else ""
+            if text:
+                normalized.append(text)
+        return normalized
+
+    def get_filtered_sorted_df(search_value, year_filter=None, affiliation_filter=None):
         """Apply same filtering/sorting logic as update_epmc_table."""
         if entries_df.empty:
             return pd.DataFrame()
@@ -40,6 +52,21 @@ def register_epmc_callbacks(app):
                 lambda col: col.astype(str).str.contains(search_value, case=False, na=False)
             ).any(axis=1)
             filtered = entries_df[mask].copy()
+        
+        # Filter by pub_year dropdown
+        if year_filter and "pub_year" in filtered.columns:
+            filtered = filtered[filtered["pub_year"].astype(str) == str(year_filter)]
+        
+        # Filter by affiliation dropdown
+        if affiliation_filter and "raw_json" in filtered.columns:
+            def _has_affiliation(raw):
+                try:
+                    obj = json.loads(raw) if isinstance(raw, str) else raw
+                except Exception:
+                    return False
+                aff = obj.get("affiliation") or obj.get("affiliations") or ""
+                return affiliation_filter in normalize_affiliation_values(aff)
+            filtered = filtered[filtered["raw_json"].apply(_has_affiliation)]
         
         # Sort by pub_year descending (most recent first)
         if "pub_year" in filtered.columns:
@@ -55,9 +82,11 @@ def register_epmc_callbacks(app):
     @app.callback(
         Output("epmc-entries-table", "data"),
         Input("epmc-table-search", "value"),
+        Input("epmc-year-filter", "value"),
+        Input("epmc-affiliation-filter", "value"),
     )
-    def update_epmc_table(search_value):
-        filtered = get_filtered_sorted_df(search_value)
+    def update_epmc_table(search_value, year_filter, affiliation_filter):
+        filtered = get_filtered_sorted_df(search_value, year_filter, affiliation_filter)
         return filtered.to_dict("records")
 
     # -----------------------
@@ -67,13 +96,15 @@ def register_epmc_callbacks(app):
         Output("epmc-entry-details", "children"),
         Input("epmc-entries-table", "selected_rows"),
         Input("epmc-table-search", "value"),
+        Input("epmc-year-filter", "value"),
+        Input("epmc-affiliation-filter", "value"),
     )
-    def show_epmc_details(selected_rows, search_value):
+    def show_epmc_details(selected_rows, search_value, year_filter, affiliation_filter):
         if not selected_rows or entries_df.empty:
             return dbc.Alert("Select an entry to see details", color="info")
         
         # Get the filtered/sorted data (same as displayed in table)
-        filtered_df = get_filtered_sorted_df(search_value)
+        filtered_df = get_filtered_sorted_df(search_value, year_filter, affiliation_filter)
         if filtered_df.empty or selected_rows[0] >= len(filtered_df):
             return dbc.Alert("Select an entry to see details", color="info")
         

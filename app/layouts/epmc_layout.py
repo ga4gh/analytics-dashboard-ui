@@ -59,30 +59,42 @@ def fig_epmc_countries_pie(countries_df):
     df["count"] = counts
     df = df.sort_values("count", ascending=False).reset_index(drop=True)
 
-    percents = (df["count"] / total * 100).round(1)
-    # text: show country name only for slices > 5%, otherwise empty string
-    text_labels = [cn if p > 5.0 else "" for cn, p in zip(df["country_normalized"], percents)]
-    # textposition: put text outside for labeled slices, inside for unlabeled (will only show percent)
-    text_positions = ["outside" if t else "inside" for t in text_labels]
+    percents = (df["count"] / total * 100)
+    # prepare text with one decimal place for percent and show country for slices > 5%
+    slice_text = []
+    hover_text = []
+    for cn, cnt, pct in zip(df["country_normalized"], df["count"], percents):
+        pct_fmt = f"{pct:.1f}%"
+        if pct > 5.0:
+            slice_text.append(f"{cn}<br>{pct_fmt}")
+            textpos = "outside"
+        else:
+            slice_text.append(f"{pct_fmt}")
+            textpos = "inside"
+        hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
+
+    # compute textposition list (outside for labeled slices, inside otherwise)
+    text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
 
     fig = go.Figure(
         data=[
             go.Pie(
-            labels=df["country_normalized"],
-            values=df["count"],
-            hole=0.2,
-            text=text_labels,
-            textinfo="percent+text",
-            hoverinfo="label+value+percent",
-            sort=False,
-            textposition=text_positions,
-            # make pie larger inside figure
-            domain=dict(x=[0, 1], y=[0, 0.9])  # y max < 1 to leave space for legend
-        )
+                labels=df["country_normalized"],
+                values=df["count"],
+                hole=0.2,
+                text=slice_text,
+                textinfo="text",
+                hovertext=hover_text,
+                hoverinfo="text",
+                sort=False,
+                textposition=text_positions,
+                # make pie larger inside figure
+                domain=dict(x=[0, 1], y=[0, 0.9])  # y max < 1 to leave space for legend
+            )
         ]
     )
     fig.update_layout(
-        title={"text": "Affiliation Countries Represented", "x": 0.5},
+        title={"text": "Affiliation - Countries Represented", "x": 0.5},
         template="simple_white",
         height=700,
         margin=dict(l=20, r=20, t=80, b=80),
@@ -162,22 +174,32 @@ def make_citations_figure(data):
     print(result)
     years = [r["pub_year"] for r in result]
     totals = [r["total_citations"] for r in result]
-    
+
+    # compute cumulative totals
+    cumulative = []
+    running = 0
+    for t in totals:
+        try:
+            running += int(t)
+        except Exception:
+            running += 0
+        cumulative.append(running)
+
     fig = go.Figure()
 
     fig.add_trace(
         go.Scatter(
             x=years,
-            y=totals,
+            y=cumulative,
             mode="lines+markers",
-            name="Citations"
+            name="Cumulative Citations"
         )
     )
 
     fig.update_layout(
-        title="Europe PMC Citations Per Year",
+        title="Europe PMC Cumulative Citations Per Year",
         xaxis_title="Year",
-        yaxis_title="Citations Count",
+        yaxis_title="Cumulative Citations",
         template="simple_white"
     )
 
@@ -192,49 +214,36 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
     """
     Build and return the full EPMC page layout using cached data (no additional API calls).
     """
-    # Compute most-cited publications inline (no separate helper function)
+    # Compute most-cited publications inline using `cited_by_count` from entries_df
     most_cited_children = []
-    # Normalize citations payload (accept list or dict containing list)
-    uc_list = []
-    if isinstance(citations, list):
-        uc_list = citations
-    elif isinstance(citations, dict):
-        for k in ("results", "items", "citations", "data"):
-            if k in citations and isinstance(citations[k], list):
-                uc_list = citations[k]
-                break
+    try:
+        candidates = []
+        if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
+            for raw in entries_df["raw_json"]:
+                try:
+                    obj = json.loads(raw)
+                except Exception:
+                    continue
+                title = obj.get("title") or obj.get("name") or ""
+                # prefer explicit cited_by_count field, fall back to 0
+                cited = obj.get("cited_by_count")
+                try:
+                    cited_count = int(cited) if cited is not None else 0
+                except Exception:
+                    cited_count = 0
+                candidates.append({"title": title, "cited_by_count": cited_count})
 
-    uc_df = pd.DataFrame.from_records(uc_list) if uc_list else pd.DataFrame()
-    if not uc_df.empty and "article_id" in uc_df.columns:
-            # Count unique citations per article_id (prefer unique citation_id)
-            if "citation_id" in uc_df.columns:
-                counts = uc_df.groupby(uc_df["article_id"].astype(str))["citation_id"].nunique()
-            else:
-                counts = uc_df["article_id"].astype(str).value_counts()
-            counts_df = counts.reset_index()
-            counts_df.columns = ["article_id", "citation_count"]
-            
-            # Map article_id to title from entries_df
-            titles_map = {}
-            if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
-                for raw in entries_df["raw_json"]:
-                    try:
-                        obj = json.loads(raw)
-                        aid = str(obj.get("id") or obj.get("article_id") or "")
-                        if aid:
-                            titles_map[aid] = obj.get("title") or obj.get("name") or aid
-                    except Exception:
-                        pass
-            
-            counts_df["title"] = counts_df["article_id"].map(lambda x: titles_map.get(x, x))
-            counts_df = counts_df.sort_values("citation_count", ascending=False).head(20)
-            
+        # sort descending and take top 20
+        if candidates:
+            counts_df = pd.DataFrame.from_records(candidates)
+            counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
             for _, r in counts_df.iterrows():
                 most_cited_children.append(
-                    html.Div(f"{r['title']} — {int(r['citation_count'])}", 
-                            style={"marginBottom": "8px", "fontSize": "14px"})
+                    html.Div(f"{r['title']} — {int(r['cited_by_count'])}", style={"marginBottom": "8px", "fontSize": "14px"})
                 )
-    
+    except Exception:
+        most_cited_children = []
+
     if not most_cited_children:
         most_cited_children.append(html.Div("No citation data available", style={"fontSize": "14px"}))
     return dbc.Container(
@@ -316,13 +325,14 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         html.Div(
                                             most_cited_children,
                                             id="epmc-most-cited-list",
-                                            style={"maxHeight": "420px", "overflowY": "auto"},
+                                            style={"overflowY": "auto", "flex": "1 1 auto", "paddingRight": "8px"},
                                         ),
-                                    ]
+                                    ],
+                                    style={"display": "flex", "flexDirection": "column", "height": "100%"}
                                 )
                             ),
                             className="mb-4 shadow-sm",
-                            style={"borderRadius": "12px"},
+                            style={"borderRadius": "12px", "height": "700px"},
                         ),
                         md=6,
                     ),
