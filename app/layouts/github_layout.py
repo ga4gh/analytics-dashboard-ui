@@ -284,7 +284,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                 ],
                 style={
                     "display": "flex",
-                    "gap": "20px",
+                    "gap": "30px",
                     "marginTop": "20px",
                     "marginBottom": "20px",
                 },

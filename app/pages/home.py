@@ -222,7 +222,7 @@ layout = dbc.Container(
             [
                 dbc.Col(
                     dbc.Badge(
-                        "Data Updated: 2026-03-13",
+                        "Data Updated: 2026-04-07",
                         color="light",
                         text_color="dark",
                         className="p-2",
