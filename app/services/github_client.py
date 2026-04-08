@@ -40,6 +40,7 @@ def prepare_github_data(fetch_date="2025-10-01"):
 
     gh_df = pd.DataFrame.from_records(GA4GH_json)
 
+
     gh_df["last_updated"] = pd.to_datetime(gh_df["last_updated"], utc=True, errors="raise")
     gh_df["pushed_at"] = pd.to_datetime(gh_df["pushed_at"], utc=True, errors="raise")
     gh_df["created_on"] = pd.to_datetime(gh_df["created_on"], utc=True, errors="raise")

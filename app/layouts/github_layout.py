@@ -80,7 +80,7 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
         height=650,
         xaxis_title="Repo Name",
         yaxis_title="Activity Score",
-        legend_title_text="Workstream",
+        legend_title_text="Work Stream",
     )
 
     fig.update_traces(marker_line_width=0)
@@ -222,7 +222,7 @@ def fig_github_workstream_pie(gh_df):
     )
 
     fig.update_layout(
-        title={"text": "Repository Work Streams", "x": 0.5},
+        title={"text": "GA4GH GitHub Repositories", "x": 0.5},
         template="simple_white",
         height=550,
         legend=dict(traceorder="normal"),

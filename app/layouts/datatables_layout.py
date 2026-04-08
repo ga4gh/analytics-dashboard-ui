@@ -21,12 +21,12 @@ def get_datatables_layout(
     Returns:
         dbc.Container with three DataTables (EPMC, GitHub, PyPI)
     """
-    
+
     # Ensure DataFrames are valid
     if epmc_entries_df is None or epmc_entries_df.empty:
         epmc_entries_df = pd.DataFrame(columns=["title", "pub_year"])
     if gh_df is None or gh_df.empty:
-        gh_df = pd.DataFrame(columns=["name", "is_archived"])
+        gh_df = pd.DataFrame(columns=["name", "workstream"])
     if pypi_details is None or pypi_details.empty:
         pypi_details = pd.DataFrame(columns=["project_name", "category"])
 
@@ -163,7 +163,7 @@ def get_datatables_layout(
                     'border': '1px solid #ccc'
                 }
             ),
-
+            print(gh_df[["name", "workstream"]].to_dict("records")[:5]),
             dbc.Row([
                 # LEFT: GITHUB TABLE
                 dbc.Col([
@@ -173,21 +173,13 @@ def get_datatables_layout(
                             {"name": "Project", "id": "name"},
                             {"name": "Work Stream", "id": "workstream"},
                         ],
-                        data=gh_df[["name", "workstream"]].to_dict("records") if not gh_df.empty and "name" in gh_df.columns else [],
+                        data = gh_df.to_dict("records") if not gh_df.empty and all(col in gh_df.columns for col in ["name", "workstream"]) else [],
                         row_selectable="single",
                         selected_rows=[0],
                         page_size=10,
-                        style_table={"overflowX": "auto"},
-                        style_cell={
-                            "textAlign": "left",
-                            "padding": "10px",
-                            "whiteSpace": "normal",
-                        },
-                        style_header={
-                            "backgroundColor": "#2c3e50",
-                            "color": "white",
-                            "fontWeight": "bold"
-                        }
+                        style_table={"overflowX": "auto"}, 
+                        style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", }, 
+                        style_header={ "backgroundColor": "#2c3e50", "color": "white", "fontWeight": "bold" }
                     )
                 ], md=6),
 
