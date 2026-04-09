@@ -10,7 +10,7 @@ import pandas as pd
 import json
 import re
 
-from app.services.epmc_client import prepare_epmc_data
+from app.services.epmc_client import prepare_epmc_data, get_authors_by_article
 from app.layouts.epmc_layout import (
     fig_epmc_countries_pie,
     fig_epmc_top_authors_bar,
@@ -131,6 +131,30 @@ def register_epmc_callbacks(app):
         doi = entry.get("doi") or parsed.get("doi") or ""
         doi_url = f"https://doi.org/{doi}" if doi else None
 
+        # Fetch authors lazily for the selected article only
+        pm_id = (
+            parsed.get("pm_id")
+            or parsed.get("pmid")
+            or parsed.get("pmId")
+            or parsed.get("article_id")
+            or parsed.get("id")
+        )
+        authors = get_authors_by_article(pm_id) if pm_id else []
+        valid_authors = [a for a in authors if isinstance(a, dict)] if isinstance(authors, list) else []
+        if valid_authors and any("author_order" in a for a in valid_authors):
+            valid_authors = sorted(
+                valid_authors,
+                key=lambda a: (a.get("author_order") is None, a.get("author_order") or 0),
+            )
+        author_names = []
+        for a in valid_authors:
+            first = (a.get("firstname") or "").strip()
+            last = (a.get("lastname") or "").strip()
+            full = f"{first} {last}".strip() or (a.get("fullname") or "").strip()
+            if full:
+                author_names.append(full)
+        authors_text = ", ".join(author_names) if author_names else "N/A"
+
         # If abstract contains HTML tags, convert common HTML tags to Markdown
         # before rendering with `dcc.Markdown`. This avoids using
         # `dangerously_set_inner_html` which isn't supported in this Dash version.
@@ -173,6 +197,7 @@ def register_epmc_callbacks(app):
                 html.Hr(),
                 html.P(f"Year: {pub_year}"),
                 html.P(f"Affiliation: {affiliation}"),
+                html.P(f"Authors: {authors_text}"),
                 html.P(f"Language: {language}"),
                 html.Br(),
                 dbc.Button(

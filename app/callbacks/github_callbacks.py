@@ -17,9 +17,15 @@ import numpy as np
 
 def register_github_callbacks(app):
     gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories, workstreams = prepare_github_data()
+    if "workstream" not in gh_df.columns:
+        gh_df["workstream"] = "N/A"
+    else:
+        gh_df["workstream"] = gh_df["workstream"].fillna("N/A").astype(str)
+
     search_columns = ["name", "description"]
     display_columns = [
         "name",
+        "workstream",
         "owner",
         "repo_link",
         "description",

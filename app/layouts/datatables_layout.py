@@ -168,7 +168,6 @@ def get_datatables_layout(
                     'border': '1px solid #ccc'
                 }
             ),
-            print(gh_df[["name", "workstream"]].to_dict("records")[:5]),
             dbc.Row([
                 # LEFT: GITHUB TABLE
                 dbc.Col([

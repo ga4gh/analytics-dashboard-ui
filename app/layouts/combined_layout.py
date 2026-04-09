@@ -27,13 +27,13 @@ def _build_source_year_df(df, year_col, item_col, source_name):
 
 
 def _make_combined_growth_figure(github_df, epmc_df, pypi_first_releases_df):
-    github_year_df = _build_source_year_df(github_df, "created_on_year", "name", "GitHub")
-    epmc_year_df = _build_source_year_df(epmc_df, "pub_year", "title", "Europe PMC")
+    github_year_df = _build_source_year_df(github_df, "created_on_year", "name", "GitHub Repositories")
+    epmc_year_df = _build_source_year_df(epmc_df, "pub_year", "title", "Europe PMC publications")
     pypi_year_df = _build_source_year_df(
         pypi_first_releases_df,
         "release_year",
         "project_name",
-        "PyPI",
+        "PyPi Libraries",
     )
 
     combined_year_df = pd.concat(
@@ -71,7 +71,7 @@ def _make_combined_growth_figure(github_df, epmc_df, pypi_first_releases_df):
     # Apply source-specific hover templates
     for trace in fig.data:
         source = trace.customdata[0][1] if trace.customdata is not None and len(trace.customdata) > 0 else ""
-        if source == "Europe PMC":
+        if source == "Europe PMC publications":
             # Simplified hover for Europe PMC: year and article count only
             trace.hovertemplate = (
                 "Year: %{x}<br>"
@@ -89,10 +89,10 @@ def _make_combined_growth_figure(github_df, epmc_df, pypi_first_releases_df):
 
     fig.update_layout(
         xaxis_title="Year",
-        yaxis_title="Cumulative number of new items",
+        yaxis_title="Cumulative Number of New Items",
         margin={"l": 40, "r": 20, "t": 70, "b": 120},
         height=600,
-        legend_title_text="Resource",
+        legend_title_text="Resource Type",
     )
 
     return fig

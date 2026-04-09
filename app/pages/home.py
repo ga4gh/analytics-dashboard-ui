@@ -5,12 +5,6 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import register_page
 
-from app.services.overview_client import (
-    pm_df,
-    gh_df,
-    pypi_df,
-)
-
 # EPMC metrics
 from app.services.epmc_client import prepare_epmc_data
 from app.constants.constants import COUNTRIES_WHITELIST
@@ -303,7 +297,7 @@ layout = dbc.Container(
 
                 dbc.Col(
                     indicator_card(
-                        f"{len(gh_df):,}",
+                        f"{_gh_total:,}",
                         "GitHub Repositories",
                         "#4FAEDC",
                     ),
@@ -312,7 +306,7 @@ layout = dbc.Container(
 
                 dbc.Col(
                     indicator_card(
-                        f"{len(pypi_df):,}",
+                        f"{_pypi_total:,}",
                         "PyPI Packages",
                         "#FAA633",
                     ),

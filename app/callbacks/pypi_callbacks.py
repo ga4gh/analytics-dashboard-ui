@@ -1,15 +1,15 @@
-from dash import dash, Input, Output
+from dash import Input, Output
 import pandas as pd
 import plotly.express as px
 
 from app.services.pypi_client import get_pypi_details
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
-import plotly.express as px
-from dash import html, dcc, dash_table
-import pandas as pd
+from dash import html, dcc
 
 def register_pypi_callbacks(app):
+
+    # Cache PyPI data once at registration time
+    _pypi_df = get_pypi_details()
 
     # -----------------------
     # DataTable search (unchanged)
@@ -19,7 +19,7 @@ def register_pypi_callbacks(app):
         Input('table-search', 'value')
     )
     def update_table(search_value):
-        df = get_pypi_details()
+        df = _pypi_df
         if not search_value:
             return df.reset_index().to_dict('records')
         filtered = df.reset_index()[df.reset_index().apply(
@@ -38,7 +38,7 @@ def register_pypi_callbacks(app):
         Input("top-n-slider", "value")
     )
     def update_bar(author_filter, email_filter, category_filter, top_n):
-        df = get_pypi_details()
+        df = _pypi_df
         dff = df.copy()
 
         # Apply filters
@@ -102,7 +102,7 @@ def register_pypi_callbacks(app):
         Input("filter-category", "value")
     )
     def update_category_distribution(author_filter, email_filter, category_filter):
-        df = get_pypi_details()
+        df = _pypi_df
         dff = df.copy()
 
         # Apply filters
@@ -144,7 +144,7 @@ def register_pypi_callbacks(app):
 
         if not selected_rows:
             return dbc.Alert("Select a project to see details", color="info")
-        pypi_details = get_pypi_details()
+        pypi_details = _pypi_df
         project = pypi_details.iloc[selected_rows[0]]
         github_url = project.get("github_url")
         versions_count = project.get("versions_count")

@@ -30,6 +30,7 @@ def get_all_paginated(endpoint, limit=1000):
 
     while True:
         params = {"limit": limit, "skip": skip}
+        print(f"Calling API: {endpoint} params={params}")
         resp = requests.get(endpoint, params=params, timeout=30)
         resp.raise_for_status()
         data = resp.json()
@@ -154,15 +155,20 @@ def get_authors_by_article(pm_id):
 # Convenience: prepare a DataFrame ready for the layout / callbacks
 # ---------------------------------------------------------------------------
 
+_epmc_cache = {}
+
 def prepare_epmc_data():
     """
     Fetch and process all EPMC data in a single pass to avoid redundant API calls.
     Returns all data needed for the dashboard: DataFrames, counts, and metadata.
+    Results are cached after the first call.
 
     Returns:
         tuple: (entries_df, countries_df, authors_df, total_entries, citations,
                 unique_authors_count, top_authors_data)
     """
+    if "result" in _epmc_cache:
+        return _epmc_cache["result"]
     # Fetch all API data upfront (7 calls total, no redundancy)
     if hasattr(api_constants, 'EPMC_ALL_ARTICLES'):
         raw_entries = get_all_articles(limit=1000)
@@ -205,4 +211,6 @@ def prepare_epmc_data():
     # Build authors DataFrame
     authors_df = pd.DataFrame.from_records(raw_authors) if raw_authors and isinstance(raw_authors, list) else pd.DataFrame()
 
-    return entries_df, countries_df, authors_df, total_entries, citations, unique_authors_count, top_authors_data
+    result = (entries_df, countries_df, authors_df, total_entries, citations, unique_authors_count, top_authors_data)
+    _epmc_cache["result"] = result
+    return result

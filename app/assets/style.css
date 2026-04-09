@@ -42,3 +42,11 @@ text {
     height: 38px !important;
     line-height: 38px !important;
 }
+
+.epmc-most-cited-item,
+.epmc-most-cited-item a {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.35;
+}

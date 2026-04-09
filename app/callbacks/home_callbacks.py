@@ -1,20 +1,9 @@
-from dash import dash, Input, Output
-import pandas as pd
-import plotly.express as px
+from dash import Input, Output, ctx
 
-from app import app
-from app.services.pypi_client import get_pypi_details
-import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
-import plotly.express as px
-from dash import html, dcc, dash_table
-import pandas as pd
-from app.pages.pypi.pypi import layout as pypi_layout
-from app.pages.github.github import layout as github_layout
-
-from dash import ctx
-from app.layouts.pypi_layout import get_pypi_layout
 from app.services.pypi_client import get_pypi_details, get_total_packages
+import dash_bootstrap_components as dbc
+
+from app.layouts.pypi_layout import get_pypi_layout
 
 from app.layouts.github_layout import get_github_layout
 from app.services.github_client import prepare_github_data
@@ -52,10 +41,11 @@ def register_home_callbacks(app):
             pypi_text = "Close"
 
         elif trigger == "open-github":
+            gh_data = prepare_github_data()
             content = get_github_layout(
-                prepare_github_data()[0],  # gh_df
-                prepare_github_data()[4],   # total_repositories,
-                prepare_github_data()[5]   # workstreams
+                gh_data[0],  # gh_df
+                gh_data[4],  # total_repositories,
+                gh_data[5]   # workstreams
             )
             github_text = "Close"
 

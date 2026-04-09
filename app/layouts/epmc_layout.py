@@ -208,15 +208,27 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                     cited_count = int(cited) if cited is not None else 0
                 except Exception:
                     cited_count = 0
-                candidates.append({"title": title, "cited_by_count": cited_count})
+                doi = obj.get("doi") or ""
+                doi_url = f"https://doi.org/{doi}" if doi else None
+                candidates.append({"title": title, "cited_by_count": cited_count, "doi_url": doi_url})
 
         # sort descending and take top 20
         if candidates:
             counts_df = pd.DataFrame.from_records(candidates)
             counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
             for _, r in counts_df.iterrows():
+                doi_url = r.get("doi_url")
+                title_element = (
+                    html.A(r["title"], href=doi_url, target="_blank", rel="noopener noreferrer")
+                    if doi_url
+                    else r["title"]
+                )
                 most_cited_children.append(
-                    html.Div(f"{r['title']} — {int(r['cited_by_count'])}", style={"marginBottom": "8px", "fontSize": "14px"})
+                    html.Div(
+                        [title_element, f" — {int(r['cited_by_count'])}"],
+                        className="epmc-most-cited-item",
+                        style={"marginBottom": "8px", "fontSize": "14px"},
+                    )
                 )
     except Exception:
         most_cited_children = []
@@ -287,9 +299,10 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
-                            className="mb-4 shadow-sm",
+                            className="mb-4 shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                     dbc.Col(
@@ -302,15 +315,16 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         html.Div(
                                             most_cited_children,
                                             id="epmc-most-cited-list",
-                                            style={"overflowY": "auto", "flex": "1 1 auto", "paddingRight": "8px"},
+                                            style={"overflowY": "auto", "overflowX": "hidden", "flex": "1 1 auto", "paddingRight": "8px"},
                                         ),
                                     ],
                                     style={"display": "flex", "flexDirection": "column", "height": "100%"}
                                 )
                             ),
-                            className="mb-4 shadow-sm",
-                            style={"borderRadius": "12px", "height": "700px"},
+                            className="mb-4 shadow-sm h-100 w-100 epmc-most-cited-card",
+                            style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                 ]
