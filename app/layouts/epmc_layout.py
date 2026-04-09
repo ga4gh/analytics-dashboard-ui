@@ -327,6 +327,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                 html.Div(
                                     [
                                         html.H5("Most Cited GA4GH Publications", style={"marginBottom": "12px"}),
+                                        html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                         html.Div(
                                             most_cited_children,
                                             id="epmc-most-cited-list",

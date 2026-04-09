@@ -285,7 +285,7 @@ layout = dbc.Container(
                                                             html.Li(
                                                                 html.Span([
                                                                     "Scientific research and publications from ",
-                                                                    html.Strong("PubMed Central"),
+                                                                    html.Strong("PubMed Central (PMC)"),
                                                                 ])
                                                             ),
                                                             html.Li(
@@ -471,7 +471,9 @@ layout = dbc.Container(
                                                 html.Ul([
                                                     html.Li(
                                                         html.Span([
-                                                            "Package metadata is collected for a curated list of GA4GH-related software packages in the Python Package Index (PyPI). Metadata is collected via the ",
+                                                            "Package metadata is collected for a curated list of GA4GH-related software packages in the ",
+                                                            html.A("Python Package Index (PyPI)", href="https://pypi.org/"),
+                                                            ". Metadata is collected via the ",
                                                             html.A("PyPI REST API", href="https://docs.pypi.org/api/"),
                                                             "."
                                                         ]),
