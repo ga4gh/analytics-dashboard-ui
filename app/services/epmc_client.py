@@ -172,7 +172,7 @@ def prepare_epmc_data():
     top_authors_resp = get_json(api_constants.EPMC_TOP_AUTHORS) if hasattr(api_constants, 'EPMC_TOP_AUTHORS') else []
     top_authors_data = top_authors_resp if isinstance(top_authors_resp, list) else []
     
-    citations = get_json(api_constants.EPMC_UNIQUE_CITATIONS) if hasattr(api_constants, 'EPMC_UNIQUE_CITATIONS') else []
+    citations = get_json(api_constants.EPMC_CITATION_OVER_YEARS) if hasattr(api_constants, 'EPMC_CITATION_OVER_YEARS') else []
 
     # Build entries DataFrame
     entries_df = pd.DataFrame()

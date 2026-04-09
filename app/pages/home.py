@@ -49,7 +49,6 @@ def _count_citations_payload(cit):
         return 0
     return 0
 
-_epmc_total_citations = _count_citations_payload(_epmc_citations_df)
 _epmc_article_count = _epmc_total_entries
 
 # Compute countries stats limited to whitelist
@@ -172,7 +171,7 @@ layout = dbc.Container(
         ),
 
         
-
+        
         # ---------- DESCRIPTION ----------
         dbc.Row(
             [
@@ -277,7 +276,7 @@ layout = dbc.Container(
 
                 dbc.Col(
                     indicator_card(
-                        f"{_epmc_total_citations:,}",
+                        f"{_epmc_citations_df.get('total_citations', 0):,}",
                         "Total Citations",
                         "#2ECC71",
                     ),

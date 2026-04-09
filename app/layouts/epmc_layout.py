@@ -5,6 +5,7 @@ Mirrors the pattern used by pypi_layout.py and github_layout.py.
 
 import json
 import pandas as pd
+from plotly import data
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html, dcc, dash_table
@@ -109,7 +110,7 @@ def fig_epmc_countries_pie(countries_df):
     return fig
 
 
-def fig_epmc_top_authors_bar(authors_data, top_n=30):
+def fig_epmc_top_authors_bar(authors_data, top_n=15):
     """Bar chart – top N authors by publication count."""
     if not authors_data:
         return go.Figure().update_layout(title="No author data available")
@@ -154,43 +155,19 @@ def fig_epmc_top_authors_bar(authors_data, top_n=30):
     return fig
 
 
-def get_citations_by_year(data: dict) -> list[dict]:
-    """Aggregate citations by pub_year, counting entries per year."""
-    citations = data.get("citations", []) if isinstance(data, dict) else []
-    if not citations:
-        return []
-    
-    counts_by_year = {}
-    for row in citations:
-        py = row.get("pub_year")
-        if py is not None:
-            counts_by_year[py] = counts_by_year.get(py, 0) + 1
-    
-    return [{"pub_year": year, "total_citations": count} for year, count in sorted(counts_by_year.items())]
-
-
 def make_citations_figure(data):
-    result = get_citations_by_year(data)
-    print(result)
-    years = [r["pub_year"] for r in result]
-    totals = [r["total_citations"] for r in result]
-
-    # compute cumulative totals
-    cumulative = []
-    running = 0
-    for t in totals:
-        try:
-            running += int(t)
-        except Exception:
-            running += 0
-        cumulative.append(running)
+    citations_over_years = data.get("citations_over_years", [])
+    
+    years = [r.get("pub_year") for r in citations_over_years if r.get("pub_year") > 2013]
+    year_counts = [r.get("year_count") for r in citations_over_years]
+    cumulative_counts = [r.get("commulative_count") for r in citations_over_years if r.get("pub_year") > 2013]
 
     fig = go.Figure()
 
     fig.add_trace(
         go.Scatter(
             x=years,
-            y=cumulative,
+            y=cumulative_counts,
             mode="lines+markers",
             name="Cumulative Citations"
         )
@@ -269,7 +246,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                 },
                             ),
                         ],
-                        style={"width": "45%"},
+                        style={"width": "50%"},
                     ),
                 ],
                 style={

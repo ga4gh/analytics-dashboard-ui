@@ -196,5 +196,5 @@ def register_epmc_callbacks(app):
     def update_epmc_graphs(top_n):
         fig_pie = fig_epmc_countries_pie(countries_df)
         # Use pre-fetched top_authors_default (no API call needed)
-        fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n=min(top_n, len(top_authors_default)))
+        fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
         return fig_pie, fig_bar
