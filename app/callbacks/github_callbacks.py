@@ -45,57 +45,39 @@ def register_github_callbacks(app):
         
         return dbc.Card([
             dbc.CardHeader(
-                html.H4(repo["name"])
+                html.Div([
+                    html.H4(repo["name"], className="mb-0 me-3"),
+                    dbc.Badge(
+                        f"⭐ Stars: {repo['stargazers_count']}",
+                        color="primary",
+                        className="me-2 fs-6 p-2",
+                        pill=True,
+                    ),
+                    dbc.Badge(
+                        f"🍴 Forks: {repo['forks_count']}",
+                        color="secondary",
+                        className="me-2 fs-6 p-2",
+                        pill=True,
+                    ),
+                    dbc.Badge(
+                        f"👀 Watchers: {repo['watchers_count']}",
+                        color="dark",
+                        className="fs-6 p-2",
+                        pill=True,
+                    ),
+                ], style={"display": "flex", "alignItems": "center", "flexWrap": "wrap", "gap": "8px"})
             ),
 
             dbc.CardBody([
 
                 html.P(repo["description"], className="mb-3"),
-
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dbc.Badge(
-                            f"⭐ Stars: {repo['stargazers_count']}",
-                            color="primary",
-                            className="me-3 fs-4 p-2",
-                            pill=True,
-                        ),
-                        width="auto",
-                    ),
-                    dbc.Col(
-                        dbc.Badge(
-                            f"🍴 Forks: {repo['forks_count']}",
-                            color="secondary",
-                            className="me-3 fs-4 p-2",
-                            pill=True,
-                        ),
-                        width="auto",
-                    ),
-                    dbc.Col(
-                        dbc.Badge(
-                            f"👀 Watchers: {repo['watchers_count']}",
-                            color="dark",
-                            className="fs-4 p-2",
-                            pill=True,
-                        ),
-                        width="auto",
-                    ),
-                ],
-                className="mb-3 justify-content-center",
-                align="center",  # vertically center if row height increases
-            ),
-
                 html.Hr(),
-
                 html.P(f"Open Issues: {repo['open_issues_count']}"),
                 html.P(f"Subscribers: {repo['subscribers_count']}"),
                 html.P(f"Last Updated: {repo['last_updated'].strftime('%Y-%m-%d %H:%M')}"),
                 html.P(f"Pushed At: {repo['pushed_at'].strftime('%Y-%m-%d %H:%M')}"),
                 #html.P(f"Archived: {repo['is_archived']}"),
-
                 html.Br(),
-
                 dbc.Button(
                     "Open Repository",
                     href=repo["repo_link"],
