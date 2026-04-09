@@ -100,7 +100,12 @@ def get_pypi_layout(pypi_details, total_packages):
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id='datatable-bar')),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="datatable-bar"),
+                                    html.Figcaption("Total number of versions for the top GA4GH-related PyPI packages, sorted in descending order by number of versions.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -108,7 +113,12 @@ def get_pypi_layout(pypi_details, total_packages):
                     ),
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id='category-distribution')),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="category-distribution"),
+                                    html.Figcaption("Relative proportion of package category for GA4GH-related PyPI packages.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),

@@ -11,15 +11,15 @@ def fig_github_activity_status_pie(gh_activity_counts):
         return go.Figure().update_layout(title="No activity status data available")
 
     category_order = [
-        "High (last 6 months)",
-        "Moderate (6 months - 2 years)",
-        "Low (more than 2 years)",
+        "High",
+        "Moderate",
+        "Low",
         "Archived",
     ]
     color_map = {
-        "High (last 6 months)": "#636EFA",
-        "Moderate (6 months - 2 years)": "#EF553B",
-        "Low (more than 2 years)": "#00CC96",
+        "High": "#636EFA",
+        "Moderate": "#EF553B",
+        "Low": "#00CC96",
         "Archived": "#8E8E93",
     }
 
@@ -49,7 +49,7 @@ def fig_github_activity_status_pie(gh_activity_counts):
         },
         plot_bgcolor="#f9f9f9",
         paper_bgcolor="#ffffff",
-        legend_title_text="Time since last development",
+        legend_title_text="Activity Status",
         height=600,
     )
 
@@ -320,7 +320,12 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id="gh-activity-bar-graph")),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="gh-activity-bar-graph"),
+                                    html.Figcaption("Activity score of GA4GH repositories. Includes technical and foundational work streams, as well as TASC / Tech Team repositories. See methods section for definition of activity score.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -328,7 +333,12 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                     ),
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id="gh-activity-status-pie")),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="gh-activity-status-pie"),
+                                    html.Figcaption("Relative proportion of GA4GH GitHub repositories at each activity status, which is determined from the number of days that have elapsed since the last update. High: last update less than 6 months ago; Moderate: last update 6 months to 2 years ago; Low: last update more than 2 years ago; Archived: repository is archived.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -342,7 +352,12 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id="gh-workstream-pie")),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="gh-workstream-pie"),
+                                    html.Figcaption("Relative proportion of GA4GH GitHub repositories by work stream. Includes technical and foundational work streams, as well as TASC / Tech Team repositories.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -350,7 +365,12 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                     ),
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id="gh-interest-graph")),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="gh-interest-graph"),
+                                    html.Figcaption("Total number of subscribers, stargazers, and forks for each GA4GH GitHub repository.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -358,10 +378,6 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                     ),
                 ]
             ),
-
-
-
-
         ],
         fluid=True,
     )

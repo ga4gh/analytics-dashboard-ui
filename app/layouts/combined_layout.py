@@ -3,7 +3,7 @@
 import pandas as pd
 import plotly.express as px
 import dash_bootstrap_components as dbc
-from dash import dcc
+from dash import dcc, html
 
 
 def _build_source_year_df(df, year_col, item_col, source_name):
@@ -113,7 +113,12 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df):
     fig = _make_combined_growth_figure(gh_df, ep_df, py_df)
 
     return dbc.Card(
-        dbc.CardBody(dcc.Graph(id="combined-growth-over-time", figure=fig)),
+        dbc.CardBody(
+            html.Figure([
+                dcc.Graph(id="combined-growth-over-time", figure=fig),
+                html.Figcaption("Cumulative number of GA4GH-related articles, GitHub repositories, and PyPI packages per year.")
+            ])
+        ),
         className="mb-4 shadow-sm",
         style={"borderRadius": "12px"},
     )

@@ -274,7 +274,12 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id="epmc-authors-bar")),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="epmc-authors-bar"),
+                                    html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -282,10 +287,15 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                     ),
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(
-                                id = "epmc-citations-over-years",
-                                figure = make_citations_figure(citations)
-                            )),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(
+                                        id = "epmc-citations-over-years",
+                                        figure = make_citations_figure(citations)
+                                    ),
+                                    html.Figcaption("Cumulative number of GA4GH-related article citations per year.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -298,7 +308,12 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="epmc-countries-pie"),
+                                    html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author’s affiliation for all publications.")
+                                ])
+                            ),
                             className="mb-4 shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
