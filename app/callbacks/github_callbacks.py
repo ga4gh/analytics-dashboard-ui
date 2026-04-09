@@ -139,9 +139,9 @@ def register_github_callbacks(app):
             (df_filtered["is_archived"] == True),
         ]
         status_choices = [
-            "High (last 6 months)",
-            "Moderate (6 months - 2 years)",
-            "Low (more than 2 years)",
+            "High",
+            "Moderate",
+            "Low",
             "Archived",
         ]
         status_series = np.select(status_conditions, status_choices, default="Unknown")

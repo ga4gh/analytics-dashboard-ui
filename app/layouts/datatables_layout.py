@@ -69,7 +69,7 @@ def get_datatables_layout(
         [
             # ========== EPMC TABLE SECTION ==========
             html.H4("Europe PMC Publications", style={"marginTop": "40px", "marginBottom": "15px"}),
-            
+            html.Figcaption("Metadata for all GA4GH-related articles found in Europe PMC.", style={"marginTop": "15px", "marginBottom": "15px"}),
             html.Div(
                 [
                     dcc.Input(
@@ -154,7 +154,7 @@ def get_datatables_layout(
 
             # ========== GITHUB TABLE SECTION ==========
             html.H4("GitHub Repositories", style={"marginBottom": "15px"}),
-            
+            html.Figcaption("Metadata and usage metrics for all GA4GH-related GitHub repositories.", style={"marginTop": "15px", "marginBottom": "15px"}),
             dcc.Input(
                 id='github-table-search',
                 type='text',
@@ -199,7 +199,7 @@ def get_datatables_layout(
 
             # ========== PYPI TABLE SECTION ==========
             html.H4("PyPI Packages", style={"marginBottom": "15px"}),
-            
+            html.Figcaption("Project metadata for all GA4GH-related PyPI packages.", style={"marginTop": "15px", "marginBottom": "15px"}),
             dcc.Input(
                 id='table-search',
                 type='text',
