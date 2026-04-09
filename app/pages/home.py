@@ -256,6 +256,278 @@ layout = dbc.Container(
             align="center",
         ),
 
+        # ---------- METHODS CARDS -----------
+        html.Div(
+            [
+                dbc.Button(
+                    "Show methods and terms",
+                    id="collapse-button",
+                    className="mb-3",
+                    color="primary",
+                    n_clicks=0,
+                ),
+                dbc.Collapse(
+                    html.Div(
+                        [
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        dbc.Card(
+                                            dbc.CardBody(
+                                                [
+                                                    html.Span([
+                                                        "This dashboard illustrates ",
+                                                        html.Strong("GA4GH's overall ecosystem impact "),
+                                                        "by bringing together three core dimensions of activity:"
+                                                    ]),
+                                                    html.Ol(
+                                                        [
+                                                            html.Li(
+                                                                html.Span([
+                                                                    "Scientific research and publications from ",
+                                                                    html.Strong("PubMed Central"),
+                                                                ])
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    "Software development and implementation from ",
+                                                                    html.Strong("GitHub")
+                                                                ])
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    "Standards-enabled software distribution from ",
+                                                                    html.Strong("PyPI")
+                                                                ])
+                                                            ),
+                                                        ]
+                                                    ),
+                                                    html.Span([
+                                                        "Rather than focusing on one platform in isolation, the following metrics, figures, and tables act as an executive snapshot of the full GA4GH value chain—from standards implementation, to community adoption, to scientific and clinical impact."
+                                                    ]),
+                                                ]
+                                            )
+                                        ),
+                                    )
+                                ],
+                                style={"marginBottom": "20px"}
+                            ),
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        dbc.Card(
+                                            dbc.CardBody(
+                                                [
+                                                    html.H4("PubMed Central", className="card-title"),
+                                                    html.H5("Methods", className="card-subtitle"),
+                                                    html.Ul(
+                                                        [
+                                                            html.Li(
+                                                                html.Span([
+                                                                    "Article and citation data is collected from ",
+                                                                    html.A("Europe PMC", href="https://europepmc.org/"),
+                                                                    " via their ",
+                                                                    html.A("Articles RESTful API", href="https://europepmc.org/RestfulWebService"),
+                                                                    "."
+                                                                ])
+                                                            ),
+                                                            html.Li("A list of GA4GH-related articles is constructed by searching the Europe PMC database for all articles that mention “GA4GH” or “Global Alliance for Genomics and Health.” Both published articles and preprints are considered."),
+                                                            html.Li("For each article returned by the initial search, the following metrics are captured:"),
+                                                            html.Ul(
+                                                                [
+                                                                    html.Li(
+                                                                        html.Span([
+                                                                            "The article's ",
+                                                                            html.Strong("citation info"),
+                                                                            " (i.e. authors, title, journal, publication date, volume and issue number, page numbers, DOI, etc.)"
+
+                                                                        ]),
+                                                                    ),
+                                                                    html.Li(
+                                                                        html.Span([
+                                                                            "All instances in which the article was cited by another paper (i.e. ",
+                                                                            html.Strong("citation"),
+                                                                            ")"
+                                                                        ])
+                                                                    ),
+                                                                    html.Li(
+                                                                        html.Span([
+                                                                            "The ",
+                                                                            html.Strong("country affiliations"),
+                                                                            " of all authors who contributed to the article"
+                                                                        ])
+                                                                    ),
+                                                                ],
+                                                                style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                            ),
+                                                            html.Li("Data tables and downstream figures are rebuilt on a regular cadence.")
+                                                        ]
+                                                    ),
+                                                    html.H5("Terms", className="card-subtitle"),
+                                                    html.Ul(
+                                                        [
+                                                            html.Li(
+                                                                html.Span([
+                                                                    html.Strong("GA4GH-related article:"),
+                                                                    " A journal article that cites or mentions “GA4GH” or “Global Alliance for Genomics and Health.”"
+                                                                ]),
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    html.Strong("GA4GH citation:"),
+                                                                    " An instance in which any article in the Europe PMC database cites a GA4GH-related article.",
+                                                                ]),
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    html.Strong("Country affiliation:"),
+                                                                    " The country that an author is associated with, determined by their institutional affiliation."
+                                                                ]),
+                                                            )
+                                                        ]
+                                                    )
+                                                ]
+                                            )
+                                        ),
+                                    ),
+                                    dbc.Col(
+                                        dbc.Card(
+                                            dbc.CardBody([
+                                                html.H4("GitHub", className="card-title"),
+                                                html.H5("Methods", className="card-subtitle"),
+                                                html.Ul([
+                                                    html.Li(
+                                                        html.Span([
+                                                            "Activity, usage, and contribution data is collected via ",
+                                                            html.A("GitHub’s REST API", href="https://docs.github.com/en/rest"),
+                                                            " for a curated list of repositories in the ",
+                                                            html.A("ga4gh", href="https://github.com/ga4gh"),
+                                                            " Github organization."
+                                                        ]),
+                                                    ),
+                                                    html.Li("Each repository is enriched with metadata to allow for associations with the corresponding Work Stream."),
+                                                    html.Li("For each repository, the following metrics are captured/calculated:"),
+                                                    html.Ul(
+                                                        [
+                                                            html.Li(html.Strong("Activity score")),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    "Number of GitHub ",
+                                                                    html.Strong("subscribers"),
+                                                                ])
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    "Number of GitHub ",
+                                                                    html.Strong("stargazers"),
+                                                                ])
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    "Number of GitHub ",
+                                                                    html.Strong("forks"),
+                                                                ])
+                                                            ),
+                                                        ],
+                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                    ),
+                                                    html.Li("Data tables and downstream figures are rebuilt on a regular cadence."),
+                                                ]),
+                                                html.H5("Terms", className="card-subtitle"),
+                                                html.Ul([
+                                                    html.Li(
+                                                        html.Span([
+                                                            html.Strong("Activity score:"),
+                                                            " A calculated metric to indicate the level of activity in a GitHub repository, determined by the number of days since the most recent code push and repository update."
+                                                        ])
+                                                    ),
+                                                    html.Li(
+                                                        html.Span([
+                                                            html.Strong("Subscriber:"),
+                                                            " A GitHub user who receives notifications about activity (issues, pull requests, releases) for a particular repository, signaling deep interest or active participation in the repository."
+                                                        ])
+                                                    ),
+                                                    html.Li(
+                                                        html.Span([
+                                                            html.Strong("Stargazer:"),
+                                                            " A GitHub user who “stars” a particular repository, effectively bookmarking it."
+                                                        ])
+                                                    ),
+                                                    html.Li(
+                                                        html.Span([
+                                                            html.Strong("Fork:"),
+                                                            " A personal copy of a GA4GH repository to one's own workspace, signaling participation and experimentation with the codebase."
+                                                        ])
+                                                    ),
+                                                ])
+                                            ])
+                                        ),
+                                    ),
+                                    dbc.Col(
+                                        dbc.Card(
+                                            dbc.CardBody([
+                                                html.H4("PyPI", className="card-title"),
+                                                html.H5("Methods", className="card-subtitle"),
+                                                html.Ul([
+                                                    html.Li(
+                                                        html.Span([
+                                                            "Package metadata is collected for a curated list of GA4GH-related software packages in the Python Package Index (PyPI). Metadata is collected via the ",
+                                                            html.A("PyPI REST API", href="https://docs.pypi.org/api/"),
+                                                            "."
+                                                        ]),
+                                                    ),
+                                                    html.Li("Each package is enriched with metadata to allow for associations with the corresponding Work Stream as well as package category (GA4GH Standard, GA4GH Mentions, Implementation)."),
+                                                    html.Li("For each software package, the following metrics are captured:"),
+                                                    html.Ul(
+                                                        [
+                                                            html.Li("Package metadata (name, description, authors, emails)"),
+                                                            html.Li("Number of published versions"),
+                                                        ],
+                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                    ),
+                                                    html.Li("Data tables and downstream figures are rebuilt on a regular cadence."),
+                                                ]),
+                                                html.H5("Terms", className="card-subtitle"),
+                                                html.Ul([
+                                                    html.Li("Package categories:"),
+                                                    html.Ul(
+                                                        [
+                                                            html.Li(
+                                                                html.Span([
+                                                                    html.Strong("GA4GH Standard:"),
+                                                                    " PyPI package directly associated with a GA4GH specification, generally released as part of the standard itself."
+                                                                ])
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    html.Strong("Implementation:"),
+                                                                    " PyPI package that implements one or more GA4GH standards."
+                                                                ])
+                                                            ),
+                                                            html.Li(
+                                                                html.Span([
+                                                                    html.Strong("GA4GH Mentions:"),
+                                                                    " PyPI package that references and/or impacts the GA4GH ecosystem but does not directly adopt any GA4GH standards."
+                                                                ])
+                                                            ),
+                                                        ],
+                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                    ),
+                                                ]),
+                                            ]),
+                                        ),
+                                    ),
+                                ],
+                                style={"marginBottom": "20px"}
+                            ),
+                        ],
+                    ),
+                    id="collapse",
+                    is_open=False,
+                ),
+            ]
+        ),
+
         # ---------- KPI INDICATORS ----------
         dbc.Row(
             [

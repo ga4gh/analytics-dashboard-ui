@@ -1,5 +1,4 @@
-from dash import Input, Output, ctx
-
+from dash import Input, Output, State, ctx
 from app.services.pypi_client import get_pypi_details, get_total_packages
 import dash_bootstrap_components as dbc
 
@@ -61,3 +60,13 @@ def register_home_callbacks(app):
             epmc_text = "Close"
         
         return content, pypi_text, github_text, epmc_text
+
+    @app.callback(
+        Output("collapse", "is_open"),
+        [Input("collapse-button", "n_clicks")],
+        [State("collapse", "is_open")],
+    )
+    def toggle_collapse(n, is_open):
+        if n:
+            return not is_open
+        return is_open
