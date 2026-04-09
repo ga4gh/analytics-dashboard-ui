@@ -258,7 +258,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 clearable=False,
                             ),
                         ],
-                        style={"width": "30%"},
+                        style={"width": "25%"},
                     ),  
                     html.Div(
                         [
@@ -279,7 +279,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 tooltip={"placement": "bottom", "always_visible": True},
                             )
                         ],
-                        style={"width": "50%"},
+                        style={"width": "50%", "marginLeft": "auto"},
                     ),
                 ],
                 style={

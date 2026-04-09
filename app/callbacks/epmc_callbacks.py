@@ -57,7 +57,6 @@ def register_epmc_callbacks(app):
         if year_filter and "pub_year" in filtered.columns:
             filtered = filtered[filtered["pub_year"].astype(str) == str(year_filter)]
         
-        # Filter by affiliation dropdown
         if affiliation_filter and "raw_json" in filtered.columns:
             def _has_affiliation(raw):
                 try:
@@ -65,7 +64,9 @@ def register_epmc_callbacks(app):
                 except Exception:
                     return False
                 aff = obj.get("affiliation") or obj.get("affiliations") or ""
-                return affiliation_filter in normalize_affiliation_values(aff)
+                if isinstance(aff, list):
+                    aff = " ".join([str(a) for a in aff if a])
+                return affiliation_filter.lower() in aff.lower()
             filtered = filtered[filtered["raw_json"].apply(_has_affiliation)]
         
         # Sort by pub_year descending (most recent first)

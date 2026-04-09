@@ -75,7 +75,7 @@ def get_datatables_layout(
                     dcc.Input(
                         id="epmc-table-search",
                         type="text",
-                        placeholder="Search Publications...",
+                        placeholder="Search by Title...",
                         debounce=False,
                         style={
                             "width": "350px",
@@ -89,16 +89,20 @@ def get_datatables_layout(
                         options=epmc_year_options,
                         placeholder="Filter by Year",
                         clearable=True,
-                        style={"width": "160px"},
+                        className="custom-dropdown",
+                        style={"width": "160px", "height": "38px"},
                     ),
-                    dcc.Dropdown(
+                    dcc.Input(
                         id="epmc-affiliation-filter",
-                        options=epmc_affiliation_options,
-                        placeholder="Filter by Affiliation",
-                        clearable=True,
-                        optionHeight=96,
-                        maxHeight=420,
-                        style={"width": "520px"},
+                        type="text",
+                        placeholder="Search by Affiliation...",
+                        debounce=True,
+                        style={
+                            "width": "350px",
+                            "padding": "8px",
+                            "border-radius": "5px",
+                            "border": "1px solid #ccc",
+                        },
                     ),
                 ],
                 style={
