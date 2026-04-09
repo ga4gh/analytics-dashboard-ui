@@ -28,12 +28,12 @@ def _build_source_year_df(df, year_col, item_col, source_name):
 
 def _make_combined_growth_figure(github_df, epmc_df, pypi_first_releases_df):
     github_year_df = _build_source_year_df(github_df, "created_on_year", "name", "GitHub Repositories")
-    epmc_year_df = _build_source_year_df(epmc_df, "pub_year", "title", "Europe PMC publications")
+    epmc_year_df = _build_source_year_df(epmc_df, "pub_year", "title", "GA4GH-Related Articles")
     pypi_year_df = _build_source_year_df(
         pypi_first_releases_df,
         "release_year",
         "project_name",
-        "PyPi Libraries",
+        "PyPI Packages",
     )
 
     combined_year_df = pd.concat(
@@ -71,7 +71,7 @@ def _make_combined_growth_figure(github_df, epmc_df, pypi_first_releases_df):
     # Apply source-specific hover templates
     for trace in fig.data:
         source = trace.customdata[0][1] if trace.customdata is not None and len(trace.customdata) > 0 else ""
-        if source == "Europe PMC publications":
+        if source == "GA4GH-Related Articles":
             # Simplified hover for Europe PMC: year and article count only
             trace.hovertemplate = (
                 "Year: %{x}<br>"
@@ -116,7 +116,7 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df):
         dbc.CardBody(
             html.Figure([
                 dcc.Graph(id="combined-growth-over-time", figure=fig),
-                html.Figcaption("Cumulative number of GA4GH-related articles, GitHub repositories, and PyPI packages per year.")
+                html.Figcaption("Cumulative number of GA4GH-Related Articles (from Europe PMC), GitHub Repositories, and PyPI Packages per year.")
             ])
         ),
         className="mb-4 shadow-sm",
