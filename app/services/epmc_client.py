@@ -34,12 +34,14 @@ def get_all_paginated(endpoint, limit=1000):
         resp.raise_for_status()
         data = resp.json()
 
-        # If the endpoint returns a dict with 'results' list
+        # If the endpoint returns a dict with a paginated list payload
         if isinstance(data, dict):
             if "results" in data and isinstance(data["results"], list):
                 page = data["results"]
             elif isinstance(data.get("items"), list):
                 page = data.get("items")
+            elif isinstance(data.get("articles"), list):
+                page = data.get("articles")
             else:
                 # Not a paginated list; return the dict directly
                 return data
@@ -80,6 +82,16 @@ def get_all_latest_entries():
         return data
     if isinstance(data, dict):
         return data.get("results") or data.get("items") or [data]
+    return []
+
+
+def get_all_articles(limit=1000):
+    """Fetch all EPMC articles using limit/skip pagination."""
+    data = get_all_paginated(api_constants.EPMC_ALL_ARTICLES, limit=limit)
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        return data.get("articles") or data.get("results") or data.get("items") or [data]
     return []
 
 
@@ -152,16 +164,11 @@ def prepare_epmc_data():
                 unique_authors_count, top_authors_data)
     """
     # Fetch all API data upfront (7 calls total, no redundancy)
-    all_articles_resp = get_json(api_constants.EPMC_ALL_ARTICLES) if hasattr(api_constants, 'EPMC_ALL_ARTICLES') else {}
-    if not isinstance(all_articles_resp, dict):
-        all_articles_resp = {}
-    
-    if isinstance(all_articles_resp, dict) and "articles" in all_articles_resp:
-        raw_entries = all_articles_resp.get("articles", [])
-        total_entries = int(all_articles_resp.get("article_count", len(raw_entries)))
+    if hasattr(api_constants, 'EPMC_ALL_ARTICLES'):
+        raw_entries = get_all_articles(limit=1000)
     else:
         raw_entries = get_all_latest_entries()
-        total_entries = len(raw_entries)
+    total_entries = len(raw_entries)
     
     raw_countries = get_affiliation_countries_count()
     raw_authors = get_all_pmc_authors()

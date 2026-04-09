@@ -75,7 +75,8 @@ def _make_combined_growth_figure(github_df, epmc_df, pypi_first_releases_df):
             # Simplified hover for Europe PMC: year and article count only
             trace.hovertemplate = (
                 "Year: %{x}<br>"
-                "Articles published: %{customdata[2]}<extra></extra>"
+                "Articles published: %{customdata[2]}<br>"
+                "Articles Published to Date: %{y}<extra></extra>"
             )
         else:
             # Detailed hover for other sources
