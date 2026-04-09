@@ -230,11 +230,7 @@ layout = dbc.Container(
             [
                 dbc.Col(
                     dbc.Badge(
-<<<<<<< Updated upstream
-                        "Data Updated: 2026-04-07",
-=======
                         "Data Updated: 2026-04-08",
->>>>>>> Stashed changes
                         color="light",
                         text_color="dark",
                         className="p-2",
