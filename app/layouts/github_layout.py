@@ -5,31 +5,55 @@ from dash import html, dcc, dash_table
 import pandas as pd
 
 # ---------- FIGURES ----------
-'''
 def fig_github_activity_status_pie(gh_activity_counts):
+    df = gh_activity_counts.copy() if isinstance(gh_activity_counts, pd.DataFrame) else pd.DataFrame(gh_activity_counts)
+    if df.empty or "Category" not in df.columns or "Count" not in df.columns:
+        return go.Figure().update_layout(title="No activity status data available")
+
+    category_order = [
+        "High (last 6 months)",
+        "Moderate (6 months - 2 years)",
+        "Low (more than 2 years)",
+        "Archived",
+    ]
+    color_map = {
+        "High (last 6 months)": "#636EFA",
+        "Moderate (6 months - 2 years)": "#EF553B",
+        "Low (more than 2 years)": "#00CC96",
+        "Archived": "#8E8E93",
+    }
+
+    df["Category"] = pd.Categorical(df["Category"], categories=category_order, ordered=True)
+    df = df.sort_values("Category")
+
     fig = go.Figure(
         data=[
             go.Pie(
-                labels=gh_activity_counts["Category"],
-                values=gh_activity_counts["Count"],
+                labels=df["Category"],
+                values=df["Count"],
                 hole=0.4,
-                textinfo="label+percent",
+                textinfo="percent",
                 hoverinfo="label+value+percent",
+                marker={"colors": [color_map.get(c, "#A0A0A0") for c in df["Category"]]},
             )
         ]
     )
 
     fig.update_layout(
         title={
-            "text": "Activity Status of GitHub Repositories",
+            "text": "Activity Status of the GA4GH GitHub Repositories",
             "x": 0.5,
+            "xanchor": "center",
+            "yanchor": "top",
+            "font": {"size": 26, "color": "#2C3E50"},
         },
-        template="simple_white",
-        height=550,
+        plot_bgcolor="#f9f9f9",
+        paper_bgcolor="#ffffff",
+        legend_title_text="Time since last development",
+        height=600,
     )
 
     return fig
-'''
 
 def fig_github_activity_bar(gh_activity_df, color_map=None):
     df = gh_activity_df.copy() if isinstance(gh_activity_df, pd.DataFrame) else pd.DataFrame(gh_activity_df)
@@ -304,7 +328,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                     ),
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(dcc.Graph(id="gh-workstream-pie")),
+                            dbc.CardBody(dcc.Graph(id="gh-activity-status-pie")),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
@@ -313,16 +337,24 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                 ]
             ),
 
-            # Row 2: interest metrics full-width
+            # Row 2: workstream pie + interest metrics
             dbc.Row(
                 [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(id="gh-workstream-pie")),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(dcc.Graph(id="gh-interest-graph")),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
-                        md=12,
+                        md=6,
                     ),
                 ]
             ),

@@ -4,6 +4,7 @@ from app import app
 from app.services.github_client import prepare_github_data
 from app.layouts.github_layout import (
     fig_github_activity_bar,
+    fig_github_activity_status_pie,
     fig_github_interest_metrics,
     fig_github_workstream_pie,
 )
@@ -12,6 +13,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from dash import html, dcc, dash_table
 import pandas as pd
+import numpy as np
 
 def register_github_callbacks(app):
     gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories, workstreams = prepare_github_data()
@@ -123,6 +125,7 @@ def register_github_callbacks(app):
     
     @app.callback(
     Output("gh-activity-bar-graph", "figure"),
+    Output("gh-activity-status-pie", "figure"),
     Output("gh-workstream-pie", "figure"),
     Output("gh-interest-graph", "figure"),
     Input("gh-top-n-slider", "value"),
@@ -138,13 +141,26 @@ def register_github_callbacks(app):
         # Top N applies only to bar chart
         df_top = df_filtered.sort_values("activity_score", ascending=False).head(top_n)
 
-        # PIE CHART should be computed from the filtered set
+        # Activity status donut (requested thresholds)
+        status_conditions = [
+            (df_filtered["is_archived"] == False) & (df_filtered["days_since_pushed_at"] < 180),
+            (df_filtered["is_archived"] == False)
+            & (df_filtered["days_since_pushed_at"] >= 180)
+            & (df_filtered["days_since_pushed_at"] <= 730),
+            (df_filtered["is_archived"] == False) & (df_filtered["days_since_pushed_at"] > 730),
+            (df_filtered["is_archived"] == True),
+        ]
+        status_choices = [
+            "High (last 6 months)",
+            "Moderate (6 months - 2 years)",
+            "Low (more than 2 years)",
+            "Archived",
+        ]
+        status_series = np.select(status_conditions, status_choices, default="Unknown")
         gh_activity_counts = (
-            df_filtered.assign(
-                Category=df_filtered["is_archived"].map({True: "Archived", False: "Active"})
-            )
-            .groupby("Category")
-            .size()
+            pd.Series(status_series)
+            .value_counts()
+            .rename_axis("Category")
             .reset_index(name="Count")
         )
 
@@ -161,8 +177,9 @@ def register_github_callbacks(app):
         df_filtered.attrs["color_map"] = color_map
 
         # Build figures
+        fig_status = fig_github_activity_status_pie(gh_activity_counts)
         fig_ws = fig_github_workstream_pie(df_filtered)
         fig3 = fig_github_interest_metrics(df_filtered)
         fig2 = fig_github_activity_bar(df_top, color_map=color_map)
 
-        return fig2, fig_ws, fig3
+        return fig2, fig_status, fig_ws, fig3
