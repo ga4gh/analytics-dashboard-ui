@@ -7,32 +7,14 @@ from typing import List, Dict, Any, Optional
 import app.constants.api as api_constants
 
 
-def get_json(endpoint: str, token: Optional[str] = None, per_page: int = 100):
+def get_json(endpoint: str, token: Optional[str] = None):
     headers = {}
     if token:
         headers["Authorization"] = f"token {token}"
 
-    params = {"per_page": per_page, "page": 1}
-    items = []
-    url = endpoint
-
-    while True:
-        resp = requests.get(url, headers=headers, params=params, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-
-        if not isinstance(data, list):
-            return data
-
-        items.extend(data)
-
-        if "next" in resp.links:
-            url = resp.links["next"]["url"]
-            params = None
-        else:
-            break
-
-    return items
+    resp = requests.get(endpoint, headers=headers, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
 
 def prepare_github_data(fetch_date="2025-10-01"):
