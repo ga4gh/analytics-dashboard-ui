@@ -72,8 +72,9 @@ def register_home_callbacks(app):
         new_state = not is_open if n else is_open
 
         label = [
-            html.Span("▶ Show methods and terms ", style={"marginRight": "4px"}),
-            html.Span("▲" if new_state else "▼", style={"fontSize": "12px"}),
+            html.Span("▼ " if new_state else "▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
+            html.Span("Show methods and terms "),
+            html.Span("▼", style={"fontSize": "12px"}),
         ]
 
         return new_state, label

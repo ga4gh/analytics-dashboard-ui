@@ -260,9 +260,10 @@ layout = dbc.Container(
         html.Div(
                 [
                     html.Div(
-                        [
-                            html.Span("▶ Show methods and terms ", style={"marginRight": "4px"}),
-                            html.Span("▼", style={"fontSize": "12px"}),
+                            [
+                                html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
+                                html.Span("Show methods and terms "),
+                                html.Span("▼", style={"fontSize": "12px"}),
                         ],
                         id="collapse-button",
                         n_clicks=0,
