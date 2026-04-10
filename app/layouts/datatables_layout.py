@@ -112,7 +112,9 @@ def get_datatables_layout(
                     "marginBottom": "15px",
                 },
             ),
-
+            
+            dcc.Store(id="first-author-store"),
+            dcc.Store(id="first-affiliation-store"),
             dbc.Row(
                 [
                     # LEFT: EPMC Table
