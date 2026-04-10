@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Optional
 
 import app.constants.api as api_constants
 

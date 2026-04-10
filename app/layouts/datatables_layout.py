@@ -120,29 +120,32 @@ def get_datatables_layout(
                     # LEFT: EPMC Table
                     dbc.Col(
                         [
-                            dash_table.DataTable(
-                                id="epmc-entries-table",
-                                columns=[
-                                    {"name": "Title", "id": "title"},
-                                    {"name": "Year", "id": "pub_year"},
-                                ],
-                                data=epmc_entries_df.to_dict("records") if not epmc_entries_df.empty else [],
-                                export_format="csv",
-                                row_selectable="single",
-                                selected_rows=[0],
-                                page_size=10,
-                                sort_action="native",
-                                style_table={"overflowX": "auto"},
-                                style_cell={
-                                    "textAlign": "left",
-                                    "padding": "10px",
-                                    "whiteSpace": "normal",
-                                },
-                                style_header={
-                                    "backgroundColor": "#2c3e50",
-                                    "color": "white",
-                                    "fontWeight": "bold",
-                                },
+                            html.Div(
+                                dash_table.DataTable(
+                                    id="epmc-entries-table",
+                                    columns=[
+                                        {"name": "Title", "id": "title"},
+                                        {"name": "Year", "id": "pub_year"},
+                                    ],
+                                    data=epmc_entries_df.to_dict("records") if not epmc_entries_df.empty else [],
+                                    export_format="csv",
+                                    row_selectable="single",
+                                    selected_rows=[0],
+                                    page_size=10,
+                                    sort_action="native",
+                                    style_table={"overflowX": "auto"},
+                                    style_cell={
+                                        "textAlign": "left",
+                                        "padding": "10px",
+                                        "whiteSpace": "normal",
+                                    },
+                                    style_header={
+                                        "backgroundColor": "#2c3e50",
+                                        "color": "white",
+                                        "fontWeight": "bold",
+                                    },
+                                ),
+                                className="datatable-controls-inline",
                             )
                         ],
                         md=6,
@@ -173,20 +176,23 @@ def get_datatables_layout(
             dbc.Row([
                 # LEFT: GITHUB TABLE
                 dbc.Col([
-                    dash_table.DataTable(
-                        id="github-projects-table",
-                        columns=[
-                            {"name": "Project", "id": "name"},
-                            {"name": "Work Stream", "id": "workstream"},
-                        ],
-                        data = gh_df.to_dict("records") if not gh_df.empty and all(col in gh_df.columns for col in ["name", "workstream"]) else [],
-                        row_selectable="single",
-                        export_format="csv",
-                        selected_rows=[0],
-                        page_size=10,
-                        style_table={"overflowX": "auto"}, 
-                        style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", }, 
-                        style_header={ "backgroundColor": "#2c3e50", "color": "white", "fontWeight": "bold" }
+                    html.Div(
+                        dash_table.DataTable(
+                            id="github-projects-table",
+                            columns=[
+                                {"name": "Project", "id": "name"},
+                                {"name": "Work Stream", "id": "workstream"},
+                            ],
+                            data = gh_df.to_dict("records") if not gh_df.empty and all(col in gh_df.columns for col in ["name", "workstream"]) else [],
+                            row_selectable="single",
+                            export_format="csv",
+                            selected_rows=[0],
+                            page_size=10,
+                            style_table={"overflowX": "auto"}, 
+                            style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", }, 
+                            style_header={ "backgroundColor": "#2c3e50", "color": "white", "fontWeight": "bold" }
+                        ),
+                        className="datatable-controls-inline",
                     )
                 ], md=6),
 
@@ -218,29 +224,32 @@ def get_datatables_layout(
 
             dbc.Row([
                 dbc.Col(
-                    dash_table.DataTable(
-                        id="projects-table",
-                        columns=[
-                            {"name": "Project", "id": "project_name"},
-                            {"name": "Category", "id": "category"},
-                        ],
-                        data=pypi_details[["project_name", "category"]].to_dict("records") if not pypi_details.empty and "project_name" in pypi_details.columns else [],
-                        export_format="csv",
-                        row_selectable="single",
-                        selected_rows=[0],
-                        page_size=10,
-                        sort_action="native",
-                        style_table={"overflowX": "auto"},
-                        style_cell={
-                            "textAlign": "left",
-                            "padding": "10px",
-                            "whiteSpace": "normal",
-                        },
-                        style_header={
-                            "backgroundColor": "#2c3e50",
-                            "color": "white",
-                            "fontWeight": "bold"
-                        }
+                    html.Div(
+                        dash_table.DataTable(
+                            id="projects-table",
+                            columns=[
+                                {"name": "Project", "id": "project_name"},
+                                {"name": "Category", "id": "category"},
+                            ],
+                            data=pypi_details[["project_name", "category"]].to_dict("records") if not pypi_details.empty and "project_name" in pypi_details.columns else [],
+                            export_format="csv",
+                            row_selectable="single",
+                            selected_rows=[0],
+                            page_size=10,
+                            sort_action="native",
+                            style_table={"overflowX": "auto"},
+                            style_cell={
+                                "textAlign": "left",
+                                "padding": "10px",
+                                "whiteSpace": "normal",
+                            },
+                            style_header={
+                                "backgroundColor": "#2c3e50",
+                                "color": "white",
+                                "fontWeight": "bold"
+                            }
+                        ),
+                        className="datatable-controls-inline",
                     ),
                     md=6
                 ),

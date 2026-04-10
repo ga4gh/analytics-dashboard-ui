@@ -27,7 +27,6 @@ def register_home_callbacks(app):
 
         trigger = ctx.triggered_id
 
-        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
         # Default button text
         pypi_text = "Open"
         github_text = "Open"

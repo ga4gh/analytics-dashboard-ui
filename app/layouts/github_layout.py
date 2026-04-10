@@ -180,10 +180,6 @@ def fig_github_interest_metrics(gh_interest_df):
     return fig
 
 
-import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
-
 def fig_github_workstream_pie(gh_df):
     """Pie chart with short labels on slices, full name in legend & hover, consistent 1-decimal %."""
     def _empty_fig():

@@ -3,9 +3,9 @@ Dash callbacks for the EPMC analytics page.
 Mirrors the pattern used by pypi_callbacks.py and github_callbacks.py.
 """
 
-from dash import Input, Output, State, dcc
+from dash import Input, Output, State
 import dash_bootstrap_components as dbc
-from dash import html
+from dash import html, dcc
 import pandas as pd
 import json
 import re
@@ -25,20 +25,6 @@ def register_epmc_callbacks(app):
      citations, unique_authors_count, top_authors_default) = prepare_epmc_data()
 
     search_columns = [c for c in entries_df.columns] if not entries_df.empty else []
-
-    def normalize_affiliation_values(value):
-        """Normalize affiliation value (string/list/dict) to list of strings."""
-        aff_list = value if isinstance(value, list) else [value]
-        normalized = []
-        for item in aff_list:
-            if isinstance(item, dict):
-                text = item.get("name") or item.get("text") or item.get("label") or ""
-            else:
-                text = str(item) if item else ""
-            text = text.strip() if isinstance(text, str) else ""
-            if text:
-                normalized.append(text)
-        return normalized
 
     def get_filtered_sorted_df(search_value, year_filter=None, affiliation_filter=None):
         """Apply same filtering/sorting logic as update_epmc_table."""

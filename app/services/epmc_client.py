@@ -70,22 +70,6 @@ def get_all_paginated(endpoint, limit=1000):
 # Data-fetching helpers – one per EPMC endpoint
 # ---------------------------------------------------------------------------
 
-def get_all_latest_entries():
-    """
-    Fetch the latest EPMC entries from the backend.
-    Returns:
-        list[dict]: raw JSON list of entry records.
-    """
-    data = get_all_paginated(api_constants.EPMC_ALL_LATEST_ENTRIES)
-    # If the paginated getter returned a dict (non-paginated response), try to
-    # extract a list from common keys, otherwise wrap single dict in list.
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        return data.get("results") or data.get("items") or [data]
-    return []
-
-
 def get_all_articles(limit=1000):
     """Fetch all EPMC articles using limit/skip pagination."""
     data = get_all_paginated(api_constants.EPMC_ALL_ARTICLES, limit=limit)
@@ -169,23 +153,20 @@ def prepare_epmc_data():
     """
     if "result" in _epmc_cache:
         return _epmc_cache["result"]
-    # Fetch all API data upfront (7 calls total, no redundancy)
-    if hasattr(api_constants, 'EPMC_ALL_ARTICLES'):
-        raw_entries = get_all_articles(limit=1000)
-    else:
-        raw_entries = get_all_latest_entries()
+    # Fetch all API data upfront (no redundancy)
+    raw_entries = get_all_articles(limit=1000)
     total_entries = len(raw_entries)
     
     raw_countries = get_affiliation_countries_count()
     raw_authors = get_all_pmc_authors()
     
-    unique_authors_resp = get_json(api_constants.EPMC_UNIQUE_AUTHOR_COUNT) if hasattr(api_constants, 'EPMC_UNIQUE_AUTHOR_COUNT') else {}
+    unique_authors_resp = get_json(api_constants.EPMC_UNIQUE_AUTHOR_COUNT)
     unique_authors_count = unique_authors_resp.get("unique_authors", 0) if isinstance(unique_authors_resp, dict) else 0
     
-    top_authors_resp = get_json(api_constants.EPMC_TOP_AUTHORS) if hasattr(api_constants, 'EPMC_TOP_AUTHORS') else []
+    top_authors_resp = get_json(api_constants.EPMC_TOP_AUTHORS)
     top_authors_data = top_authors_resp if isinstance(top_authors_resp, list) else []
     
-    citations = get_json(api_constants.EPMC_CITATION_OVER_YEARS) if hasattr(api_constants, 'EPMC_CITATION_OVER_YEARS') else []
+    citations = get_json(api_constants.EPMC_CITATION_OVER_YEARS)
 
     # Build entries DataFrame
     entries_df = pd.DataFrame()

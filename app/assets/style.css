@@ -50,3 +50,23 @@ text {
     word-break: break-word;
     line-height: 1.35;
 }
+
+/* Keep DataTable export and pagination controls on one bottom row. */
+.datatable-controls-inline .dash-table-container {
+    position: relative;
+    padding-bottom: 40px;
+}
+
+.datatable-controls-inline .dash-spreadsheet-menu {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    margin: 0;
+}
+
+.datatable-controls-inline .previous-next-container {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+}

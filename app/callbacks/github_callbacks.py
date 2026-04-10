@@ -1,6 +1,4 @@
-from datetime import datetime
 from dash import Input, Output
-from app import app
 from app.services.github_client import prepare_github_data
 from app.layouts.github_layout import (
     fig_github_activity_bar,
@@ -9,9 +7,8 @@ from app.layouts.github_layout import (
     fig_github_workstream_pie,
 )
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
 import plotly.express as px
-from dash import html, dcc, dash_table
+from dash import html
 import pandas as pd
 import numpy as np
 

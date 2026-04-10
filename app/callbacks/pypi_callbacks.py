@@ -22,10 +22,11 @@ def register_pypi_callbacks(app):
         df = _pypi_df
         if not search_value:
             return df.reset_index().to_dict('records')
-        filtered = df.reset_index()[df.reset_index().apply(
-            lambda row: row.astype(str).str.contains(search_value, case=True).any(), axis=1
-        )]
-        return filtered.to_dict('records')
+        indexed = df.reset_index()
+        mask = indexed.apply(
+            lambda col: col.astype(str).str.contains(search_value, case=False, na=False)
+        ).any(axis=1)
+        return indexed[mask].to_dict('records')
 
     # -----------------------
     # Update bar chart based on filters

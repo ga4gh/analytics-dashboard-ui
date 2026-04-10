@@ -5,7 +5,6 @@ Mirrors the pattern used by pypi_layout.py and github_layout.py.
 
 import json
 import pandas as pd
-from plotly import data
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html, dcc, dash_table
@@ -201,7 +200,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
     Build and return the full EPMC page layout using cached data (no additional API calls).
     """
     # Compute most-cited publications inline using `cited_by_count` from entries_df
-    most_cited_children = []
+    most_cited_rows = []
     try:
         candidates = []
         if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
@@ -227,23 +226,17 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
             counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
             for _, r in counts_df.iterrows():
                 doi_url = r.get("doi_url")
-                title_element = (
-                    html.A(r["title"], href=doi_url, target="_blank", rel="noopener noreferrer")
-                    if doi_url
-                    else r["title"]
-                )
-                most_cited_children.append(
-                    html.Div(
-                        [title_element, f" — {int(r['cited_by_count'])}"],
-                        className="epmc-most-cited-item",
-                        style={"marginBottom": "8px", "fontSize": "14px"},
-                    )
+                title = str(r.get("title") or "")
+                article_link = f"[View]({doi_url})" if doi_url else ""
+                most_cited_rows.append(
+                    {
+                        "article_link": article_link,
+                        "title": title,
+                        "cited_by_count": int(r["cited_by_count"]),
+                    }
                 )
     except Exception:
-        most_cited_children = []
-
-    if not most_cited_children:
-        most_cited_children.append(html.Div("No citation data available", style={"fontSize": "14px"}))
+        most_cited_rows = []
     return dbc.Container(
         [
 
@@ -316,20 +309,53 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
-                                # build a simple vertical list of "Title — count"
                                 html.Div(
                                     [
                                         html.H5("Most Cited GA4GH Publications", style={"marginBottom": "12px"}),
                                         html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                         html.Div(
-                                            most_cited_children,
-                                            id="epmc-most-cited-list",
-                                            style={"overflowY": "auto", "overflowX": "hidden", "flex": "1 1 auto", "paddingRight": "8px"},
+                                            dash_table.DataTable(
+                                                id="epmc-most-cited-table",
+                                                columns=[
+                                                    {"name": "Article", "id": "article_link", "presentation": "markdown"},
+                                                    {"name": "Title", "id": "title"},
+                                                    {"name": "Citations", "id": "cited_by_count"},
+                                                ],
+                                                data=most_cited_rows,
+                                                page_size=20,
+                                                style_table={"height": "100%", "overflowX": "auto", "overflowY": "auto"},
+                                                style_cell={
+                                                    "textAlign": "left",
+                                                    "padding": "4px 6px",
+                                                    "fontSize": "13px",
+                                                    "lineHeight": "1.15",
+                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                    "whiteSpace": "normal",
+                                                },
+                                                style_header={
+                                                    "backgroundColor": "#2c3e50",
+                                                    "color": "white",
+                                                    "fontWeight": "bold",
+                                                    "padding": "5px 6px",
+                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                },
+                                                style_data_conditional=[
+                                                    {"if": {"column_id": "article_link"}, "width": "8%", "textAlign": "center"},
+                                                    {"if": {"column_id": "title"}, "width": "76%"},
+                                                    {"if": {"column_id": "cited_by_count"}, "width": "16%", "textAlign": "right"},
+                                                ],
+                                                css=[
+                                                    {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.1;"},
+                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": "display:inline-block; padding:2px 8px; border:1px solid #0d6efd; background-color:#0d6efd; color:#fff; border-radius:0.375rem; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1;"},
+                                                ],
+                                                markdown_options={"link_target": "_blank"},
+                                            ),
+                                            style={"flex": "1 1 auto", "minHeight": 0},
                                         ),
                                     ],
                                     style={"display": "flex", "flexDirection": "column", "height": "100%"}
                                 )
-                            ),
+                            , style={"height": "100%"}),
                             className="mb-4 shadow-sm h-100 w-100 epmc-most-cited-card",
                             style={"borderRadius": "12px"},
                         ),
