@@ -183,7 +183,7 @@ def register_epmc_callbacks(app):
             if not full:
                 continue
             aff_nums = author_id_to_affs.get(a.get("id"), [])
-            superscript = f" {','.join(str("[") + str(n) + "]" for n in sorted(aff_nums))}" if aff_nums else ""
+            superscript = (" " + ",".join(f"[{n}]" for n in sorted(aff_nums))) if aff_nums else ""
             author_items.append(f"{full}{superscript}")
 
         first_author_text = f"{author_items[0]}, et al." if len(author_items) > 1 else (author_items[0] if author_items else "N/A")
@@ -254,7 +254,7 @@ def register_epmc_callbacks(app):
                 
                 html.Div([
                     html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
-                    html.Span("1. first_aff_component"),
+                    first_aff_component,
                 ], id="aff-collapse-button", n_clicks=0, style={
                     "color": "#0d9cf0",
                     "cursor": "pointer",
