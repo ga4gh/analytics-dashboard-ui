@@ -1,4 +1,4 @@
-"""Combined cross-source layout for cumulative yearly growth charts."""
+"""Map of registered GA4GH services"""
 
 import numpy as np
 import pandas as pd
