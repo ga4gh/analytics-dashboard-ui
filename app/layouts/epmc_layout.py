@@ -158,9 +158,10 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
 def make_citations_figure(data):
     citations_over_years = data.get("citations_over_years", [])
     
-    years = [r.get("pub_year") for r in citations_over_years if r.get("pub_year") > 2013]
-    year_counts = [r.get("year_count") for r in citations_over_years]
-    cumulative_counts = [r.get("commulative_count") for r in citations_over_years if r.get("pub_year") > 2013]
+    filtered = [r for r in citations_over_years if r.get("pub_year") and r.get("pub_year") > 2013]
+    years = [r.get("pub_year") for r in filtered]
+    year_counts = [r.get("year_count") for r in filtered]
+    cumulative_counts = [r.get("commulative_count") for r in filtered]
 
     fig = go.Figure()
 
@@ -169,7 +170,15 @@ def make_citations_figure(data):
             x=years,
             y=cumulative_counts,
             mode="lines+markers",
-            name="Cumulative Citations"
+            name="Cumulative Citations",
+            line={"color": "#2ECC71"},
+            marker={"size": 7, "color": "#2ECC71"},
+            customdata=list(zip(year_counts)),
+            hovertemplate=(
+                "Year: %{x}<br>"
+                "New citations: %{customdata[0]}<br>"
+                "Total citations to date: %{y}<extra></extra>"
+            ),
         )
     )
 
@@ -283,23 +292,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
-                        md=6,
-                    ),
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                html.Figure([
-                                    dcc.Graph(
-                                        id = "epmc-citations-over-years",
-                                        figure = make_citations_figure(citations)
-                                    ),
-                                    html.Figcaption("Cumulative number of GA4GH-related article citations per year.")
-                                ])
-                            ),
-                            className="mb-4 shadow-sm",
-                            style={"borderRadius": "12px"},
-                        ),
-                        md=6,
+                        md=12,
                     ),
                 ]
             ),

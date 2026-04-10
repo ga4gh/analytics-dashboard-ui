@@ -97,7 +97,7 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
 
     fig.update_layout(
         template="simple_white",
-        title={"text": "Most Recently Updated GA4GH-Related Repositories", "x": 0.0},
+        title={"text": "Most active GA4GH Repositories by Work Stream", "x": 0.0},
         barmode="group",
         xaxis=dict(tickangle=-45),
         margin=dict(l=40, r=20, t=80, b=150),
@@ -336,7 +336,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                             dbc.CardBody(
                                 html.Figure([
                                     dcc.Graph(id="gh-activity-status-pie"),
-                                    html.Figcaption("Relative proportion of GA4GH GitHub repositories at each activity status, which is determined from the number of days that have elapsed since the last update. High: last update less than 6 months ago; Moderate: last update 6 months to 2 years ago; Low: last update more than 2 years ago; Archived: repository is archived.")
+                                    html.Figcaption("Relative proportion of GA4GH GitHub repositories at each activity status, which is determined from the number of days that have elapsed since the last update. High: last update less than 6 months ago; Moderate: last update 6 months to 2 years ago; Low: last update more than 2 years ago.")
                                 ])
                             ),
                             className="mb-4 shadow-sm",

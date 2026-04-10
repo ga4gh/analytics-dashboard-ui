@@ -96,6 +96,7 @@ _combined_layout = get_combined_layout(
     _gh_df,
     _epmc_entries_df,
     _pypi_first_releases,
+    _epmc_citations_df,
 )
 
 register_page(
