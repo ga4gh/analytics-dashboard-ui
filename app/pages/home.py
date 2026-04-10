@@ -21,6 +21,10 @@ from app.services.github_client import prepare_github_data
 from app.layouts.epmc_layout import get_epmc_layout
 from app.layouts.combined_layout import get_combined_layout
 
+# Service Map module
+from app.layouts.service_map_layout import get_service_map_layout
+from app.services.service_map_client import prepare_service_map_data
+
 # Data tables layout (moved to bottom of page)
 from app.layouts.datatables_layout import get_datatables_layout
 
@@ -76,6 +80,9 @@ _pypi_first_releases = pd.DataFrame.from_records(get_first_releases())
 # Prepare GitHub module data
 _gh_df, _, _, _, _gh_total, workstreams = prepare_github_data()
 
+# Prepare Service Map module data
+standards_df, services_df, deployments_df = prepare_service_map_data()
+
 # Build EPMC layout using consolidated data
 _epmc_layout = get_epmc_layout(
     _epmc_entries_df,
@@ -98,6 +105,9 @@ _combined_layout = get_combined_layout(
     _pypi_first_releases,
     _epmc_citations_df,
 )
+
+# Prepare service map layout
+_service_map_layout = get_service_map_layout(standards_df, services_df, deployments_df)
 
 register_page(
     __name__,
@@ -605,6 +615,7 @@ layout = dbc.Container(
         ),
             
         # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
+        dbc.Row([dbc.Col(_service_map_layout, md=12)], className="mt-4"),
         dbc.Row([dbc.Col(_combined_layout, md=12)], className="mt-4"),
         dbc.Row([dbc.Col(_epmc_layout, md=12)], className="mt-4"),
         dbc.Row([dbc.Col(_github_layout, md=12)], className="mt-4"),
