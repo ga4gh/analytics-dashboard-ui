@@ -1,4 +1,5 @@
 from dash import Input, Output, State, ctx
+from dash import html
 from app.services.pypi_client import get_pypi_details, get_total_packages
 import dash_bootstrap_components as dbc
 
@@ -63,10 +64,16 @@ def register_home_callbacks(app):
 
     @app.callback(
         Output("collapse", "is_open"),
-        [Input("collapse-button", "n_clicks")],
-        [State("collapse", "is_open")],
+        Output("collapse-button", "children"),
+        Input("collapse-button", "n_clicks"),
+        State("collapse", "is_open"),
     )
     def toggle_collapse(n, is_open):
-        if n:
-            return not is_open
-        return is_open
+        new_state = not is_open if n else is_open
+
+        label = [
+            html.Span("▶ Show methods and terms ", style={"marginRight": "4px"}),
+            html.Span("▲" if new_state else "▼", style={"fontSize": "12px"}),
+        ]
+
+        return new_state, label

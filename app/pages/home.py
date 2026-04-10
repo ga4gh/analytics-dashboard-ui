@@ -258,14 +258,25 @@ layout = dbc.Container(
 
         # ---------- METHODS CARDS -----------
         html.Div(
-            [
-                dbc.Button(
-                    "Show methods and terms",
-                    id="collapse-button",
-                    className="mb-3",
-                    color="primary",
-                    n_clicks=0,
-                ),
+                [
+                    html.Div(
+                        [
+                            html.Span("▶ Show methods and terms ", style={"marginRight": "4px"}),
+                            html.Span("▼", style={"fontSize": "12px"}),
+                        ],
+                        id="collapse-button",
+                        n_clicks=0,
+                        style={
+                            "color": "#0d9cf0",
+                            "cursor": "pointer",
+                            "fontWeight": "600",
+                            "fontSize": "16px",
+                            "display": "inline-flex",
+                            "alignItems": "center",
+                            "gap": "4px",
+                            "marginBottom": "1rem",
+                        }
+                    ),
                 dbc.Collapse(
                     html.Div(
                         [
