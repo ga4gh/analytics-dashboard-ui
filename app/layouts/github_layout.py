@@ -210,8 +210,8 @@ def fig_github_workstream_pie(gh_df):
         "Tech/TASC": "TT",
         "Large Scale Genomics": "LSG",
         "Clinical and Phenotypic": "Clin-Pheno",
-        "Data Discovery":"DD",
-        "Regulatory and Ethics":"RE",
+        "Discovery":"DD",
+        "Regulatory and Ethics":"REWS",
         "Data Security":"DS",
         "Data Use and Researcher Identity":"DURI",
     }
