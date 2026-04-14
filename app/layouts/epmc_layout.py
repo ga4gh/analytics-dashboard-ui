@@ -5,6 +5,7 @@ Mirrors the pattern used by pypi_layout.py and github_layout.py.
 
 import json
 import pandas as pd
+import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html, dcc, dash_table
@@ -23,20 +24,18 @@ def fig_epmc_countries_pie(countries_df):
     if countries_df is None or countries_df.empty:
         return go.Figure().update_layout(title="No country data available")
 
-    # Determine country / count columns robustly
+    # --- Column handling ---
     cols = list(countries_df.columns)
     if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
-        # match actual column names (case-sensitive) by lowercasing lookup
         country_col = next(c for c in cols if c.lower() == "country")
         count_col = next(c for c in cols if c.lower() == "count")
         df = countries_df[[country_col, count_col]].copy()
         df.columns = ["country", "count"]
     else:
-        # fallback: assume first col = country, second col = count
         df = countries_df.iloc[:, :2].copy()
         df.columns = ["country", "count"]
 
-    # Normalize country names and filter against whitelist (case-insensitive)
+    # --- Clean + filter ---
     whitelist = {c.strip().lower() for c in COUNTRIES_WHITELIST}
     df["country_normalized"] = df["country"].astype(str).str.strip()
     df["country_lower"] = df["country_normalized"].str.lower()
@@ -45,71 +44,58 @@ def fig_epmc_countries_pie(countries_df):
     if df.empty:
         return go.Figure().update_layout(title="No country data available (after filtering)")
 
-    # Build the pie: make the pie visually larger by decreasing hole and increasing height
-    # Only show the country label next to a slice if its percent > 5%
     counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
     total = counts.sum()
     if total <= 0:
         return go.Figure().update_layout(title="No country data available (zero total)")
 
-    # Attach numeric counts to dataframe and sort descending so the largest
-    # slices appear first (decreasing size). We set sort=False on the Pie
-    # trace so Plotly preserves the order we supply.
     df = df.copy()
     df["count"] = counts
     df = df.sort_values("count", ascending=False).reset_index(drop=True)
 
-    percents = (df["count"] / total * 100)
-    # prepare text with one decimal place for percent and show country for slices > 5%
-    slice_text = []
-    hover_text = []
-    for cn, cnt, pct in zip(df["country_normalized"], df["count"], percents):
-        pct_fmt = f"{pct:.1f}%"
-        if pct > 5.0:
-            slice_text.append(f"{cn}<br>{pct_fmt}")
-            textpos = "outside"
-        else:
-            slice_text.append(f"{pct_fmt}")
-            textpos = "inside"
-        hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
+    # --- Percent + labels ---
+    percents = df["count"] / total * 100.0
+    text_labels = [cn if p > 5.0 else "" for cn, p in zip(df["country_normalized"], percents)]
+    text_positions = ["outside" if t else "inside" for t in text_labels]
 
-    # compute textposition list (outside for labeled slices, inside otherwise)
-    text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
+    # --- THEME COLORS ---
+    colors = pio.templates[pio.templates.default].layout.colorway
+
+    # --- Subtle explode (top 3 only) ---
+    pull = [0.06 if i < 3 else 0 for i in range(len(df))]
 
     fig = go.Figure(
         data=[
             go.Pie(
                 labels=df["country_normalized"],
                 values=df["count"],
-                hole=0.2,
-                text=slice_text,
-                textinfo="text",
-                hovertext=hover_text,
-                hoverinfo="text",
+                hole=0.25,  # slightly more modern donut
                 sort=False,
+                text=text_labels,
+                textinfo="percent+text",
                 textposition=text_positions,
-                # make pie larger inside figure
-                domain=dict(x=[0, 1], y=[0, 0.9])  # y max < 1 to leave space for legend
+                hovertemplate="%{label}<br>%{value} (%{percent})<extra></extra>",
+
+                marker=dict(
+                    colors=colors,
+                    line=dict(color="white", width=2),  # 👈 clean separation
+                ),
+
+                pull=pull,  # 👈 subtle explode
             )
         ]
     )
+
     fig.update_layout(
-        title={"text": "Affiliation - Countries Represented", "x": 0.5},
-        template="simple_white",
+        title={"text": "Affiliation Countries Represented", "x": 0.5},
         height=700,
-        margin=dict(l=20, r=20, t=80, b=80),
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.1,
-            xanchor="center",
-            x=0.5
-        )
+        margin=dict(l=20, r=20, t=80, b=20),
     )
+
     return fig
 
 
-def fig_epmc_top_authors_bar(authors_data, top_n=15):
+def fig_epmc_top_authors_bar(authors_data, top_n=30):
     """Bar chart – top N authors by publication count."""
     if not authors_data:
         return go.Figure().update_layout(title="No author data available")
@@ -134,7 +120,6 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
         y="author",
         orientation="h",
         title=f"Top {top_n} Europe PMC Authors",
-        template="simple_white",
         labels=labels,
     )
 
@@ -146,7 +131,7 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
         ),
         xaxis=dict(title="count"),
         margin=dict(l=240, r=40, t=60, b=40),
-        height=max(400, 25 * len(df)),
+        height=700,
         xaxis_title = "Publication Count",
         yaxis_title = "Author Name",
     )
@@ -154,38 +139,43 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
     return fig
 
 
-def make_citations_figure(data):
-    citations_over_years = data.get("citations_over_years", [])
+def get_citations_by_year(data: dict) -> list[dict]:
+    """Aggregate citations by pub_year, counting entries per year."""
+    citations = data.get("citations", []) if isinstance(data, dict) else []
+    if not citations:
+        return []
     
-    filtered = [r for r in citations_over_years if r.get("pub_year") and r.get("pub_year") > 2013]
-    years = [r.get("pub_year") for r in filtered]
-    year_counts = [r.get("year_count") for r in filtered]
-    cumulative_counts = [r.get("commulative_count") for r in filtered]
+    counts_by_year = {}
+    for row in citations:
+        py = row.get("pub_year")
+        if py is not None:
+            counts_by_year[py] = counts_by_year.get(py, 0) + 1
+    
+    return [{"pub_year": year, "total_citations": count} for year, count in sorted(counts_by_year.items())]
 
+
+def make_citations_figure(data):
+    result = get_citations_by_year(data)
+    print(result)
+    years = [r["pub_year"] for r in result]
+    totals = [r["total_citations"] for r in result]
+    
     fig = go.Figure()
 
     fig.add_trace(
         go.Scatter(
             x=years,
-            y=cumulative_counts,
+            y=totals,
             mode="lines+markers",
-            name="Cumulative Citations",
-            line={"color": "#2ECC71"},
-            marker={"size": 7, "color": "#2ECC71"},
-            customdata=list(zip(year_counts)),
-            hovertemplate=(
-                "Year: %{x}<br>"
-                "New citations: %{customdata[0]}<br>"
-                "Total citations to date: %{y}<extra></extra>"
-            ),
+            name="Citations"
         )
     )
 
     fig.update_layout(
-        title="Europe PMC Cumulative Citations Per Year",
+        title="Europe PMC Citations Per Year",
         xaxis_title="Year",
-        yaxis_title="Cumulative Citations",
-        template="simple_white"
+        yaxis_title="Citations Count",
+        height=700,
     )
 
     return fig
@@ -199,44 +189,51 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
     """
     Build and return the full EPMC page layout using cached data (no additional API calls).
     """
-    # Compute most-cited publications inline using `cited_by_count` from entries_df
-    most_cited_rows = []
-    try:
-        candidates = []
-        if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
-            for raw in entries_df["raw_json"]:
-                try:
-                    obj = json.loads(raw)
-                except Exception:
-                    continue
-                title = obj.get("title") or obj.get("name") or ""
-                # prefer explicit cited_by_count field, fall back to 0
-                cited = obj.get("cited_by_count")
-                try:
-                    cited_count = int(cited) if cited is not None else 0
-                except Exception:
-                    cited_count = 0
-                doi = obj.get("doi") or ""
-                doi_url = f"https://doi.org/{doi}" if doi else None
-                candidates.append({"title": title, "cited_by_count": cited_count, "doi_url": doi_url})
+    # Compute most-cited publications inline (no separate helper function)
+    most_cited_children = []
+    # Normalize citations payload (accept list or dict containing list)
+    uc_list = []
+    if isinstance(citations, list):
+        uc_list = citations
+    elif isinstance(citations, dict):
+        for k in ("results", "items", "citations", "data"):
+            if k in citations and isinstance(citations[k], list):
+                uc_list = citations[k]
+                break
 
-        # sort descending and take top 20
-        if candidates:
-            counts_df = pd.DataFrame.from_records(candidates)
-            counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
+    uc_df = pd.DataFrame.from_records(uc_list) if uc_list else pd.DataFrame()
+    if not uc_df.empty and "article_id" in uc_df.columns:
+            # Count unique citations per article_id (prefer unique citation_id)
+            if "citation_id" in uc_df.columns:
+                counts = uc_df.groupby(uc_df["article_id"].astype(str))["citation_id"].nunique()
+            else:
+                counts = uc_df["article_id"].astype(str).value_counts()
+            counts_df = counts.reset_index()
+            counts_df.columns = ["article_id", "citation_count"]
+            
+            # Map article_id to title from entries_df
+            titles_map = {}
+            if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
+                for raw in entries_df["raw_json"]:
+                    try:
+                        obj = json.loads(raw)
+                        aid = str(obj.get("id") or obj.get("article_id") or "")
+                        if aid:
+                            titles_map[aid] = obj.get("title") or obj.get("name") or aid
+                    except Exception:
+                        pass
+            
+            counts_df["title"] = counts_df["article_id"].map(lambda x: titles_map.get(x, x))
+            counts_df = counts_df.sort_values("citation_count", ascending=False).head(20)
+            
             for _, r in counts_df.iterrows():
-                doi_url = r.get("doi_url")
-                title = str(r.get("title") or "")
-                article_link = f"[View]({doi_url})" if doi_url else ""
-                most_cited_rows.append(
-                    {
-                        "article_link": article_link,
-                        "title": title,
-                        "cited_by_count": int(r["cited_by_count"]),
-                    }
+                most_cited_children.append(
+                    html.Div(f"{r['title']} — {int(r['citation_count'])}", 
+                            style={"marginBottom": "8px", "fontSize": "14px"})
                 )
-    except Exception:
-        most_cited_rows = []
+    
+    if not most_cited_children:
+        most_cited_children.append(html.Div("No citation data available", style={"fontSize": "14px"}))
     return dbc.Container(
         [
 
@@ -260,7 +257,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                 },
                             ),
                         ],
-                        style={"width": "50%"},
+                        style={"width": "45%"},
                     ),
                 ],
                 style={
@@ -276,16 +273,22 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(
-                                html.Figure([
-                                    dcc.Graph(id="epmc-authors-bar"),
-                                    html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
-                                ])
-                            ),
+                            dbc.CardBody(dcc.Graph(id="epmc-authors-bar")),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
-                        md=12,
+                        md=6,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(dcc.Graph(
+                                id = "epmc-citations-over-years",
+                                figure = make_citations_figure(citations)
+                            )),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
                     ),
                 ]
             ),
@@ -294,72 +297,30 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                 [
                     dbc.Col(
                         dbc.Card(
-                            dbc.CardBody(
-                                html.Figure([
-                                    dcc.Graph(id="epmc-countries-pie"),
-                                    html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author’s affiliation for all publications.")
-                                ])
-                            ),
-                            className="mb-4 shadow-sm h-100 w-100",
+                            dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
+                            className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
-                        className="d-flex",
                         md=6,
                     ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
+                                # build a simple vertical list of "Title — count"
                                 html.Div(
                                     [
                                         html.H5("Most Cited GA4GH Publications", style={"marginBottom": "12px"}),
-                                        html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                         html.Div(
-                                            dash_table.DataTable(
-                                                id="epmc-most-cited-table",
-                                                columns=[
-                                                    {"name": "Article", "id": "article_link", "presentation": "markdown"},
-                                                    {"name": "Title", "id": "title"},
-                                                    {"name": "Citations", "id": "cited_by_count"},
-                                                ],
-                                                data=most_cited_rows,
-                                                page_size=20,
-                                                style_table={"height": "100%", "overflowX": "auto", "overflowY": "auto"},
-                                                style_cell={
-                                                    "textAlign": "left",
-                                                    "padding": "4px 6px",
-                                                    "fontSize": "13px",
-                                                    "lineHeight": "1.15",
-                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
-                                                    "whiteSpace": "normal",
-                                                },
-                                                style_header={
-                                                    "backgroundColor": "#2c3e50",
-                                                    "color": "white",
-                                                    "fontWeight": "bold",
-                                                    "padding": "5px 6px",
-                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
-                                                },
-                                                style_data_conditional=[
-                                                    {"if": {"column_id": "article_link"}, "width": "8%", "textAlign": "center"},
-                                                    {"if": {"column_id": "title"}, "width": "76%"},
-                                                    {"if": {"column_id": "cited_by_count"}, "width": "16%", "textAlign": "right"},
-                                                ],
-                                                css=[
-                                                    {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.1;"},
-                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": "display:inline-block; padding:2px 8px; border:1px solid #0d6efd; background-color:#0d6efd; color:#fff; border-radius:0.375rem; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1;"},
-                                                ],
-                                                markdown_options={"link_target": "_blank"},
-                                            ),
-                                            style={"flex": "1 1 auto", "minHeight": 0},
+                                            most_cited_children,
+                                            id="epmc-most-cited-list",
+                                            style={"maxHeight": "700px", "overflowY": "auto"},
                                         ),
-                                    ],
-                                    style={"display": "flex", "flexDirection": "column", "height": "100%"}
+                                    ]
                                 )
-                            , style={"height": "100%"}),
-                            className="mb-4 shadow-sm h-100 w-100 epmc-most-cited-card",
+                            ),
+                            className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},
                         ),
-                        className="d-flex",
                         md=6,
                     ),
                 ]

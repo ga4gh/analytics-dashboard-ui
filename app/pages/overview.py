@@ -47,7 +47,6 @@ def plot_indicators(pm_df, gh_df, pypi_df,
     )
 
     fig.update_layout(
-        template="simple_white",
         title={
             "text": "Total GA4GH Data Points Per Source (with 2025 Increases)",
             "x": 0.5,
