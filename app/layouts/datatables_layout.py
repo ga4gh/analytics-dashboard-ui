@@ -5,6 +5,9 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 
 
+DATATABLE_FONT_FAMILY = "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif"
+
+
 def get_datatables_layout(
     epmc_entries_df,
     gh_df,
@@ -138,11 +141,13 @@ def get_datatables_layout(
                                         "textAlign": "left",
                                         "padding": "10px",
                                         "whiteSpace": "normal",
+                                        "fontFamily": DATATABLE_FONT_FAMILY,
                                     },
                                     style_header={
                                         "backgroundColor": "#2c3e50",
                                         "color": "white",
                                         "fontWeight": "bold",
+                                        "fontFamily": DATATABLE_FONT_FAMILY,
                                     },
                                 ),
                                 className="datatable-controls-inline",
@@ -189,8 +194,8 @@ def get_datatables_layout(
                             selected_rows=[0],
                             page_size=10,
                             style_table={"overflowX": "auto"}, 
-                            style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", }, 
-                            style_header={ "backgroundColor": "#2c3e50", "color": "white", "fontWeight": "bold" }
+                            style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", "fontFamily": DATATABLE_FONT_FAMILY }, 
+                            style_header={ "backgroundColor": "#2c3e50", "color": "white", "fontWeight": "bold", "fontFamily": DATATABLE_FONT_FAMILY }
                         ),
                         className="datatable-controls-inline",
                     )
@@ -242,11 +247,13 @@ def get_datatables_layout(
                                 "textAlign": "left",
                                 "padding": "10px",
                                 "whiteSpace": "normal",
+                                "fontFamily": DATATABLE_FONT_FAMILY,
                             },
                             style_header={
                                 "backgroundColor": "#2c3e50",
                                 "color": "white",
-                                "fontWeight": "bold"
+                                "fontWeight": "bold",
+                                "fontFamily": DATATABLE_FONT_FAMILY,
                             }
                         ),
                         className="datatable-controls-inline",

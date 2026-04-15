@@ -85,7 +85,6 @@ def register_github_callbacks(app):
                     "Open Repository",
                     href=repo["repo_link"],
                     target="_blank",
-                    color="success"
                 )
 
             ])
