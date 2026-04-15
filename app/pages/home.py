@@ -117,154 +117,114 @@ register_page(
 )
 
 
-def indicator_card(value, label, color, small=False):
-    
+def indicator_card(value, label, color_class):
     return dbc.Card(
         dbc.CardBody(
             [
-                html.H3(
-                    value,
-                    style={
-                        "margin": "0",
-                        "fontSize": "26px",
-                        "fontWeight": "600",
-                        "color": "#2C3E50",
-                    },
-                ),
-                html.Div(label, style={"fontSize": "14px", "color": "#77787B"}),
+                html.H3(value, className="indicator-value"),
+                html.Div(label, className="indicator-label"),
             ],
-            style={"padding": "12px 16px"},
+            className="indicator-card-body",
         ),
-        style={
-            "borderRadius": "10px",
-            "border": "1px solid #E6E6E6",
-            "borderRight": f"12px solid {color}",
-            "height": "72px",
-        },
-        className="shadow-sm",
+        className=f"indicator-card shadow-sm {color_class}",
     )
 
 
 layout = dbc.Container(
     [
-        dbc.Row(
-            [
-                # ---------- LOGO ----------
-                
-
-                # ---------- TITLE ----------
-                dbc.Col(
-                    html.H1(
-                        "GA4GH Analytics Dashboard",
-                        style={
-                            "fontSize": "56px",
-                            "fontWeight": "700",
-                            "color": "#2C3E50",
-                            "marginBottom": "25px",
-                            "marginTop": "30px",
-                        },
-                        className="text",
-                    ),
-                    md=9,
-                    className="d-flex align-items-center",
-                ),
-                dbc.Col(
-                    html.Img(
-                        src="/assets/logo-full-color.svg",
-                        style={
-                            "width": "100%",
-                            "maxHeight": "120px",
-                            "objectFit": "contain",
-                        },
-                    ),
-                    md=3,
-                    className="d-flex align-items-center",
-                ),
-            ],
-            align="center",
+       html.Div(
+    [
+        # ---------- TOP BAR ----------
+dbc.Row(
+    [
+        dbc.Col(
+            html.Img(
+                src="/assets/logo-full-color.svg",
+                className="logo-img",
+            ),
+            width="auto",
+            className="logo-col",
         ),
 
-        
-        
-        # ---------- DESCRIPTION ----------
-        dbc.Row(
+        dbc.Col(
+            html.Div(
+                [
+                    html.A("Overview", href="#overview", className="menu-link"),
+                    html.A("Service Map", href="#servicemap", className="menu-link"),
+                    html.A("Cumulative Metrics", href="#metrics", className="menu-link"),
+                    html.A("EPMC", href="#epmc", className="menu-link"),
+                    html.A("GitHub", href="#github", className="menu-link"),
+                    html.A("PyPI", href="#pypi", className="menu-link"),
+                    html.A("Tables", href="#tables", className="menu-link"),
+                ],
+                className="menu-container",
+            ),
+            className="menu-col d-flex justify-content-end",
+        ),
+    ],
+    className="top-bar top-bar-row",  # 👈 add this
+),
+
+      # ---------- HERO ----------
+html.Div(
+    [
+        html.Div(
             [
-
-
-
-                dbc.Col(
-                    [
-                        html.P(
-                            "Analytics are important for standards organisations like GA4GH "
-                            "as it helps to make data-driven decisions. The GA4GH Tech Team "
-                            "is building an analytics dashboard to enable our community to "
-                            "quantify the impact of standards, policy frameworks and products "
-                            "that have been actively developed over the last 12 years.",
-                            style={
-                                "fontSize": "18px",
-                                "color": "#6C757D",
-                                "lineHeight": "1.6",
-                            },
-                        ),
-
-                        html.P(
-                            "Collaborators across Work Streams can use this dashboard to "
-                            "understand how their contributions advance genomic data sharing, "
-                            "gather intelligence to guide future product development, and "
-                            "identify implementation opportunities.",
-                            style={
-                                "fontSize": "18px",
-                                "color": "#6C757D",
-                                "lineHeight": "1.6",
-                            },
-                        ),
-                    ],
-                    md=8,
+                html.H1(
+                    "GA4GH Analytics Dashboard",
+                    className="dashboard-title",
                 ),
 
-                
+                html.P(
+                    "The GA4GH Analytics Dashboard is a one-stop resource for understanding the real-world impact of GA4GH standards, policy frameworks, and products. Drawing on data from GitHub, PyPI, and PubMed, it tracks how GA4GH's work has been adopted, cited, and built upon across the genomics community.",
+                    className="dashboard-summary",
+                ),
 
+                html.P(
+                    "Whether you're a Work Stream contributor looking to understand how your efforts are landing, a product lead shaping the next development cycle, or a stakeholder making the case for genomic data sharing — this dashboard gives you the evidence to do it. Explore trends, spot",
+                    className="dashboard-summary",
+                ),
             ],
-            align="center",
-        ),
+            className="hero-content-box",
+        )
+    ],
+    className="hero-section",
+    id="overview",
+),
+    ]
+),
 
-        html.Br(),
+        html.Div(className="section-spacer"),
 
         # ---------- INFO BADGES ----------
         dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Badge(
-                        "Data Updated: 2026-04-08",
-                        color="light",
-                        text_color="dark",
-                        className="p-2",
-                    ),
-                    width="auto",
-                ),
+    [
+        dbc.Col(
+            dbc.Badge(
+                "Data Updated: 2026-03-13",
+                className="info-badge",
+            ),
+            width="auto",
+        ),
 
-                dbc.Col(
-                    dbc.Badge(
-                        "Created by: GA4GH Technical Team",
-                        color="light",
-                        text_color="dark",
-                        className="p-2",
-                    ),
-                    width="auto",
-                ),
+        dbc.Col(
+            dbc.Badge(
+                "Created by: GA4GH Technical Team",
+                className="info-badge",
+            ),
+            width="auto",
+        ),
 
-                dbc.Col(
-                    dbc.Badge(
-                        "Data Sources: GitHub, PyPI, Europe PMC",
-                        color="light",
-                        text_color="dark",
-                        className="p-2",
-                    ),
-                    width="auto",
-                ),
-            ],
-            className="mb-4",
-            align="center",
+        dbc.Col(
+            dbc.Badge(
+                "Data Sources: GitHub, PyPI, Europe PMC",
+                className="info-badge",
+            ),
+            width="auto",
+        ),
+    ],
+    className="info-badges-row",
+    align="center",
         ),
 
         # ---------- METHODS CARDS -----------
@@ -328,7 +288,10 @@ layout = dbc.Container(
                                                     html.Span([
                                                         "Rather than focusing on one platform in isolation, the following metrics, figures, and tables act as an executive snapshot of the full GA4GH value chain—from standards implementation, to community adoption, to scientific and clinical impact."
                                                     ]),
-                                                ]
+                                                ],
+                                                style={
+                                                    "min-height": "auto",
+                                                }
                                             )
                                         ),
                                     )
@@ -409,13 +372,17 @@ layout = dbc.Container(
                                                             )
                                                         ]
                                                     )
-                                                ]
+                                                ],
+                                                style={
+                                                    "min-height": "auto",
+                                                }
                                             )
                                         ),
                                     ),
                                     dbc.Col(
                                         dbc.Card(
-                                            dbc.CardBody([
+                                            dbc.CardBody(
+                                                [
                                                 html.H4("GitHub", className="card-title"),
                                                 html.H5("Methods", className="card-subtitle"),
                                                 html.Ul([
@@ -483,12 +450,17 @@ layout = dbc.Container(
                                                         ])
                                                     ),
                                                 ])
-                                            ])
+                                            ],
+                                                style={
+                                                    "min-height": "auto",
+                                                }
+                                            )
                                         ),
                                     ),
                                     dbc.Col(
                                         dbc.Card(
-                                            dbc.CardBody([
+                                            dbc.CardBody(
+                                                [
                                                 html.H4("PyPI", className="card-title"),
                                                 html.H5("Methods", className="card-subtitle"),
                                                 html.Ul([
@@ -539,7 +511,11 @@ layout = dbc.Container(
                                                         style={"listStyleType": "circle", "paddingLeft": "20px"},
                                                     ),
                                                 ]),
-                                            ]),
+                                            ],
+                                                style={
+                                                    "min-height": "auto",
+                                                }
+                                            ),
                                         ),
                                     ),
                                 ],
@@ -555,90 +531,168 @@ layout = dbc.Container(
 
         # ---------- KPI INDICATORS ----------
         dbc.Row(
-            [
-                dbc.Col(
-                    indicator_card(
-                            f"{_epmc_article_count:,}",
-                            "Europe PMC Publications",
-                            "#1B75BB",
-                        ),
-                    md=2,
-                ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{_epmc_unique_authors:,}",
-                        "Total Authors",
-                        "#7B2CBF",
-                    ),
-                    md=2,
-                ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{_epmc_citations_df.get('total_citations', 0):,}",
-                        "Total Citations",
-                        "#2ECC71",
-                    ),
-                    md=2,
-                ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{_epmc_unique_countries:,}",
-                        "Total Countries",
-                        "#E67E22",
-                    ),
-                    md=2,
-                ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{_gh_total:,}",
-                        "GitHub Repositories",
-                        "#4FAEDC",
-                    ),
-                    md=2,
-                ),
-
-                dbc.Col(
-                    indicator_card(
-                        f"{_pypi_total:,}",
-                        "PyPI Packages",
-                        "#FAA633",
-                    ),
-                    md=2,
-                ),
-               
-            ],
-            className="mb-4",
+    [
+        dbc.Col(
+            indicator_card(
+                f"{_epmc_article_count:,}",
+                "Europe PMC Publications",
+                "border-red",
+            ),
+            md=2,
         ),
+
+        dbc.Col(
+            indicator_card(
+                f"{_epmc_unique_authors:,}",
+                "Total Authors",
+                "border-orange",
+            ),
+            md=2,
+        ),
+
+        dbc.Col(
+            indicator_card(
+                f"{_epmc_citations_df.get('total_citations', 0):,}",
+                "Total Citations",
+                "border-green",
+            ),
+            md=2,
+        ),
+
+        dbc.Col(
+            indicator_card(
+                f"{_epmc_unique_countries:,}",
+                "Total Countries",
+                "border-lightblue",
+            ),
+            md=2,
+        ),
+
+        dbc.Col(
+            indicator_card(
+                f"{_gh_total:,}",
+                "GitHub Repositories",
+                "border-darkblue",
+            ),
+            md=2,
+        ),
+
+        dbc.Col(
+            indicator_card(
+                f"{_pypi_total:,}",
+                "PyPI Packages",
+                "border-purple",
+            ),
+            md=2,
+        ),
+    ],
+    className="mb-4",
+),
             
         # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
-        dbc.Row([dbc.Col(_service_map_layout, md=12)], className="mt-4"),
-        dbc.Row([dbc.Col(_combined_layout, md=12)], className="mt-4"),
-        dbc.Row([dbc.Col(_epmc_layout, md=12)], className="mt-4"),
-        dbc.Row([dbc.Col(_github_layout, md=12)], className="mt-4"),
-        dbc.Row([dbc.Col(_pypi_layout, md=12)], className="mt-4"),
 
-        # ---------- DATA TABLES (at bottom) ----------
-        get_datatables_layout(
-            _epmc_entries_df,
-            _gh_df,
-            _pypi_details,
+html.Div(
+    [
+        html.Div(
+            "Service Map",
+            className="section-title",
         ),
-        
+        dbc.Row(
+            [dbc.Col(_service_map_layout, md=12)],
+            className="mt-4",
+        ),
+    ],
+    id="servicemap",
+    className="servicemap-section",
+),
+
+html.Div(
+    [
+        html.Div(
+            "Cumulative Metrics",
+            className="section-title",
+        ),
+        dbc.Row(
+            [dbc.Col(_combined_layout, md=12)],
+            className="mt-4",
+        ),
+    ],
+    id="metrics",
+    className="metrics-section",
+),
+
+html.Div(
+    [
+        html.Div(
+            "European PMC (EPMC) Metrics",
+            className="section-title",
+        ),
+        dbc.Row(
+            [dbc.Col(_epmc_layout, md=12)],
+            className="mt-4",
+        ),
+    ],
+    id="epmc",
+    className="epmc-section",
+),
+
+html.Div(
+    [
+        html.Div(
+            "GitHub Metrics",
+            className="section-title",
+        ),
+        dbc.Row(
+            [dbc.Col(_github_layout, md=12)],
+            className="mt-4",
+        ),
+    ],
+    id="github",
+    className="github-section",
+
+),
+
+html.Div(
+    [
+        html.Div(
+            "PyPI Metrics",
+            className="section-title",
+        ),
+        dbc.Row(
+            [dbc.Col(_pypi_layout, md=12)],
+            className="mt-4",
+        ),
+    ],
+    id="pypi",
+    className="pypi-section",
+),
+
+# ---------- TABLES ----------
+html.Div(
+    [
+        html.Div(
+            "Data Tables",
+            className="section-title",
+        ),
+
+        html.Div(
+            get_datatables_layout(
+                _epmc_entries_df,
+                _gh_df,
+                _pypi_details,
+            ),
+            className="tables-container",
+        ),
+    ],
+    id="tables",
+    className="tables-section",
+),
+
         # ---------- FOOTER ----------
         html.Div(
             "© 2026 GA4GH Analytics Dashboard",
-            style={
-                "textAlign": "center",
-                "marginTop": "50px",
-                "marginBottom": "50px",
-                "color": "#95A5A6",
-            },
+            className="footer",
         ),
-
     ],
     fluid=True,
 )
