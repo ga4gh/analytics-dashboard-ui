@@ -170,8 +170,8 @@ def make_citations_figure(data):
             y=cumulative_counts,
             mode="lines+markers",
             name="Cumulative Citations",
-            line={"color": "#2ECC71"},
-            marker={"size": 7, "color": "#2ECC71"},
+            line={"color": "#8cc63e"},
+            marker={"size": 7, "color": "#8cc63e"},
             customdata=list(zip(year_counts)),
             hovertemplate=(
                 "Year: %{x}<br>"

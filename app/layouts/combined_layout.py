@@ -89,14 +89,14 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     epmc_year_df = _build_source_year_df(ep_df, "pub_year", "title", "GA4GH-Related Articles")
     pypi_year_df = _build_source_year_df(py_df, "release_year", "project_name", "PyPI Packages")
 
-    gh_fig = _make_source_growth_figure(github_year_df, "GitHub Repositories", "#4FAEDC")
+    gh_fig = _make_source_growth_figure(github_year_df, "GitHub Repositories", "#1b75bb")
     epmc_fig = _make_source_growth_figure(
-        epmc_year_df, "GA4GH-Related Articles", "#1B75BB",
+        epmc_year_df, "GA4GH-Related Articles", "#e34a3a",
         yearly_label="New articles",
         cumulative_label="Total articles to date",
     )
     pypi_fig = _make_source_growth_figure(
-        pypi_year_df, "PyPI Packages", "#FAA633",
+        pypi_year_df, "PyPI Packages", "#9f79b0",
         yearly_label="New libraries created",
         cumulative_label="Total libraries to date",
     )
