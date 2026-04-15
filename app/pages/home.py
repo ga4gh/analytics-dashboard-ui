@@ -181,7 +181,7 @@ html.Div(
                 ),
 
                 html.P(
-                    "Whether you're a Work Stream contributor looking to understand how your efforts are landing, a product lead shaping the next development cycle, or a stakeholder making the case for genomic data sharing — this dashboard gives you the evidence to do it. Explore trends, spot",
+                    "Whether you're a Work Stream contributor looking to understand how your efforts are landing, a product lead shaping the next development cycle, or a stakeholder making the case for genomic data sharing — this dashboard gives you the evidence to do it. Explore trends, spot implementation gaps, and see over a decade of open science translated into data.",
                     className="dashboard-summary",
                 ),
             ],
