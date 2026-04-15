@@ -290,13 +290,15 @@ def register_epmc_callbacks(app):
     @app.callback(
         Output("epmc-countries-pie", "figure"),
         Output("epmc-authors-bar", "figure"),
+        Output("epmc-authors-card-body", "style"),
         Input("epmc-top-n-slider", "value"),  # Responds to slider but uses same cached authors
     )
     def update_epmc_graphs(top_n):
         fig_pie = fig_epmc_countries_pie(countries_df)
         # Use pre-fetched top_authors_default (no API call needed)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
-        return fig_pie, fig_bar
+        graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
+        return fig_pie, fig_bar, {"minHeight": f"{graph_height + 96}px"}
     
     @app.callback(
         Output("author-collapse", "is_open"),

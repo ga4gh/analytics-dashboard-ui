@@ -45,7 +45,7 @@ def fig_github_activity_status_pie(gh_activity_counts):
             "x": 0.5,
             "xanchor": "center",
             "yanchor": "top",
-            "font": {"size": 26, "color": "#2C3E50"},
+            "font": {"color": "#2C3E50"},
         },
         plot_bgcolor="#f9f9f9",
         paper_bgcolor="#ffffff",

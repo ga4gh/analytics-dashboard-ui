@@ -690,7 +690,7 @@ html.Div(
 
         # ---------- FOOTER ----------
         html.Div(
-            "© 2026 GA4GH Analytics Dashboard",
+            "© 2026 Global Alliance for Genomics and Health",
             className="footer",
         ),
     ],

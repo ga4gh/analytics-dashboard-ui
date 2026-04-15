@@ -280,7 +280,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                 html.Figure([
                                     dcc.Graph(id="epmc-authors-bar"),
                                     html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
-                                ])
+                                ]),
+                                id="epmc-authors-card-body",
                             ),
                             className="mb-4 shadow-sm",
                             style={"borderRadius": "12px"},

@@ -134,7 +134,7 @@ def get_datatables_layout(
                                     export_format="csv",
                                     row_selectable="single",
                                     selected_rows=[0],
-                                    page_size=10,
+                                    page_size=15,
                                     sort_action="native",
                                     style_table={"overflowX": "auto"},
                                     style_cell={
@@ -192,7 +192,7 @@ def get_datatables_layout(
                             row_selectable="single",
                             export_format="csv",
                             selected_rows=[0],
-                            page_size=10,
+                            page_size=15,
                             style_table={"overflowX": "auto"}, 
                             style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", "fontFamily": DATATABLE_FONT_FAMILY }, 
                             style_header={ "backgroundColor": "#2c3e50", "color": "white", "fontWeight": "bold", "fontFamily": DATATABLE_FONT_FAMILY }
@@ -240,7 +240,7 @@ def get_datatables_layout(
                             export_format="csv",
                             row_selectable="single",
                             selected_rows=[0],
-                            page_size=10,
+                            page_size=15,
                             sort_action="native",
                             style_table={"overflowX": "auto"},
                             style_cell={

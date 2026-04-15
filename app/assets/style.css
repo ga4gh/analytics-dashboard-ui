@@ -406,3 +406,7 @@ text {
 .user-select-none.svg-container{
     height:700px !important
 }
+
+#epmc-authors-card-body {
+    min-height: auto;
+}

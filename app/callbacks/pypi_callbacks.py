@@ -6,6 +6,13 @@ from app.services.pypi_client import get_pypi_details
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
+
+PYPI_CATEGORY_COLORS = {
+    "Implementation": "#1f77b4",
+    "GA4GH Standard": "#ff7f0e",
+    "GA4GH mentions": "#2ca02c",
+}
+
 def register_pypi_callbacks(app):
 
     # Cache PyPI data once at registration time
@@ -60,7 +67,7 @@ def register_pypi_callbacks(app):
             y="versions_count",
             color="category",
             hover_data=["project_name", "category", "versions_count"],
-            color_discrete_sequence=px.colors.qualitative.Safe,
+            color_discrete_map=PYPI_CATEGORY_COLORS,
             category_orders={
                 "project_name": dff["project_name"].tolist()  # 👈 THIS FIXES IT
             }
@@ -127,7 +134,13 @@ def register_pypi_callbacks(app):
                 "type": "pie",
                 "hole": 0.4,
                 "textinfo": "label+percent",
-                "hoverinfo": "label+value+percent"
+                "hoverinfo": "label+value+percent",
+                "marker": {
+                    "colors": [
+                        PYPI_CATEGORY_COLORS.get(cat, "#9aa0a6")
+                        for cat in cat_counts["category"]
+                    ]
+                },
             }],
             "layout": {
                 "title": {"text": "Category Distribution", "x": 0.5, "xanchor": "center", "font": {"size": 20, "color": "#2C3E50"}},
