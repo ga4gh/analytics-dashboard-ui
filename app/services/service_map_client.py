@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 from typing import Optional
 
-BASE_URL = "http://3.22.13.102:8080/api"
+BASE_URL = "https://implementation-registry.ga4gh.org/api"
 STANDARDS_ENDPOINT = f"{BASE_URL}/standards"
 SERVICES_ENDPOINT = f"{BASE_URL}/services"
 DEPLOYMENTS_ENDPOINT = f"{BASE_URL}/deployments"

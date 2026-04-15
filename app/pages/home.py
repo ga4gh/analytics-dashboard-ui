@@ -79,7 +79,7 @@ _pypi_details = get_pypi_details()
 _pypi_total = get_total_packages()
 
 # Prepare GitHub module data
-_gh_df, _, _, _, _gh_total = prepare_github_data()
+_gh_df, _, _, _, _gh_total, _ = prepare_github_data()
 
 # Build EPMC layout using consolidated data
 _epmc_layout = get_epmc_layout(

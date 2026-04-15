@@ -13,7 +13,7 @@ from dash import html, dcc, dash_table
 import pandas as pd
 
 def register_github_callbacks(app):
-    gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories = prepare_github_data()
+    gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories, workstreams = prepare_github_data()
     search_columns = ["name", "description"]
     display_columns = [
         "name",
