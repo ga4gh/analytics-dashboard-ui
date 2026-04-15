@@ -176,7 +176,7 @@ html.Div(
                 ),
 
                 html.P(
-                    "The GA4GH Analytics Dashboard is a one-stop resource for understanding the real-world impact of GA4GH standards, policy frameworks, and products. Drawing on data from GitHub, PyPI, and PubMed, it tracks how GA4GH's work has been adopted, cited, and built upon across the genomics community.",
+                    "The GA4GH Analytics Dashboard is a one-stop resource for understanding the real-world impact of GA4GH standards, policy frameworks, and products. Drawing on data from GitHub, PyPI, and Europe PMC, it tracks how GA4GH's work has been adopted, cited, and built upon across the genomics community.",
                     className="dashboard-summary",
                 ),
 
@@ -217,7 +217,7 @@ html.Div(
 
         dbc.Col(
             dbc.Badge(
-                "Data Sources: GitHub, PyPI, Europe PMC",
+                "Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry",
                 className="info-badge",
             ),
             width="auto",
@@ -268,7 +268,7 @@ html.Div(
                                                             html.Li(
                                                                 html.Span([
                                                                     "Scientific research and publications from ",
-                                                                    html.Strong("PubMed Central (PMC)"),
+                                                                    html.Strong("Europe PMC"),
                                                                 ])
                                                             ),
                                                             html.Li(
@@ -304,7 +304,7 @@ html.Div(
                                         dbc.Card(
                                             dbc.CardBody(
                                                 [
-                                                    html.H4("PubMed Central", className="card-title"),
+                                                    html.H4("Europe PMC", className="card-title"),
                                                     html.H5("Methods", className="card-subtitle"),
                                                     html.Ul(
                                                         [
