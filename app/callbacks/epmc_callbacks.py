@@ -1,20 +1,165 @@
-"""
-Dash callbacks for the EPMC analytics page.
-Mirrors the pattern used by pypi_callbacks.py and github_callbacks.py.
-"""
-
 from dash import Input, Output, State
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
 import json
 import re
+import plotly.express as px
+import plotly.graph_objects as go
 
 from app.services.epmc_client import prepare_epmc_data, get_authors_by_article
-from app.layouts.epmc_layout import (
-    fig_epmc_countries_pie,
-    fig_epmc_top_authors_bar,
-)
+from app.constants.constants import COUNTRIES_WHITELIST
+
+
+def fig_epmc_countries_pie(countries_df):
+    """Pie chart – article count by affiliation country."""
+    if countries_df is None or countries_df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    cols = list(countries_df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col = next(c for c in cols if c.lower() == "count")
+        df = countries_df[[country_col, count_col]].copy()
+        df.columns = ["country", "count"]
+    else:
+        df = countries_df.iloc[:, :2].copy()
+        df.columns = ["country", "count"]
+
+    whitelist = {c.strip().lower() for c in COUNTRIES_WHITELIST}
+    df["country_normalized"] = df["country"].astype(str).str.strip()
+    df["country_lower"] = df["country_normalized"].str.lower()
+    df = df[df["country_lower"].isin(whitelist)].copy()
+
+    if df.empty:
+        return go.Figure().update_layout(title="No country data available (after filtering)")
+
+    counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
+    total = counts.sum()
+    if total <= 0:
+        return go.Figure().update_layout(title="No country data available (zero total)")
+
+    df = df.copy()
+    df["count"] = counts
+    df = df.sort_values("count", ascending=False).reset_index(drop=True)
+
+    percents = (df["count"] / total * 100)
+    slice_text = []
+    hover_text = []
+    for cn, cnt, pct in zip(df["country_normalized"], df["count"], percents):
+        pct_fmt = f"{pct:.1f}%"
+        if pct > 5.0:
+            slice_text.append(f"{cn}<br>{pct_fmt}")
+        else:
+            slice_text.append(f"{pct_fmt}")
+        hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
+
+    text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
+
+    fig = go.Figure(
+        data=[
+            go.Pie(
+                labels=df["country_normalized"],
+                values=df["count"],
+                hole=0.2,
+                text=slice_text,
+                textinfo="text",
+                hovertext=hover_text,
+                hoverinfo="text",
+                sort=False,
+                textposition=text_positions,
+                domain=dict(x=[0, 1], y=[0, 0.9]),
+            )
+        ]
+    )
+    fig.update_layout(
+        title={"text": "Affiliation - Countries Represented", "x": 0.5},
+        template="simple_white",
+        height=700,
+        margin=dict(l=20, r=20, t=80, b=80),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.1,
+            xanchor="center",
+            x=0.5,
+        ),
+    )
+    return fig
+
+
+def fig_epmc_top_authors_bar(authors_data, top_n=15):
+    """Bar chart – top N authors by publication count."""
+    if not authors_data:
+        return go.Figure().update_layout(title="No author data available")
+
+    df = pd.DataFrame(authors_data)
+    if df.empty:
+        return go.Figure().update_layout(title="No author data available")
+
+    df = df.head(top_n).copy()
+    df = df.sort_values("author_count", ascending=True)
+
+    fig = px.bar(
+        df,
+        x="author_count",
+        y="author",
+        orientation="h",
+        title=f"Top {top_n} Europe PMC Authors",
+        template="simple_white",
+        labels={"author_count": "Total Publication", "author": "Author Name"},
+    )
+
+    fig.update_traces(marker_line_width=0)
+    fig.update_layout(
+        yaxis=dict(automargin=True, tickfont=dict(size=9)),
+        xaxis=dict(title="count"),
+        margin=dict(l=240, r=40, t=60, b=40),
+        height=max(400, 25 * len(df)),
+        xaxis_title="Publication Count",
+        yaxis_title="Author Name",
+    )
+    return fig
+
+
+def build_most_cited_rows(entries_df):
+    """Build rows for the Most Cited GA4GH Publications table."""
+    most_cited_rows = []
+    try:
+        candidates = []
+        if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
+            for raw in entries_df["raw_json"]:
+                try:
+                    obj = json.loads(raw)
+                except Exception:
+                    continue
+                title = obj.get("title") or obj.get("name") or ""
+                cited = obj.get("cited_by_count")
+                try:
+                    cited_count = int(cited) if cited is not None else 0
+                except Exception:
+                    cited_count = 0
+                doi = obj.get("doi") or ""
+                doi_url = f"https://doi.org/{doi}" if doi else None
+                candidates.append({"title": title, "cited_by_count": cited_count, "doi_url": doi_url})
+
+        if candidates:
+            counts_df = pd.DataFrame.from_records(candidates)
+            counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
+            for _, row in counts_df.iterrows():
+                doi_url = row.get("doi_url")
+                title = str(row.get("title") or "")
+                article_link = f"[View]({doi_url})" if doi_url else ""
+                most_cited_rows.append(
+                    {
+                        "article_link": article_link,
+                        "title": title,
+                        "cited_by_count": int(row["cited_by_count"]),
+                    }
+                )
+    except Exception:
+        most_cited_rows = []
+    return most_cited_rows
 
 
 def register_epmc_callbacks(app):
@@ -75,6 +220,13 @@ def register_epmc_callbacks(app):
     def update_epmc_table(search_value, year_filter, affiliation_filter):
         filtered = get_filtered_sorted_df(search_value, year_filter, affiliation_filter)
         return filtered.to_dict("records")
+
+    @app.callback(
+        Output("epmc-most-cited-table", "data"),
+        Input("epmc-top-n-slider", "value"),
+    )
+    def update_most_cited_table(_top_n):
+        return build_most_cited_rows(entries_df)
 
     # -----------------------
     # Entry detail card on row select

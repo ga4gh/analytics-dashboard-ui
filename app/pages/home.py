@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 from dash import register_page
 
 # EPMC metrics
-from app.services.epmc_client import prepare_epmc_data
+from app.services.epmc_client import prepare_epmc_data, _countries_stats_whitelist
 from app.constants.constants import COUNTRIES_WHITELIST
 
 # PyPI module
@@ -32,43 +32,7 @@ from app.layouts.datatables_layout import get_datatables_layout
 (_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries, 
  _epmc_citations_df, _epmc_unique_authors, _epmc_top_authors_data) = prepare_epmc_data()
 
-# Total citations: robust count from cached payload (list or dict containing list)
-def _count_citations_payload(cit):
-    if cit is None:
-        return 0
-    if isinstance(cit, list):
-        return len(cit)
-    if isinstance(cit, dict):
-        for k in ("results", "items", "citations", "data"):
-            if k in cit and isinstance(cit[k], list):
-                return len(cit[k])
-        # fallback: if dict directly contains a numeric summary
-        if "citation_count" in cit and isinstance(cit["citation_count"], (int, float)):
-            return int(cit["citation_count"])
-        return 0
-    return 0
-
 _epmc_article_count = _epmc_total_entries
-
-# Compute countries stats limited to whitelist
-def _countries_stats_whitelist(df, whitelist):
-    if df is None or df.empty:
-        return 0, 0
-    cols = list(df.columns)
-    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
-        country_col = next(c for c in cols if c.lower() == "country")
-        count_col = next(c for c in cols if c.lower() == "count")
-        tmp = df[[country_col, count_col]].copy()
-        tmp.columns = ["country", "count"]
-    else:
-        tmp = df.iloc[:, :2].copy()
-        tmp.columns = ["country", "count"]
-    tmp["country_norm"] = tmp["country"].astype(str).str.strip()
-    whitelist_set = {c.strip().lower() for c in whitelist}
-    tmp = tmp[tmp["country_norm"].str.lower().isin(whitelist_set)]
-    num_countries = int(tmp["country_norm"].nunique())
-    total_counts = int(pd.to_numeric(tmp["count"], errors="coerce").fillna(0).sum())
-    return num_countries, total_counts
 
 _epmc_unique_countries, _epmc_countries_entries = _countries_stats_whitelist(_epmc_countries_df, COUNTRIES_WHITELIST)
 

@@ -1,10 +1,7 @@
-"""Combined layout with four cumulative charts in one card."""
-
 import pandas as pd
 import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
-from app.layouts.epmc_layout import make_citations_figure
 
 
 def _build_source_year_df(df, year_col, item_col, source_name):
@@ -26,8 +23,13 @@ def _build_source_year_df(df, year_col, item_col, source_name):
     tmp["Source"] = source_name
     return tmp[["year", "item", "Source"]]
 
-
-def _make_source_growth_figure(source_year_df, source_name, line_color, yearly_label="New repos created", cumulative_label="Total repos to date"):
+def _make_source_growth_figure(
+    source_year_df,
+    source_name,
+    line_color,
+    yearly_label="New repos created",
+    cumulative_label="Total repos to date",
+):
     """Build one cumulative growth chart for a single source."""
     if source_year_df is None or source_year_df.empty:
         return px.line(title=f"No {source_name} time-series data available")
@@ -40,6 +42,7 @@ def _make_source_growth_figure(source_year_df, source_name, line_color, yearly_l
 
     year_plot_df["items_str"] = year_plot_df["item"].apply(lambda items: "<br>".join(items))
     year_plot_df["yearly_count"] = year_plot_df["item"].apply(len)
+
     year_plot_df["yearly_cumulative_count"] = year_plot_df["yearly_count"].cumsum()
 
     fig = px.line(
@@ -78,6 +81,12 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     gh_df = github_df.copy() if github_df is not None else pd.DataFrame()
     ep_df = epmc_entries_df.copy() if epmc_entries_df is not None else pd.DataFrame()
     py_df = pypi_first_releases_df.copy() if pypi_first_releases_df is not None else pd.DataFrame()
+    ct_df = pd.DataFrame(
+        epmc_citations.get("citations_over_years", [])
+        if isinstance(epmc_citations, dict)
+        else epmc_citations if isinstance(epmc_citations, list)
+        else []
+    ).reindex(columns=["pub_year", "year_count"])
 
     if not gh_df.empty and "created_on" in gh_df.columns:
         gh_df["created_on_year"] = pd.to_datetime(gh_df["created_on"], errors="coerce", utc=True).dt.year
@@ -85,11 +94,22 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     if not py_df.empty and "release_date" in py_df.columns:
         py_df["release_year"] = pd.to_datetime(py_df["release_date"], errors="coerce", utc=True).dt.year
 
+    if not ct_df.empty:
+        ct_df["pub_year"] = pd.to_numeric(ct_df["pub_year"], errors="coerce")
+        ct_df["year_count"] = pd.to_numeric(ct_df["year_count"], errors="coerce").fillna(0).astype(int)
+        ct_df = ct_df[(ct_df["pub_year"] > 2013) & (ct_df["year_count"] > 0)]
+        ct_df = ct_df.loc[ct_df.index.repeat(ct_df["year_count"])].copy()
+        ct_df["citation_item"] = "citation-" + ct_df.groupby("pub_year").cumcount().add(1).astype(str)
+
     github_year_df = _build_source_year_df(gh_df, "created_on_year", "name", "GitHub Repositories")
     epmc_year_df = _build_source_year_df(ep_df, "pub_year", "title", "GA4GH-Related Articles")
     pypi_year_df = _build_source_year_df(py_df, "release_year", "project_name", "PyPI Packages")
+    citations_year_df = _build_source_year_df(ct_df, "pub_year", "citation_item", "Europe PMC Cumulative Citations")
 
-    gh_fig = _make_source_growth_figure(github_year_df, "GitHub Repositories", "#1b75bb")
+    gh_fig = _make_source_growth_figure(
+        github_year_df, "GitHub Repositories", "#1b75bb"
+    )
+
     epmc_fig = _make_source_growth_figure(
         epmc_year_df, "GA4GH-Related Articles", "#e34a3a",
         yearly_label="New articles",
@@ -101,11 +121,19 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
         cumulative_label="Total libraries to date",
     )
 
-    citations_payload = epmc_citations if isinstance(epmc_citations, dict) else {}
-    if isinstance(epmc_citations, list):
-        citations_payload = {"citations_over_years": epmc_citations}
-    citations_fig = make_citations_figure(citations_payload)
-    citations_fig.update_layout(height=430, margin={"l": 40, "r": 20, "t": 70, "b": 60})
+    citations_fig = _make_source_growth_figure(
+        citations_year_df,
+        "Europe PMC Cumulative Citations Per Year",
+        "#8cc63e",
+        yearly_label="New citations",
+        cumulative_label="Total citations to date",
+    )
+
+    gh_fig.update_layout(yaxis_title="Cumulative Repositories")
+    epmc_fig.update_layout(yaxis_title="Cumulative Articles")
+    pypi_fig.update_layout(yaxis_title="Cumulative Libraries")
+    citations_fig.update_layout(yaxis_title="Cumulative Citations")
+
 
     return dbc.Card(
         dbc.CardBody(
