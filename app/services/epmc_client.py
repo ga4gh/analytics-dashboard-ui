@@ -1,8 +1,3 @@
-"""
-EPMC (Europe PubMed Central) API client.
-Mirrors the pattern used by pypi_client.py and github_client.py.
-"""
-
 import requests
 import pandas as pd
 import json
@@ -96,6 +91,41 @@ def get_affiliation_countries_count():
         return data
     return {}
 
+# Compute countries stats limited to whitelist
+def _countries_stats_whitelist(df, whitelist):
+    if df is None or df.empty:
+        return 0, 0
+    cols = list(df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col = next(c for c in cols if c.lower() == "count")
+        tmp = df[[country_col, count_col]].copy()
+        tmp.columns = ["country", "count"]
+    else:
+        tmp = df.iloc[:, :2].copy()
+        tmp.columns = ["country", "count"]
+    tmp["country_norm"] = tmp["country"].astype(str).str.strip()
+    whitelist_set = {c.strip().lower() for c in whitelist}
+    tmp = tmp[tmp["country_norm"].str.lower().isin(whitelist_set)]
+    num_countries = int(tmp["country_norm"].nunique())
+    total_counts = int(pd.to_numeric(tmp["count"], errors="coerce").fillna(0).sum())
+    return num_countries, total_counts
+    
+# Total citations: robust count from cached payload (list or dict containing list)
+def _count_citations_payload(cit):
+    if cit is None:
+        return 0
+    if isinstance(cit, list):
+        return len(cit)
+    if isinstance(cit, dict):
+        for k in ("results", "items", "citations", "data"):
+            if k in cit and isinstance(cit[k], list):
+                return len(cit[k])
+        # fallback: if dict directly contains a numeric summary
+        if "citation_count" in cit and isinstance(cit["citation_count"], (int, float)):
+            return int(cit["citation_count"])
+        return 0
+    return 0
 
 def get_all_pmc_authors():
     """
