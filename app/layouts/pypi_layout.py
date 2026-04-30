@@ -23,74 +23,8 @@ def get_pypi_layout(pypi_details, total_packages):
     
     return dbc.Container(
         [
-            html.H1(
-                "PyPI Analytics Dashboard",
-                style={
-                    "textAlign": "center",
-                    "marginTop": "20px",
-                    "marginBottom": "10px",
-                    "fontSize": "60px",
-                    "fontWeight": "bold",
-                    "color": "#2C3E50",
-                    "textShadow": "2px 2px #BDC3C7"
-                }
-            ),
-                        
-            html.H2(
-                f"Total PyPI Packages: {total_packages}",
-                style={'textAlign': 'center', 'margin-bottom': '20px', 'color': "#9DAAB8"}
-            ),
             
-            # Search box for DataTable
-            dcc.Input(
-                id='table-search',
-                type='text',
-                placeholder='Search projects...',
-                debounce=False,
-                style={
-                    'margin-bottom': '15px',
-                    'width': '350px',
-                    'padding': '8px',
-                    'border-radius': '5px',
-                    'border': '1px solid #ccc'
-                }
-            ),
-            
-            dbc.Row([
-                dbc.Row([
-                    dbc.Col(
-                        dash_table.DataTable(
-                            id="projects-table",
-                            columns=[
-                                {"name": "Project", "id": "project_name"},
-                                {"name": "Category", "id": "category"},
-                            ],
-                            data=pypi_details[["project_name", "category"]].to_dict("records"),
-                            row_selectable="single",
-                            page_size=10,
-                            sort_action="native",
-                            style_table={"overflowX": "auto"},
-                            style_cell={
-                                "textAlign": "left",
-                                "padding": "10px",
-                                "whiteSpace": "normal",
-                            },
-                            style_header={
-                                "backgroundColor": "#2c3e50",
-                                "color": "white",
-                                "fontWeight": "bold"
-                            }
-                        ),
-                        width=6
-                    ),
 
-                    dbc.Col(
-                        html.Div(id="pypi-project-details"),
-                        width=6
-                    )
-                ])
-
-            ]),
 
             html.Div(
             [
@@ -138,7 +72,7 @@ def get_pypi_layout(pypi_details, total_packages):
                         ], style={"width": "48%"}),
 
                         html.Div([
-                            html.Label("Top N Packages"),
+                            html.Label("Top Packages"),
                             dcc.Slider(
                                 id="top-n-slider",
                                 min=5,
@@ -161,9 +95,39 @@ def get_pypi_layout(pypi_details, total_packages):
                 "margin-bottom": "20px"
             }
         ),
-            # Graphs
-            dcc.Graph(id='datatable-bar'),
-            dcc.Graph(id='category-distribution'),
+            # ---------- GRAPHS  ----------
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="datatable-bar"),
+                                    html.Figcaption("Total number of versions for the top GA4GH-related PyPI packages, sorted in descending order by number of versions.")
+                                ])
+                            ),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="category-distribution"),
+                                    html.Figcaption("Relative proportion of package category for GA4GH-related PyPI packages.")
+                                ])
+                            ),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=6,
+                    ),
+                ]
+            ),
+
+
             
         ],
         fluid=True,

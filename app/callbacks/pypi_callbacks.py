@@ -1,15 +1,22 @@
-from dash import dash, Input, Output
+from dash import Input, Output
 import pandas as pd
 import plotly.express as px
 
 from app.services.pypi_client import get_pypi_details
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
-import plotly.express as px
-from dash import html, dcc, dash_table
-import pandas as pd
+from dash import html, dcc
+
+
+PYPI_CATEGORY_COLORS = {
+    "Implementation": "#1f77b4",
+    "GA4GH Standard": "#ff7f0e",
+    "GA4GH mentions": "#2ca02c",
+}
 
 def register_pypi_callbacks(app):
+
+    # Cache PyPI data once at registration time
+    _pypi_df = get_pypi_details()
 
     # -----------------------
     # DataTable search (unchanged)
@@ -19,13 +26,14 @@ def register_pypi_callbacks(app):
         Input('table-search', 'value')
     )
     def update_table(search_value):
-        df = get_pypi_details()
+        df = _pypi_df
         if not search_value:
             return df.reset_index().to_dict('records')
-        filtered = df.reset_index()[df.reset_index().apply(
-            lambda row: row.astype(str).str.contains(search_value, case=True).any(), axis=1
-        )]
-        return filtered.to_dict('records')
+        indexed = df.reset_index()
+        mask = indexed.apply(
+            lambda col: col.astype(str).str.contains(search_value, case=False, na=False)
+        ).any(axis=1)
+        return indexed[mask].to_dict('records')
 
     # -----------------------
     # Update bar chart based on filters
@@ -38,7 +46,7 @@ def register_pypi_callbacks(app):
         Input("top-n-slider", "value")
     )
     def update_bar(author_filter, email_filter, category_filter, top_n):
-        df = get_pypi_details()
+        df = _pypi_df
         dff = df.copy()
 
         # Apply filters
@@ -59,7 +67,7 @@ def register_pypi_callbacks(app):
             y="versions_count",
             color="category",
             hover_data=["project_name", "category", "versions_count"],
-            color_discrete_sequence=px.colors.qualitative.Safe,
+            color_discrete_map=PYPI_CATEGORY_COLORS,
             category_orders={
                 "project_name": dff["project_name"].tolist()  # 👈 THIS FIXES IT
             }
@@ -102,7 +110,7 @@ def register_pypi_callbacks(app):
         Input("filter-category", "value")
     )
     def update_category_distribution(author_filter, email_filter, category_filter):
-        df = get_pypi_details()
+        df = _pypi_df
         dff = df.copy()
 
         # Apply filters
@@ -126,7 +134,13 @@ def register_pypi_callbacks(app):
                 "type": "pie",
                 "hole": 0.4,
                 "textinfo": "label+percent",
-                "hoverinfo": "label+value+percent"
+                "hoverinfo": "label+value+percent",
+                "marker": {
+                    "colors": [
+                        PYPI_CATEGORY_COLORS.get(cat, "#9aa0a6")
+                        for cat in cat_counts["category"]
+                    ]
+                },
             }],
             "layout": {
                 "title": {"text": "Category Distribution", "x": 0.5, "xanchor": "center", "font": {"size": 20, "color": "#2C3E50"}},
@@ -144,7 +158,7 @@ def register_pypi_callbacks(app):
 
         if not selected_rows:
             return dbc.Alert("Select a project to see details", color="info")
-        pypi_details = get_pypi_details()
+        pypi_details = _pypi_df
         project = pypi_details.iloc[selected_rows[0]]
         github_url = project.get("github_url")
         versions_count = project.get("versions_count")

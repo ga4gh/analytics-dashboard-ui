@@ -1,7 +1,5 @@
-import dash
 from app.layouts.github_layout import get_github_layout
 from app.services.github_client import prepare_github_data
-from app.callbacks.github_callbacks import register_github_callbacks
 
 
 # ---- Prepare Data Once for Layout ----
@@ -11,6 +9,7 @@ from app.callbacks.github_callbacks import register_github_callbacks
     gh_activity_counts,
     gh_interest_df,
     total_repositories,
+    workstreams
 ) = prepare_github_data()
 
-layout = get_github_layout(gh_df, total_repositories)
+layout = get_github_layout(gh_df, total_repositories, workstreams)

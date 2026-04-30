@@ -1,10 +1,6 @@
-"""
-EPMC (Europe PubMed Central) API client.
-Mirrors the pattern used by pypi_client.py and github_client.py.
-"""
-
 import requests
 import pandas as pd
+import json
 import app.constants.api as api_constants
 
 
@@ -29,16 +25,19 @@ def get_all_paginated(endpoint, limit=1000):
 
     while True:
         params = {"limit": limit, "skip": skip}
+        print(f"Calling API: {endpoint} params={params}")
         resp = requests.get(endpoint, params=params, timeout=30)
         resp.raise_for_status()
         data = resp.json()
 
-        # If the endpoint returns a dict with 'results' list
+        # If the endpoint returns a dict with a paginated list payload
         if isinstance(data, dict):
             if "results" in data and isinstance(data["results"], list):
                 page = data["results"]
             elif isinstance(data.get("items"), list):
                 page = data.get("items")
+            elif isinstance(data.get("articles"), list):
+                page = data.get("articles")
             else:
                 # Not a paginated list; return the dict directly
                 return data
@@ -66,19 +65,13 @@ def get_all_paginated(endpoint, limit=1000):
 # Data-fetching helpers – one per EPMC endpoint
 # ---------------------------------------------------------------------------
 
-def get_all_latest_entries():
-    """
-    Fetch the latest EPMC entries from the backend.
-    Returns:
-        list[dict]: raw JSON list of entry records.
-    """
-    data = get_all_paginated(api_constants.EPMC_ALL_LATEST_ENTRIES)
-    # If the paginated getter returned a dict (non-paginated response), try to
-    # extract a list from common keys, otherwise wrap single dict in list.
+def get_all_articles(limit=1000):
+    """Fetch all EPMC articles using limit/skip pagination."""
+    data = get_all_paginated(api_constants.EPMC_ALL_ARTICLES, limit=limit)
     if isinstance(data, list):
         return data
     if isinstance(data, dict):
-        return data.get("results") or data.get("items") or [data]
+        return data.get("articles") or data.get("results") or data.get("items") or [data]
     return []
 
 
@@ -98,6 +91,41 @@ def get_affiliation_countries_count():
         return data
     return {}
 
+# Compute countries stats limited to whitelist
+def _countries_stats_whitelist(df, whitelist):
+    if df is None or df.empty:
+        return 0, 0
+    cols = list(df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col = next(c for c in cols if c.lower() == "count")
+        tmp = df[[country_col, count_col]].copy()
+        tmp.columns = ["country", "count"]
+    else:
+        tmp = df.iloc[:, :2].copy()
+        tmp.columns = ["country", "count"]
+    tmp["country_norm"] = tmp["country"].astype(str).str.strip()
+    whitelist_set = {c.strip().lower() for c in whitelist}
+    tmp = tmp[tmp["country_norm"].str.lower().isin(whitelist_set)]
+    num_countries = int(tmp["country_norm"].nunique())
+    total_counts = int(pd.to_numeric(tmp["count"], errors="coerce").fillna(0).sum())
+    return num_countries, total_counts
+    
+# Total citations: robust count from cached payload (list or dict containing list)
+def _count_citations_payload(cit):
+    if cit is None:
+        return 0
+    if isinstance(cit, list):
+        return len(cit)
+    if isinstance(cit, dict):
+        for k in ("results", "items", "citations", "data"):
+            if k in cit and isinstance(cit[k], list):
+                return len(cit[k])
+        # fallback: if dict directly contains a numeric summary
+        if "citation_count" in cit and isinstance(cit["citation_count"], (int, float)):
+            return int(cit["citation_count"])
+        return 0
+    return 0
 
 def get_all_pmc_authors():
     """
@@ -111,46 +139,89 @@ def get_all_pmc_authors():
     return data if isinstance(data, list) else []
 
 
-def get_unique_citations():
+def get_authors_by_article(pm_id):
     """
-    Fetch the total unique citations value from the backend.
-    Returns an integer when possible, otherwise 0.
+    Fetch authors for a specific article by PM id using the configured API endpoint.
+    Returns a list of author dicts (may be empty).
     """
-    # Citations endpoint returns a list of citation records; count unique citations
-    data = get_all_paginated(api_constants.EPMC_UNIQUE_CITATIONS)
-    if isinstance(data, list):
-        return len(data)
-    return 0
+    if not pm_id:
+        return []
+    try:
+        endpoint = api_constants.EPMC_GET_AUTHORS_BY_ARTICLE + str(pm_id)
+        data = get_json(endpoint)
+        if isinstance(data, list):
+            return data
+        # If API returns a dict with 'results' or 'items'
+        if isinstance(data, dict):
+            if "results" in data and isinstance(data["results"], list):
+                return data["results"]
+            if "items" in data and isinstance(data["items"], list):
+                return data["items"]
+        return []
+    except Exception:
+        return []
+
+
+
 
 
 # ---------------------------------------------------------------------------
 # Convenience: prepare a DataFrame ready for the layout / callbacks
 # ---------------------------------------------------------------------------
 
+_epmc_cache = {}
+
 def prepare_epmc_data():
     """
-    Fetch and lightly process all EPMC data needed by the dashboard page.
+    Fetch and process all EPMC data in a single pass to avoid redundant API calls.
+    Returns all data needed for the dashboard: DataFrames, counts, and metadata.
+    Results are cached after the first call.
 
     Returns:
-        tuple: (entries_df, countries_df, authors_df, total_entries)
+        tuple: (entries_df, countries_df, authors_df, total_entries, citations,
+                unique_authors_count, top_authors_data)
     """
-    raw_entries = get_all_latest_entries()
+    if "result" in _epmc_cache:
+        return _epmc_cache["result"]
+    # Fetch all API data upfront (no redundancy)
+    raw_entries = get_all_articles(limit=1000)
+    total_entries = len(raw_entries)
+    
     raw_countries = get_affiliation_countries_count()
     raw_authors = get_all_pmc_authors()
+    
+    unique_authors_resp = get_json(api_constants.EPMC_UNIQUE_AUTHOR_COUNT)
+    unique_authors_count = unique_authors_resp.get("unique_authors", 0) if isinstance(unique_authors_resp, dict) else 0
+    
+    top_authors_resp = get_json(api_constants.EPMC_TOP_AUTHORS)
+    top_authors_data = top_authors_resp if isinstance(top_authors_resp, list) else []
+    
+    citations = get_json(api_constants.EPMC_CITATION_OVER_YEARS)
 
-    # Entries: expect a list of dicts
-    entries_df = pd.DataFrame.from_records(raw_entries) if raw_entries and isinstance(raw_entries, list) else pd.DataFrame()
+    # Build entries DataFrame
+    entries_df = pd.DataFrame()
+    if isinstance(raw_entries, list):
+        sanitized = []
+        for e in raw_entries:
+            record = {
+                "title": e.get("title") or "",
+                "doi": e.get("doi") or "",
+                "pub_year": e.get("pub_year") or e.get("year") or "",
+                "raw_json": json.dumps(e, ensure_ascii=False),
+            }
+            sanitized.append(record)
+        entries_df = pd.DataFrame.from_records(sanitized) if sanitized else pd.DataFrame()
 
-    # Countries: expect a dict mapping country -> count
+    # Build countries DataFrame
     if isinstance(raw_countries, dict):
         items = [{"country": k, "count": v} for k, v in raw_countries.items()]
         countries_df = pd.DataFrame.from_records(items)
     else:
         countries_df = pd.DataFrame()
 
-    # Authors: expect a list of dicts with 'fullname' etc.
+    # Build authors DataFrame
     authors_df = pd.DataFrame.from_records(raw_authors) if raw_authors and isinstance(raw_authors, list) else pd.DataFrame()
 
-    total_entries = len(entries_df)
-
-    return entries_df, countries_df, authors_df, total_entries
+    result = (entries_df, countries_df, authors_df, total_entries, citations, unique_authors_count, top_authors_data)
+    _epmc_cache["result"] = result
+    return result

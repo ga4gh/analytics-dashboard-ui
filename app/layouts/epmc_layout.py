@@ -1,254 +1,24 @@
-"""
-Dash layout for the EPMC Test analytics page.
-Mirrors the pattern used by pypi_layout.py and github_layout.py.
-"""
-
-import dash_bootstrap_components as dbc
-import plotly.express as px
-import plotly.graph_objects as go
 from dash import html, dcc, dash_table
-import pandas as pd
-
-# whitelist of countries to display
-from app.constants.constants import COUNTRIES_WHITELIST
-
-
-# ---------------------------------------------------------------------------
-# Figures (called from callbacks to rebuild charts)
-# ---------------------------------------------------------------------------
-
-def fig_epmc_countries_pie(countries_df):
-    """Pie chart – article count by affiliation country."""
-    if countries_df is None or countries_df.empty:
-        return go.Figure().update_layout(title="No country data available")
-
-    # Determine country / count columns robustly
-    cols = list(countries_df.columns)
-    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
-        # match actual column names (case-sensitive) by lowercasing lookup
-        country_col = next(c for c in cols if c.lower() == "country")
-        count_col = next(c for c in cols if c.lower() == "count")
-        df = countries_df[[country_col, count_col]].copy()
-        df.columns = ["country", "count"]
-    else:
-        # fallback: assume first col = country, second col = count
-        df = countries_df.iloc[:, :2].copy()
-        df.columns = ["country", "count"]
-
-    # Normalize country names and filter against whitelist (case-insensitive)
-    whitelist = {c.strip().lower() for c in COUNTRIES_WHITELIST}
-    df["country_normalized"] = df["country"].astype(str).str.strip()
-    df["country_lower"] = df["country_normalized"].str.lower()
-    df = df[df["country_lower"].isin(whitelist)].copy()
-
-    if df.empty:
-        return go.Figure().update_layout(title="No country data available (after filtering)")
-
-    # Build the pie: make the pie visually larger by decreasing hole and increasing height
-    # Only show the country label next to a slice if its percent > 5%
-    counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
-    total = counts.sum()
-    if total <= 0:
-        return go.Figure().update_layout(title="No country data available (zero total)")
-
-    percents = counts / total * 100.0
-    # text: show country name only for slices > 5%, otherwise empty string
-    text_labels = [cn if p > 5.0 else "" for cn, p in zip(df["country_normalized"], percents)]
-    # textposition: put text outside for labeled slices, inside for unlabeled (will only show percent)
-    text_positions = ["outside" if t else "inside" for t in text_labels]
-
-    fig = go.Figure(
-        data=[
-            go.Pie(
-                labels=df["country_normalized"],
-                values=counts,
-                hole=0.2,  # smaller hole → bigger pie
-                text=text_labels,
-                textinfo="percent+text",
-                hoverinfo="label+value+percent",
-                sort=False,
-                textposition=text_positions,
-            )
-        ]
-    )
-    fig.update_layout(
-        title={"text": "Affiliation Countries Distribution", "x": 0.5},
-        template="simple_white",
-        height=700,
-        margin=dict(l=20, r=20, t=80, b=20),
-    )
-    return fig
-
-
-def fig_epmc_top_authors_bar(authors_df, top_n=30):
-    """Bar chart – top N authors by publication count."""
-    if authors_df is None or authors_df.empty:
-        return go.Figure().update_layout(title="No author data available")
-    # Prefer firstname + lastname when available (fall back to fullname or first col)
-    df = authors_df.copy()
-    cols_lower = {c.lower(): c for c in df.columns}
-    fname_col = None
-    lname_col = None
-    fullname_col = None
-    # common name variants
-    for key in ("firstname", "first_name", "givenname", "given_name"):
-        if key in cols_lower:
-            fname_col = cols_lower[key]
-            break
-    for key in ("lastname", "last_name", "surname"):
-        if key in cols_lower:
-            lname_col = cols_lower[key]
-            break
-    for key in ("fullname", "full_name", "name"):
-        if key in cols_lower:
-            fullname_col = cols_lower[key]
-            break
-
-    if fname_col and lname_col:
-        df["author_name"] = (
-            df[fname_col].fillna("").astype(str).str.strip()
-            + " "
-            + df[lname_col].fillna("").astype(str).str.strip()
-        ).str.strip()
-    elif fullname_col:
-        df["author_name"] = df[fullname_col].fillna("").astype(str).str.strip()
-    else:
-        # fallback: use first column as name
-        first_col = df.columns[0]
-        df["author_name"] = df[first_col].fillna("").astype(str).str.strip()
-
-    # Remove empty / blank names
-    df = df[df["author_name"] != ""].copy()
-    if df.empty:
-        return go.Figure().update_layout(title="No author names available")
-
-    # Count occurrences per author_name and take top_n
-    counts = df["author_name"].value_counts().head(top_n).reset_index()
-    counts.columns = ["author", "count"]
-    counts = counts.sort_values("count", ascending=True)
-
-    fig = px.bar(
-        counts,
-        x="count",
-        y="author",
-        orientation="h",
-        title=f"Top {top_n} PMC Authors",
-        template="simple_white",
-    )
-
-    fig.update_traces(marker_line_width=0)
-    fig.update_layout(
-        yaxis=dict(
-            automargin=True,
-            tickfont=dict(size=9),
-        ),
-        xaxis=dict(title="count"),
-        margin=dict(l=240, r=40, t=60, b=40),
-        height=max(400, 25 * len(counts)),
-    )
-
-    return fig
-
+import dash_bootstrap_components as dbc
 
 # ---------------------------------------------------------------------------
 # Page layout
 # ---------------------------------------------------------------------------
 
-def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
+def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citations):
     """
-    Build and return the full EPMC Test page layout.
+    Build and return the full EPMC page layout using cached data.
     """
-    # Ensure we have a DataFrame even if data is missing
-    if entries_df is None or (isinstance(entries_df, pd.DataFrame) and entries_df.empty):
-        entries_df = pd.DataFrame(columns=[
-            "pmcid", "title", "author", "journal", "publish_date", "affiliation_country"
-        ])
-        # chen needs to fix this – update column list once schema is finalised
-
     return dbc.Container(
         [
-            # ---------- TITLE ----------
-            html.H1(
-                "EPMC Test Dashboard",
-                style={
-                    "textAlign": "center",
-                    "marginTop": "20px",
-                    "marginBottom": "10px",
-                    "fontSize": "60px",
-                    "fontWeight": "bold",
-                    "color": "#2C3E50",
-                    "textShadow": "2px 2px #BDC3C7",
-                },
-            ),
 
-            html.H2(
-                f"Total EPMC Entries: {total_entries}",
-                style={
-                    "textAlign": "center",
-                    "margin-bottom": "20px",
-                    "color": "#9DAAB8",
-                },
-            ),
-
-            # ---------- SEARCH ----------
-            dcc.Input(
-                id="epmc-table-search",
-                type="text",
-                placeholder="Search entries...",
-                debounce=False,
-                style={
-                    "margin-bottom": "15px",
-                    "width": "350px",
-                    "padding": "8px",
-                    "border-radius": "5px",
-                    "border": "1px solid #ccc",
-                },
-            ),
-
-            # ---------- TABLE + DETAILS ----------
-            dbc.Row(
-                [
-                    # LEFT: table
-                    dbc.Col(
-                        [
-                            dash_table.DataTable(
-                                id="epmc-entries-table",
-                                # chen needs to fix this – update columns to match real schema
-                                columns=[
-                                    {"name": "PMC ID", "id": "pmcid"},
-                                    {"name": "Title", "id": "title"},
-                                    {"name": "Journal", "id": "journal"},
-                                ],
-                                data=entries_df.to_dict("records") if not entries_df.empty else [],
-                                row_selectable="single",
-                                page_size=10,
-                                sort_action="native",
-                                style_table={"overflowX": "auto"},
-                                style_cell={
-                                    "textAlign": "left",
-                                    "padding": "10px",
-                                    "whiteSpace": "normal",
-                                },
-                                style_header={
-                                    "backgroundColor": "#2c3e50",
-                                    "color": "white",
-                                    "fontWeight": "bold",
-                                },
-                            )
-                        ],
-                        width=6,
-                    ),
-                    # RIGHT: detail card
-                    dbc.Col(html.Div(id="epmc-entry-details"), width=6),
-                ],
-            ),
 
             # ---------- FILTERS ----------
             html.Div(
                 [
                     html.Div(
                         [
-                            html.Label("Top N Authors"),
+                            html.Label("Top Authors"),
                             dcc.Slider(
                                 id="epmc-top-n-slider",
                                 min=5,
@@ -262,7 +32,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
                                 },
                             ),
                         ],
-                        style={"width": "60%"},
+                        style={"width": "50%"},
                     ),
                 ],
                 style={
@@ -273,17 +43,102 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries):
                 },
             ),
 
-            # ---------- GRAPHS ----------
-            dbc.Card(
-                dbc.CardBody(dcc.Graph(id="epmc-authors-bar")),
-                className="mb-4 shadow-sm",
-                style={"borderRadius": "12px"},
+            # ---------- GRAPHS  ----------
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="epmc-authors-bar"),
+                                    html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
+                                ]),
+                                id="epmc-authors-card-body",
+                            ),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=12,
+                    ),
+                ]
             ),
-            dbc.Card(
-                dbc.CardBody(dcc.Graph(id="epmc-countries-pie")),
-                className="mb-4 shadow-sm",
-                style={"borderRadius": "12px"},
-            ),            
+            # Countries pie + Most-cited publications side-by-side
+            dbc.Row(
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                html.Figure([
+                                    dcc.Graph(id="epmc-countries-pie"),
+                                    html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author’s affiliation for all publications.")
+                                ])
+                            ),
+                            className="mb-4 shadow-sm h-100 w-100",
+                            style={"borderRadius": "12px"},
+                        ),
+                        className="d-flex",
+                        md=6,
+                    ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                html.Div(
+                                    [
+                                        html.H5("Most Cited GA4GH Publications", style={"marginBottom": "12px"}),
+                                        html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
+                                        html.Div(
+                                            dash_table.DataTable(
+                                                id="epmc-most-cited-table",
+                                                columns=[
+                                                    {"name": "Article", "id": "article_link", "presentation": "markdown"},
+                                                    {"name": "Title", "id": "title"},
+                                                    {"name": "Citations", "id": "cited_by_count"},
+                                                ],
+                                                data=[],
+                                                page_size=20,
+                                                style_table={"height": "100%", "overflowX": "auto", "overflowY": "auto"},
+                                                style_cell={
+                                                    "textAlign": "left",
+                                                    "padding": "4px 6px",
+                                                    "fontSize": "13px",
+                                                    "lineHeight": "1.15",
+                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                    "whiteSpace": "normal",
+                                                },
+                                                style_header={
+                                                    "backgroundColor": "#2c3e50",
+                                                    "color": "white",
+                                                    "fontWeight": "bold",
+                                                    "padding": "5px 6px",
+                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                },
+                                                style_data_conditional=[
+                                                    {"if": {"column_id": "article_link"}, "width": "8%", "textAlign": "center"},
+                                                    {"if": {"column_id": "title"}, "width": "76%"},
+                                                    {"if": {"column_id": "cited_by_count"}, "width": "16%", "textAlign": "right"},
+                                                ],
+                                                css=[
+                                                    {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.1;"},
+                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": "display:inline-block; padding:2px 8px; border:1px solid #0d6efd; background-color:#0d6efd; color:#fff; border-radius:0.375rem; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1;"},
+                                                ],
+                                                markdown_options={"link_target": "_blank"},
+                                            ),
+                                            style={"flex": "1 1 auto", "minHeight": 0},
+                                        ),
+                                    ],
+                                    style={"display": "flex", "flexDirection": "column", "height": "100%"}
+                                )
+                            , style={"height": "100%"}),
+                            className="mb-4 shadow-sm h-100 w-100 epmc-most-cited-card",
+                            style={"borderRadius": "12px"},
+                        ),
+                        className="d-flex",
+                        md=6,
+                    ),
+                ]
+            ),
+
+
         ],
         fluid=True,
     )
