@@ -1,0 +1,24 @@
+name: Deploy
+on: [push]
+permissions:
+  id-token: write
+jobs:
+  aws_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # - name: Build Docker Image
+
+      # - name: Push to ECR
+        # run: |
+        #   # Add your deployment commands here, for example:
+        #   # aws s3 sync ./dist s3://your-bucket-name --delete
+        #   echo "Deploying to AWS..."
