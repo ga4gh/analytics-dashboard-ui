@@ -1,0 +1,64 @@
+# this workflow is triggered when a PR to the develop branch is merged.
+# the following steps are performed:
+#   - build docker image and push to ECR (image tag is the git describe output as well as 'latest')
+#   - deploy image to staging environment
+name: develop branch workflow
+on:
+  push:
+    branches:
+      - develop
+      - main # temporary until we get a "develop" branch set up
+      - ci-github-actions # temporary branch for testing, to be removed once workflow is verified
+permissions:
+  id-token: write
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        id: checkout-code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: save command output
+        id: save-command-output
+        run: |
+          echo "DOCKER_REPO=analytics-dashboard-ui" >> $GITHUB_ENV
+          echo "DOCKER_TAG=$(git describe)" >> $GITHUB_ENV
+
+      - name: build docker image
+        id: build-docker-image
+        run: docker build -t ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }} -t ${{ env.DOCKER_REPO }}:latest .
+
+      - name: configure aws credentials
+        id: configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: push to ecr
+        id: push-to-ecr
+        uses: jwalton/gh-ecr-push@v2
+        with:
+          region: ${{ secrets.AWS_REGION }}
+          local-image: ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
+          image: ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}, ${{ env.DOCKER_REPO }}:latest
+
+      - name: render ecs task definition
+        id: render-ecs-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition-arn: ${{ secrets.AWS_ECS_TASK_DEFINITION_ARN }}
+          container-name: ${{ secrets.AWS_ECS_CONTAINER_NAME }}
+          image: ${{ secrets.AWS_ECR_REGISTRY}}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
+
+      - name: deploy to ecs service
+        id: deploy-to-ecs-service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-ecs-task-definition.outputs.task-definition }}
+          service: ${{ secrets.AWS_ECS_SERVICE_NAME }}
+          cluster: ${{ secrets.AWS_ECS_CLUSTER_NAME }}
+          wait-for-service-stability: true
