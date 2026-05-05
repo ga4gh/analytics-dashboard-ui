@@ -6,7 +6,6 @@ from app.config import config
 
 #BASE API endpoint
 BASE_API = config.api_base_url
-#BASE_API = "http://0.0.0.0:8000" # local test url
 
 # PyPI API endpoint
 ALL_PACKAGES_API = BASE_API + "/pypi/all-packages"
