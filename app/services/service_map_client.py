@@ -20,8 +20,6 @@ def get_json(endpoint: str, token: Optional[str] = None):
 _service_map_cache = {}
 
 def prepare_service_map_data(fetch_date="2025-10-01"):
-    if "result" in _service_map_cache:
-        return _service_map_cache["result"]
     
     standards_json = get_json(STANDARDS_ENDPOINT)
     services_json = get_json(SERVICES_ENDPOINT)

@@ -181,8 +181,7 @@ def prepare_epmc_data():
         tuple: (entries_df, countries_df, authors_df, total_entries, citations,
                 unique_authors_count, top_authors_data)
     """
-    if "result" in _epmc_cache:
-        return _epmc_cache["result"]
+
     # Fetch all API data upfront (no redundancy)
     raw_entries = get_all_articles(limit=1000)
     total_entries = len(raw_entries)

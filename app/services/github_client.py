@@ -21,8 +21,6 @@ def get_json(endpoint: str, token: Optional[str] = None):
 _github_cache = {}
 
 def prepare_github_data(fetch_date="2025-10-01"):
-    if "result" in _github_cache:
-        return _github_cache["result"]
 
     GA4GH_json = get_json(api_constants.GITHUB_REPOS_API)
 
