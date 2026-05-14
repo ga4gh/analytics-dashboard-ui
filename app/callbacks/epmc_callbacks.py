@@ -7,7 +7,7 @@ import re
 import plotly.express as px
 import plotly.graph_objects as go
 
-from app.services.epmc_client import prepare_epmc_data, get_authors_by_article
+from app.services.epmc_client import prepare_epmc_data, get_affiliations_by_article
 from app.constants.constants import COUNTRIES_WHITELIST
 
 
@@ -242,11 +242,11 @@ def register_epmc_callbacks(app):
     )
     def show_epmc_details(selected_rows, search_value, year_filter, affiliation_filter):
         if not selected_rows or entries_df.empty:
-            return dbc.Alert("Select an entry to see details", color="info"), None
+            return dbc.Alert("Select an entry to see details", color="info"), None, None
 
         filtered_df = get_filtered_sorted_df(search_value, year_filter, affiliation_filter)
         if filtered_df.empty or selected_rows[0] >= len(filtered_df):
-            return dbc.Alert("Select an entry to see details", color="info"), None
+            return dbc.Alert("Select an entry to see details", color="info"), None, None
 
         entry = filtered_df.iloc[selected_rows[0]]
 
@@ -269,72 +269,79 @@ def register_epmc_callbacks(app):
             or parsed.get("article_id")
             or parsed.get("id")
         )
-        authors = get_authors_by_article(pm_id) if pm_id else []
-        valid_authors = [a for a in authors if isinstance(a, dict)] if isinstance(authors, list) else []
-        if valid_authors and any("author_order" in a for a in valid_authors):
-            valid_authors = sorted(
-                valid_authors,
-                key=lambda a: (a.get("author_order") is None, a.get("author_order") or 0),
-            )
+        affiliation_rows = get_affiliations_by_article(pm_id) if pm_id else []
+        affiliation_rows = [r for r in affiliation_rows if isinstance(r, dict)]
+        affiliation_rows = sorted(
+            affiliation_rows,
+            key=lambda r: (
+                r.get("author_order") is None,
+                r.get("author_order") or 0,
+                r.get("affiliation_order") is None,
+                r.get("affiliation_order") or 0,
+            ),
+        )
 
-        # Build affiliation index: org_name -> number, and reverse map: number -> list of author names
-        raw_affiliations = parsed.get("affiliations") or []
-        affiliation_index = {}   # org_name -> aff_number
-        affiliation_list = []    # list of (number, org_name)
-        aff_counter = 1
-
-        # First pass: build affiliation index
-        if isinstance(raw_affiliations, list):
-            for aff in sorted(raw_affiliations, key=lambda x: x.get("affiliation_order", 0)):
-                org = aff.get("org_name", "").strip()
-                if org and org not in affiliation_index:
-                    affiliation_index[org] = aff_counter
-                    affiliation_list.append((aff_counter, org))
-                    aff_counter += 1
-
-        # Build affiliation -> author names map
+        # Build ordered author map from affiliation rows
+        author_order = []
         author_id_to_name = {}
-        for a in valid_authors:
-            first = (a.get("firstname") or "").strip()
-            last = (a.get("lastname") or "").strip()
-            full = f"{first} {last}".strip() or (a.get("fullname") or "").strip()
-            if full:
-                author_id_to_name[a.get("id")] = full
-
-        aff_to_authors = {}  # aff_number -> list of author names
-        if isinstance(raw_affiliations, list):
-            for aff in raw_affiliations:
-                org = aff.get("org_name", "").strip()
-                aid = aff.get("author_id")
-                if org in affiliation_index and aid in author_id_to_name:
-                    aff_num = affiliation_index[org]
-                    if aff_num not in aff_to_authors:
-                        aff_to_authors[aff_num] = []
-                    author_name = author_id_to_name[aid]
-                    if author_name not in aff_to_authors[aff_num]:
-                        aff_to_authors[aff_num].append(author_name)
-
-        # Build author items with superscript aff numbers
-        author_id_to_affs = {}  # author_id -> list of aff numbers
-        if isinstance(raw_affiliations, list):
-            for aff in raw_affiliations:
-                org = aff.get("org_name", "").strip()
-                aid = aff.get("author_id")
-                if org in affiliation_index and aid:
-                    if aid not in author_id_to_affs:
-                        author_id_to_affs[aid] = []
-                    aff_num = affiliation_index[org]
-                    if aff_num not in author_id_to_affs[aid]:
-                        author_id_to_affs[aid].append(aff_num)
-
-        author_items = []
-        for a in valid_authors:
-            first = (a.get("firstname") or "").strip()
-            last = (a.get("lastname") or "").strip()
-            full = f"{first} {last}".strip() or (a.get("fullname") or "").strip()
+        for row in affiliation_rows:
+            aid = row.get("author_id")
+            if aid is None:
+                continue
+            first = (row.get("firstname") or "").strip()
+            last = (row.get("lastname") or "").strip()
+            full = f"{first} {last}".strip() or (row.get("fullname") or "").strip()
             if not full:
                 continue
-            aff_nums = author_id_to_affs.get(a.get("id"), [])
+            if aid not in author_id_to_name:
+                author_id_to_name[aid] = full
+                author_order.append(aid)
+
+        # Build affiliation index and reverse map in affiliation order
+        affiliation_index = {}
+        affiliation_list = []
+        for row in sorted(
+            affiliation_rows,
+            key=lambda r: (
+                r.get("affiliation_order") is None,
+                r.get("affiliation_order") or 0,
+                r.get("author_order") is None,
+                r.get("author_order") or 0,
+            ),
+        ):
+            org = (row.get("org_name") or "").strip()
+            if org and org not in affiliation_index:
+                aff_num = len(affiliation_index) + 1
+                affiliation_index[org] = aff_num
+                affiliation_list.append((aff_num, org))
+
+        aff_to_authors = {}
+        author_id_to_affs = {}
+        for row in affiliation_rows:
+            aid = row.get("author_id")
+            org = (row.get("org_name") or "").strip()
+            if aid is None or org not in affiliation_index or aid not in author_id_to_name:
+                continue
+
+            aff_num = affiliation_index[org]
+            author_name = author_id_to_name[aid]
+
+            if aff_num not in aff_to_authors:
+                aff_to_authors[aff_num] = []
+            if author_name not in aff_to_authors[aff_num]:
+                aff_to_authors[aff_num].append(author_name)
+
+            if aid not in author_id_to_affs:
+                author_id_to_affs[aid] = []
+            if aff_num not in author_id_to_affs[aid]:
+                author_id_to_affs[aid].append(aff_num)
+
+        author_items = []
+        for aid in author_order:
+            full = author_id_to_name.get(aid)
+            if not full:
+                continue
+            aff_nums = author_id_to_affs.get(aid, [])
             superscript = (" " + ",".join(f"[{n}]" for n in sorted(aff_nums))) if aff_nums else ""
             author_items.append(f"{full}{superscript}")
 
@@ -351,6 +358,7 @@ def register_epmc_callbacks(app):
             ], style={"marginBottom": "6px"})
 
         first_aff_component = aff_item(*affiliation_list[0]) if affiliation_list else html.P("N/A")
+        first_aff_text = f"{affiliation_list[0][0]}. {affiliation_list[0][1]}" if affiliation_list else "N/A"
         rest_aff_components = [aff_item(num, org) for num, org in affiliation_list[1:]] if len(affiliation_list) > 1 else []
 
         # Abstract HTML to Markdown conversion
@@ -434,7 +442,7 @@ def register_epmc_callbacks(app):
             ]),
         ], style={"boxShadow": "0 4px 10px rgba(0,0,0,0.1)"})
 
-        return card, first_author_store, first_aff_component
+        return card, first_author_store, first_aff_text
 
     # -----------------------
     # Build initial charts from cached data

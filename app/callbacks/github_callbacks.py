@@ -90,6 +90,8 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
                 hovertemplate=(
                     f"Repo: {row['name']}<br>"
                     f"Activity Score: {row['activity_score']:.4f}<br>"
+                    f"Pushed At: {row['pushed_at_str']}<br>"
+                    f"Last Updated: {row['last_updated_str']}<br>"
                     "<extra></extra>"
                 ),
             )
