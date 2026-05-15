@@ -162,6 +162,28 @@ def get_authors_by_article(pm_id):
         return []
 
 
+def get_affiliations_by_article(pm_id):
+    """
+    Fetch affiliation rows for a specific article by PM id using the configured API endpoint.
+    Returns a list of affiliation/author rows (may be empty).
+    """
+    if not pm_id:
+        return []
+    try:
+        endpoint = api_constants.EPMC_AFFILIATION_BY_ARTICLE + str(pm_id)
+        data = get_json(endpoint)
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict):
+            if "results" in data and isinstance(data["results"], list):
+                return data["results"]
+            if "items" in data and isinstance(data["items"], list):
+                return data["items"]
+        return []
+    except Exception:
+        return []
+
+
 
 
 
@@ -170,6 +192,19 @@ def get_authors_by_article(pm_id):
 # ---------------------------------------------------------------------------
 
 _epmc_cache = {}
+
+
+def _normalize_pub_year(value):
+    """Return a 4-digit publication year as int, or None when invalid."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return None
+    try:
+        year = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return year if 1000 <= year <= 9999 else None
 
 def prepare_epmc_data():
     """
@@ -202,14 +237,17 @@ def prepare_epmc_data():
     if isinstance(raw_entries, list):
         sanitized = []
         for e in raw_entries:
+            pub_year = _normalize_pub_year(e.get("pub_year") or e.get("year"))
             record = {
                 "title": e.get("title") or "",
                 "doi": e.get("doi") or "",
-                "pub_year": e.get("pub_year") or e.get("year") or "",
+                "pub_year": pub_year,
                 "raw_json": json.dumps(e, ensure_ascii=False),
             }
             sanitized.append(record)
         entries_df = pd.DataFrame.from_records(sanitized) if sanitized else pd.DataFrame()
+        if not entries_df.empty and "pub_year" in entries_df.columns:
+            entries_df["pub_year"] = pd.array(entries_df["pub_year"], dtype="Int64")
 
     # Build countries DataFrame
     if isinstance(raw_countries, dict):
