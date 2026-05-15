@@ -17,10 +17,7 @@ def get_json(endpoint: str, token: Optional[str] = None):
     resp.raise_for_status()
     return resp.json()
 
-_service_map_cache = {}
-
 def prepare_service_map_data(fetch_date="2025-10-01"):
-    
     standards_json = get_json(STANDARDS_ENDPOINT)
     services_json = get_json(SERVICES_ENDPOINT)
     deployments_json = get_json(DEPLOYMENTS_ENDPOINT)
@@ -28,7 +25,5 @@ def prepare_service_map_data(fetch_date="2025-10-01"):
     standards_df = pd.DataFrame.from_records(standards_json)
     services_df = pd.DataFrame.from_records(services_json)
     deployments_df = pd.DataFrame.from_records(deployments_json)
-    
-    _service_map_cache["result"] = (standards_df, services_df, deployments_df)
 
-    return _service_map_cache["result"]
+    return standards_df, services_df, deployments_df

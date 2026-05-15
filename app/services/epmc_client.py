@@ -187,13 +187,6 @@ def get_affiliations_by_article(pm_id):
 
 
 
-# ---------------------------------------------------------------------------
-# Convenience: prepare a DataFrame ready for the layout / callbacks
-# ---------------------------------------------------------------------------
-
-_epmc_cache = {}
-
-
 def _normalize_pub_year(value):
     """Return a 4-digit publication year as int, or None when invalid."""
     if value is None:
@@ -210,19 +203,16 @@ def prepare_epmc_data():
     """
     Fetch and process all EPMC data in a single pass to avoid redundant API calls.
     Returns all data needed for the dashboard: DataFrames, counts, and metadata.
-    Results are cached after the first call.
 
     Returns:
         tuple: (entries_df, countries_df, authors_df, total_entries, citations,
                 unique_authors_count, top_authors_data)
     """
-
     # Fetch all API data upfront (no redundancy)
     raw_entries = get_all_articles(limit=1000)
     total_entries = len(raw_entries)
     
     raw_countries = get_affiliation_countries_count()
-    raw_authors = get_all_pmc_authors()
     
     unique_authors_resp = get_json(api_constants.EPMC_UNIQUE_AUTHOR_COUNT)
     unique_authors_count = unique_authors_resp.get("unique_authors", 0) if isinstance(unique_authors_resp, dict) else 0
@@ -256,9 +246,8 @@ def prepare_epmc_data():
     else:
         countries_df = pd.DataFrame()
 
-    # Build authors DataFrame
-    authors_df = pd.DataFrame.from_records(raw_authors) if raw_authors and isinstance(raw_authors, list) else pd.DataFrame()
+    # The current UI uses summary author endpoints and article-specific author lookups,
+    # so avoid fetching every author row during app startup.
+    authors_df = pd.DataFrame()
 
-    result = (entries_df, countries_df, authors_df, total_entries, citations, unique_authors_count, top_authors_data)
-    _epmc_cache["result"] = result
-    return result
+    return entries_df, countries_df, authors_df, total_entries, citations, unique_authors_count, top_authors_data

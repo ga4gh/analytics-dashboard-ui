@@ -15,8 +15,6 @@ def get_json(endpoint):
     resp.raise_for_status()
     return resp.json()
 
-_pypi_cache = {}
-
 def get_all_packages():
     """
     Returns the full list of all PyPI package records stored in DB.
@@ -34,7 +32,6 @@ def get_total_packages():
     """
     total_packages = get_json(api_constants.TOTAL_PACKAGES_API)
     total_packages = int(total_packages.get("total_packages", 0))
-    _pypi_cache["total"] = total_packages
     return total_packages
 
 def get_pypi_details():
@@ -64,5 +61,4 @@ def get_first_releases():
     Returns the first release date for each PyPI project.
     """
     first_releases = get_json(api_constants.FIRST_RELEASES_API)
-    _pypi_cache["first_releases"] = first_releases
     return first_releases
