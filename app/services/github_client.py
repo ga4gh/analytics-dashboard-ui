@@ -18,12 +18,7 @@ def get_json(endpoint: str, token: Optional[str] = None):
     return resp.json()
 
 
-_github_cache = {}
-
 def prepare_github_data(fetch_date="2025-10-01"):
-    if "result" in _github_cache:
-        return _github_cache["result"]
-
     GA4GH_json = get_json(api_constants.GITHUB_REPOS_API)
 
     gh_df = pd.DataFrame.from_records(GA4GH_json)
@@ -74,5 +69,4 @@ def prepare_github_data(fetch_date="2025-10-01"):
     workstreams = gh_df["workstream"].dropna().unique().tolist()
 
     result = (gh_df, gh_activity_df, gh_activity_counts, gh_interest_df, total_repositories, workstreams)
-    _github_cache["result"] = result
     return result
