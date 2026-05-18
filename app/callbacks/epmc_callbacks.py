@@ -271,6 +271,10 @@ def register_epmc_callbacks(app):
         )
         affiliation_rows = get_affiliations_by_article(pm_id) if pm_id else []
         affiliation_rows = [r for r in affiliation_rows if isinstance(r, dict)]
+
+        def _row_display_affiliation_order(row):
+            return row.get("display_affiliation_order") or row.get("affiliation_order")
+
         affiliation_rows = sorted(
             affiliation_rows,
             key=lambda r: (
@@ -303,8 +307,8 @@ def register_epmc_callbacks(app):
         for row in sorted(
             affiliation_rows,
             key=lambda r: (
-                r.get("affiliation_order") is None,
-                r.get("affiliation_order") or 0,
+                _row_display_affiliation_order(r) is None,
+                _row_display_affiliation_order(r) or 0,
                 r.get("author_order") is None,
                 r.get("author_order") or 0,
             ),
