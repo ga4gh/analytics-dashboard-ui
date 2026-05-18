@@ -1,6 +1,10 @@
+import logging
 import requests
 import app.constants.api as api_constants
 import pandas as pd
+
+logger = logging.getLogger(__name__)
+
 
 def get_json(endpoint):
     """
@@ -10,7 +14,7 @@ def get_json(endpoint):
     Returns:
         dict: JSON response from the API
     """
-    print(f"Calling API: {endpoint}")
+    logger.debug("Calling API: %s", endpoint)
     resp = requests.get(endpoint, timeout=30)
     resp.raise_for_status()
     return resp.json()

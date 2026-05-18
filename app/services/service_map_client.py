@@ -1,6 +1,9 @@
+import logging
 import requests
 import pandas as pd
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://implementation-registry.ga4gh.org/api"
 STANDARDS_ENDPOINT = f"{BASE_URL}/standards"
@@ -12,7 +15,7 @@ def get_json(endpoint: str, token: Optional[str] = None):
     if token:
         headers["Authorization"] = f"token {token}"
 
-    print(f"Calling API: {endpoint}")
+    logger.debug("Calling API: %s", endpoint)
     resp = requests.get(endpoint, headers=headers, timeout=30)
     resp.raise_for_status()
     return resp.json()

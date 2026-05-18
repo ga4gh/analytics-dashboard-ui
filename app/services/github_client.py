@@ -1,3 +1,4 @@
+import logging
 import requests
 import pandas as pd
 import numpy as np
@@ -6,13 +7,15 @@ from typing import Optional
 
 import app.constants.api as api_constants
 
+logger = logging.getLogger(__name__)
+
 
 def get_json(endpoint: str, token: Optional[str] = None):
     headers = {}
     if token:
         headers["Authorization"] = f"token {token}"
 
-    print(f"Calling API: {endpoint}")
+    logger.debug("Calling API: %s", endpoint)
     resp = requests.get(endpoint, headers=headers, timeout=30)
     resp.raise_for_status()
     return resp.json()

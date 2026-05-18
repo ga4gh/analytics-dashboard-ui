@@ -1,14 +1,17 @@
+import logging
 import requests
 import pandas as pd
 import json
 import app.constants.api as api_constants
+
+logger = logging.getLogger(__name__)
 
 
 def get_json(endpoint):
     """
     Generic GET → JSON helper (same as pypi_client.get_json).
     """
-    print(f"Calling API: {endpoint}")
+    logger.debug("Calling API: %s", endpoint)
     resp = requests.get(endpoint, timeout=30)
     resp.raise_for_status()
     return resp.json()
@@ -25,7 +28,7 @@ def get_all_paginated(endpoint, limit=1000):
 
     while True:
         params = {"limit": limit, "skip": skip}
-        print(f"Calling API: {endpoint} params={params}")
+        logger.debug("Calling API: %s params=%s", endpoint, params)
         resp = requests.get(endpoint, params=params, timeout=30)
         resp.raise_for_status()
         data = resp.json()
