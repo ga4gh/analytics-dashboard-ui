@@ -20,14 +20,15 @@ def get_json(endpoint: str, token: Optional[str] = None):
 
 _github_cache = {}
 
-def prepare_github_data(fetch_date="2025-10-01"):
+def prepare_github_data():
+    
     if "result" in _github_cache:
         return _github_cache["result"]
 
     GA4GH_json = get_json(api_constants.GITHUB_REPOS_API)
 
     gh_df = pd.DataFrame.from_records(GA4GH_json)
-
+    fetch_date=gh_df["created_at"].max() 
 
     gh_df["last_updated"] = pd.to_datetime(gh_df["last_updated"], utc=True, errors="raise")
     gh_df["pushed_at"] = pd.to_datetime(gh_df["pushed_at"], utc=True, errors="raise")
@@ -36,8 +37,8 @@ def prepare_github_data(fetch_date="2025-10-01"):
     target_date = pd.to_datetime(fetch_date, utc=True)
 
     # Use absolute timedeltas so days-since values are never negative
-    gh_df["days_since_pushed_at"] = (target_date - gh_df["pushed_at"]).abs().dt.days
-    gh_df["days_since_last_updated"] = (target_date - gh_df["last_updated"]).abs().dt.days
+    gh_df["days_since_pushed_at"] = (target_date - gh_df["pushed_at"]).dt.days
+    gh_df["days_since_last_updated"] = (target_date - gh_df["last_updated"]).dt.days
 
     gh_df["activity_score"] = (
         1 / (1 + gh_df["days_since_pushed_at"])
