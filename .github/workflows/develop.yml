@@ -29,7 +29,7 @@ jobs:
 
       - name: build docker image
         id: build-docker-image
-        run: docker build -t ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }} -t ${{ env.DOCKER_REPO }}:latest .
+        run: docker build -t ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }} -t ${{ env.DOCKER_REPO }}:latest -t ${{ env.DOCKER_REPO }}:develop .
 
       - name: configure aws credentials
         id: configure-aws-credentials
@@ -44,21 +44,4 @@ jobs:
         with:
           region: ${{ secrets.AWS_REGION }}
           local-image: ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
-          image: ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}, ${{ env.DOCKER_REPO }}:latest
-
-      - name: render ecs task definition
-        id: render-ecs-task-definition
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition-arn: ${{ secrets.AWS_ECS_TASK_DEFINITION_ARN }}
-          container-name: ${{ secrets.AWS_ECS_CONTAINER_NAME }}
-          image: ${{ secrets.AWS_ECR_REGISTRY}}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
-
-      - name: deploy to ecs service
-        id: deploy-to-ecs-service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-        with:
-          task-definition: ${{ steps.render-ecs-task-definition.outputs.task-definition }}
-          service: ${{ secrets.AWS_ECS_SERVICE_NAME }}
-          cluster: ${{ secrets.AWS_ECS_CLUSTER_NAME }}
-          wait-for-service-stability: true
+          image: ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}, ${{ env.DOCKER_REPO }}:latest, ${{ env.DOCKER_REPO }}:develop
