@@ -39,9 +39,10 @@ def get_datatables_layout(
 
     if not epmc_entries_df.empty:
         if "pub_year" in epmc_entries_df.columns:
+            years = pd.to_numeric(epmc_entries_df["pub_year"], errors="coerce").dropna().astype(int).unique()
             epmc_year_options = [
                 {"label": str(y), "value": str(y)}
-                for y in sorted(epmc_entries_df["pub_year"].dropna().unique(), reverse=True)
+                for y in sorted(years, reverse=True)
             ]
 
         if "raw_json" in epmc_entries_df.columns:
