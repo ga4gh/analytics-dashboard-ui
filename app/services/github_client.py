@@ -34,15 +34,14 @@ def prepare_github_data():
     gh_df["pushed_at"] = pd.to_datetime(gh_df["pushed_at"], utc=True, errors="raise")
     gh_df["created_on"] = pd.to_datetime(gh_df["created_on"], utc=True, errors="raise")
 
-    target_date = pd.to_datetime(fetch_date, utc=True)
+    target_date = pd.to_datetime("today", utc=True)
 
-    # Use absolute timedeltas so days-since values are never negative
     gh_df["days_since_pushed_at"] = (target_date - gh_df["pushed_at"]).dt.days
     gh_df["days_since_last_updated"] = (target_date - gh_df["last_updated"]).dt.days
 
     gh_df["activity_score"] = (
-        1 / (1 + gh_df["days_since_pushed_at"])
-        + 1 / (1 + gh_df["days_since_last_updated"])
+        (1 / (1 + gh_df["days_since_pushed_at"]))
+        + (1 / (1 + gh_df["days_since_last_updated"]))
     )
 
     # Top 15 active repos
