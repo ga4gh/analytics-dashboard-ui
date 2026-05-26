@@ -1,6 +1,10 @@
+import logging
 import requests
 import app.constants.api as api_constants
 import pandas as pd
+
+logger = logging.getLogger(__name__)
+
 
 def get_json(endpoint):
     """
@@ -10,12 +14,10 @@ def get_json(endpoint):
     Returns:
         dict: JSON response from the API
     """
-    print(f"Calling API: {endpoint}")
+    logger.debug("Calling API: %s", endpoint)
     resp = requests.get(endpoint, timeout=30)
     resp.raise_for_status()
     return resp.json()
-
-_pypi_cache = {}
 
 def get_all_packages():
     """
@@ -32,19 +34,14 @@ def get_total_packages():
     Returns:
         int: total number of packages
     """
-    if "total" in _pypi_cache:
-        return _pypi_cache["total"]
     total_packages = get_json(api_constants.TOTAL_PACKAGES_API)
     total_packages = int(total_packages.get("total_packages", 0))
-    _pypi_cache["total"] = total_packages
     return total_packages
 
 def get_pypi_details():
     """
     Returns detailed metadata for each PyPI project.
     """
-    if "details" in _pypi_cache:
-        return _pypi_cache["details"]
     pypi_details = get_json(api_constants.PYPI_DETAILS_API)
     # Build DataFrame
     rows = []
@@ -61,15 +58,11 @@ def get_pypi_details():
         })
 
     df = pd.DataFrame(rows)
-    _pypi_cache["details"] = df
     return df
 
 def get_first_releases():
     """
     Returns the first release date for each PyPI project.
     """
-    if "first_releases" in _pypi_cache:
-        return _pypi_cache["first_releases"]
     first_releases = get_json(api_constants.FIRST_RELEASES_API)
-    _pypi_cache["first_releases"] = first_releases
     return first_releases
