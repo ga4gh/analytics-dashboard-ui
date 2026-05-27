@@ -2,11 +2,10 @@
 All external API endpoints live here
 """
 
-from app.config import settings
+from app.config import config
 
 #BASE API endpoint
-#BASE_API = "http://AnalyticsDashboardAlbBalancer-1386294349.us-east-2.elb.amazonaws.com:8000"
-BASE_API = settings.API_BASE_URL.rstrip("/")
+BASE_API = config.api_base_url
 
 # PyPI API endpoint
 ALL_PACKAGES_API = BASE_API + "/pypi/all-packages"
