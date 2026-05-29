@@ -417,14 +417,18 @@ def register_epmc_callbacks(app):
                 html.H6("Affiliations: ", className="fw-bold"),
                 
                 html.Div([
-                    html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
+                    html.Span("▶ ", style={
+                        "fontSize": "12px",
+                        "marginRight": "4px",
+                        "display": "inline" if rest_aff_components else "none",
+                    }),
                     first_aff_component,
                 ], id="aff-collapse-button", n_clicks=0, style={
                     "color": "#0d9cf0",
-                    "cursor": "pointer",
+                    "cursor": "pointer" if rest_aff_components else "default",
                     "fontWeight": "600",
                     "fontSize": "13px",
-                    "display": "inline-flex" if rest_aff_components else "none",
+                    "display": "inline-flex",
                     "alignItems": "center",
                     "marginBottom": "0.5rem",
                 }),
