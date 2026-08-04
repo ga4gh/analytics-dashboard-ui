@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()  # reads .env from project root if present; real env vars always win
 
 class Config:
 
