@@ -1,12 +1,12 @@
 # app/pages/home.py
 
-from dash import html
+from dash import html, dcc
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash import register_page
 
 # EPMC metrics
-from app.services.epmc_client import prepare_epmc_data, _countries_stats_whitelist
+from app.services.epmc_client import prepare_epmc_data, _countries_stats_whitelist, compute_epmc_kpis, get_funding_agencies
 from app.constants.constants import COUNTRIES_WHITELIST
 
 # PyPI module
@@ -28,13 +28,23 @@ from app.services.service_map_client import prepare_service_map_data
 # Data tables layout (moved to bottom of page)
 from app.layouts.datatables_layout import get_datatables_layout
 
+# Funder persona layout components
+from app.layouts.funder_layout import get_funder_charts_section
+
 # Prepare all EPMC data once (calls consolidated prepare_epmc_data which fetches all APIs in one pass)
-(_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries, 
+(_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries,
  _epmc_citations_df, _epmc_unique_authors, _epmc_top_authors_data) = prepare_epmc_data()
 
 _epmc_article_count = _epmc_total_entries
 
 _epmc_unique_countries, _epmc_countries_entries = _countries_stats_whitelist(_epmc_countries_df, COUNTRIES_WHITELIST)
+
+_epmc_kpis = compute_epmc_kpis(_epmc_entries_df, _epmc_citations_df, _epmc_total_entries)
+_epmc_yoy_growth_pct   = _epmc_kpis["yoy_growth_pct"]
+_epmc_avg_citations    = _epmc_kpis["avg_citations"]
+_epmc_total_citations  = _epmc_kpis["total_citations"]
+
+_epmc_funding_data     = get_funding_agencies(limit=50)
 
 # Prepare PyPI module data
 _pypi_details = get_pypi_details()
@@ -55,6 +65,12 @@ _epmc_layout = get_epmc_layout(
     _epmc_total_entries,
     _epmc_citations_df,
 )
+
+# Build Funder persona components
+_agencies_list = _epmc_funding_data.get("agencies", []) if isinstance(_epmc_funding_data, dict) else []
+_funding_bodies_count = _epmc_funding_data.get("total_unique", 0) if isinstance(_epmc_funding_data, dict) else 0
+
+_funder_charts = get_funder_charts_section(_epmc_entries_df, _agencies_list)
 
 # Prepare PyPI layout
 _pypi_layout = get_pypi_layout(_pypi_details, _pypi_total)
@@ -150,7 +166,17 @@ html.Div(
                 ),
             ],
             className="hero-content-box",
-        )
+        ),
+
+        # ---------- INFO BADGES (hero right panel) ----------
+        html.Div(
+            [
+                dbc.Badge("Data Updated: 2026-03-13",                              className="hero-badge"),
+                dbc.Badge("Created by: GA4GH Technical Team",                      className="hero-badge"),
+                dbc.Badge("Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry", className="hero-badge"),
+            ],
+            className="hero-right-panel",
+        ),
     ],
     className="hero-section",
     id="overview",
@@ -160,35 +186,24 @@ html.Div(
 
         html.Div(className="section-spacer"),
 
-        # ---------- INFO BADGES ----------
-        dbc.Row(
-    [
-        dbc.Col(
-            dbc.Badge(
-                "Data Updated: 2026-03-13",
-                className="info-badge",
-            ),
-            width="auto",
-        ),
+        # ---------- PERSONA SELECTOR ----------
+        dcc.Store(id="active-persona", storage_type="session", data="default"),
 
-        dbc.Col(
-            dbc.Badge(
-                "Created by: GA4GH Technical Team",
-                className="info-badge",
-            ),
-            width="auto",
-        ),
-
-        dbc.Col(
-            dbc.Badge(
-                "Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry",
-                className="info-badge",
-            ),
-            width="auto",
-        ),
-    ],
-    className="info-badges-row",
-    align="center",
+        html.Div(
+            [
+                html.Span("View as:", className="persona-selector-label"),
+                html.Div(
+                    [
+                        dbc.Button("Default",        id="persona-btn-default",    n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
+                        dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("GA4GH Internal", id="persona-btn-internal",   n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                    ],
+                    className="persona-btn-group",
+                ),
+            ],
+            className="persona-selector-row",
         ),
 
         # ---------- METHODS CARDS -----------
@@ -495,63 +510,93 @@ html.Div(
 
         # ---------- KPI INDICATORS ----------
         dbc.Row(
-    [
-        dbc.Col(
-            indicator_card(
-                f"{_epmc_article_count:,}",
-                "Europe PMC Publications",
-                "border-red",
-            ),
-            md=2,
+            [
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_article_count:,}",
+                        "Europe PMC Publications",
+                        "border-red",
+                    ),
+                    md=2,
+                ),
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_unique_authors:,}",
+                        "Total Authors",
+                        "border-orange",
+                    ),
+                    md=2,
+                ),
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_total_citations:,}",
+                        "Total Citations",
+                        "border-green",
+                    ),
+                    md=2,
+                ),
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_unique_countries:,}",
+                        "Total Countries",
+                        "border-lightblue",
+                    ),
+                    md=2,
+                ),
+                dbc.Col(
+                    indicator_card(
+                        f"{_gh_total:,}",
+                        "GitHub Repositories",
+                        "border-darkblue",
+                    ),
+                    md=2,
+                ),
+                dbc.Col(
+                    indicator_card(
+                        f"{_pypi_total:,}",
+                        "PyPI Packages",
+                        "border-purple",
+                    ),
+                    md=2,
+                ),
+                # Funder-specific KPIs — hidden by default, shown when Funder persona is active
+                dbc.Col(
+                    indicator_card(
+                        f"+{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None and _epmc_yoy_growth_pct >= 0
+                        else (f"{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None else "N/A"),
+                        "YoY Publication Growth",
+                        "border-orange",
+                    ),
+                    md=2,
+                    id="funder-kpi-yoy",
+                    className="mt-3",
+                    style={"display": "none"},
+                ),
+                dbc.Col(
+                    indicator_card(
+                        str(_epmc_avg_citations),
+                        "Avg Citations / Paper",
+                        "border-purple",
+                    ),
+                    md=2,
+                    id="funder-kpi-avg-citations",
+                    className="mt-3",
+                    style={"display": "none"},
+                ),
+                dbc.Col(
+                    indicator_card(
+                        f"{_funding_bodies_count:,}" if _funding_bodies_count else "N/A",
+                        "Unique Funding Bodies",
+                        "border-darkgreen",
+                    ),
+                    md=2,
+                    id="funder-kpi-funding-bodies",
+                    className="mt-3",
+                    style={"display": "none"},
+                ),
+            ],
+            className="mb-4",
         ),
-
-        dbc.Col(
-            indicator_card(
-                f"{_epmc_unique_authors:,}",
-                "Total Authors",
-                "border-orange",
-            ),
-            md=2,
-        ),
-
-        dbc.Col(
-            indicator_card(
-                f"{_epmc_citations_df.get('total_citations', 0):,}",
-                "Total Citations",
-                "border-green",
-            ),
-            md=2,
-        ),
-
-        dbc.Col(
-            indicator_card(
-                f"{_epmc_unique_countries:,}",
-                "Total Countries",
-                "border-lightblue",
-            ),
-            md=2,
-        ),
-
-        dbc.Col(
-            indicator_card(
-                f"{_gh_total:,}",
-                "GitHub Repositories",
-                "border-darkblue",
-            ),
-            md=2,
-        ),
-
-        dbc.Col(
-            indicator_card(
-                f"{_pypi_total:,}",
-                "PyPI Packages",
-                "border-purple",
-            ),
-            md=2,
-        ),
-    ],
-    className="mb-4",
-),
             
         # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
 
@@ -599,6 +644,8 @@ html.Div(
     id="epmc",
     className="epmc-section",
 ),
+
+_funder_charts,
 
 html.Div(
     [
