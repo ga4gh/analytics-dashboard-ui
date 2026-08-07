@@ -33,8 +33,12 @@ ALL_SECTION_IDS = [
     "github",
     "pypi",
     "tables",
-    # funder-specific chart sections
-    "funder-charts",
+    # shared publication trend chart (funder + researcher)
+    "publication-charts",
+    # funder-only charts
+    "funder-only-charts",
+    # researcher-only charts
+    "researcher-charts",
 ]
 
 # dbc.Col KPI cards — shown with {} (let Bootstrap flex handle sizing)
@@ -56,8 +60,12 @@ PERSONA_SHOW = {
         "cols":     [],
     },
     "funder": {
-        "sections": ["metrics", "epmc", "funder-charts"],
+        "sections": ["metrics", "epmc", "publication-charts", "funder-only-charts"],
         "cols":     ["funder-kpi-yoy", "funder-kpi-avg-citations", "funder-kpi-funding-bodies"],
+    },
+    "researcher": {
+        "sections": ["metrics", "epmc", "tables", "publication-charts", "researcher-charts"],
+        "cols":     ["funder-kpi-yoy", "funder-kpi-avg-citations"],
     },
 }
 

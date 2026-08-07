@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 from dash import register_page
 
 # EPMC metrics
-from app.services.epmc_client import prepare_epmc_data, _countries_stats_whitelist, compute_epmc_kpis, get_funding_agencies
+from app.services.epmc_client import prepare_epmc_data, _countries_stats_whitelist, compute_epmc_kpis, get_funding_agencies, get_publication_types
 from app.constants.constants import COUNTRIES_WHITELIST
 
 # PyPI module
@@ -28,8 +28,9 @@ from app.services.service_map_client import prepare_service_map_data
 # Data tables layout (moved to bottom of page)
 from app.layouts.datatables_layout import get_datatables_layout
 
-# Funder persona layout components
-from app.layouts.funder_layout import get_funder_charts_section
+# Persona layout components
+from app.layouts.funder_layout import get_publication_charts_section, get_funder_only_charts_section
+from app.layouts.researcher_layout import get_researcher_charts_section
 
 # Prepare all EPMC data once (calls consolidated prepare_epmc_data which fetches all APIs in one pass)
 (_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries,
@@ -45,6 +46,7 @@ _epmc_avg_citations    = _epmc_kpis["avg_citations"]
 _epmc_total_citations  = _epmc_kpis["total_citations"]
 
 _epmc_funding_data     = get_funding_agencies(limit=50)
+_epmc_pub_types        = get_publication_types()
 
 # Prepare PyPI module data
 _pypi_details = get_pypi_details()
@@ -66,11 +68,13 @@ _epmc_layout = get_epmc_layout(
     _epmc_citations_df,
 )
 
-# Build Funder persona components
+# Build persona chart components
 _agencies_list = _epmc_funding_data.get("agencies", []) if isinstance(_epmc_funding_data, dict) else []
 _funding_bodies_count = _epmc_funding_data.get("total_unique", 0) if isinstance(_epmc_funding_data, dict) else 0
 
-_funder_charts = get_funder_charts_section(_epmc_entries_df, _agencies_list)
+_publication_charts  = get_publication_charts_section(_epmc_entries_df)
+_funder_only_charts  = get_funder_only_charts_section(_agencies_list)
+_researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
 
 # Prepare PyPI layout
 _pypi_layout = get_pypi_layout(_pypi_details, _pypi_total)
@@ -645,7 +649,9 @@ html.Div(
     className="epmc-section",
 ),
 
-_funder_charts,
+_publication_charts,
+_funder_only_charts,
+_researcher_charts,
 
 html.Div(
     [

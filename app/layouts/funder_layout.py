@@ -144,27 +144,23 @@ def _kpi_card(value, label, color_class):
 # Public layout builders
 # ---------------------------------------------------------------------------
 
-def get_funder_charts_section(entries_df, agencies_list):
+def get_publication_charts_section(entries_df):
     """
-    Funder-specific charts: annual publications, top agencies, region breakdown.
+    Annual publications bar — shared across personas (funder + researcher).
     Hidden by default; persona callback sets display:block.
     """
     annual_fig = _annual_publications_figure(entries_df)
-    agencies_fig = _top_agencies_figure(agencies_list)
-    region_fig = _region_pie_figure(agencies_list)
 
     return html.Div(
         [
-            html.Div("Funding Analytics", className="section-title"),
-
-            # Annual publications bar
+            html.Div("Publication Trends", className="section-title"),
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
                                 dcc.Graph(
-                                    id="funder-annual-publications-bar",
+                                    id="annual-publications-bar",
                                     figure=annual_fig,
                                     config={"displayModeBar": False},
                                 ),
@@ -180,8 +176,24 @@ def get_funder_charts_section(entries_df, agencies_list):
                     width=12,
                 ),
             ),
+        ],
+        id="publication-charts",
+        style={"display": "none"},
+        className="epmc-section",
+    )
 
-            # Top agencies + region side by side
+
+def get_funder_only_charts_section(agencies_list):
+    """
+    Funder-specific charts: top agencies bar + region pie.
+    Hidden by default; shown only when Funder persona is active.
+    """
+    agencies_fig = _top_agencies_figure(agencies_list)
+    region_fig = _region_pie_figure(agencies_list)
+
+    return html.Div(
+        [
+            html.Div("Funding Analytics", className="section-title"),
             dbc.Row(
                 [
                     dbc.Col(
@@ -229,7 +241,7 @@ def get_funder_charts_section(entries_df, agencies_list):
                 ],
             ),
         ],
-        id="funder-charts",
+        id="funder-only-charts",
         style={"display": "none"},
         className="epmc-section",
     )

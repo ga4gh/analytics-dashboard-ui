@@ -2,7 +2,6 @@ from dash import Input, Output, State
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
-import json
 import re
 import plotly.express as px
 import plotly.graph_objects as go
@@ -124,42 +123,27 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
 
 def build_most_cited_rows(entries_df):
     """Build rows for the Most Cited GA4GH Publications table."""
-    most_cited_rows = []
     try:
-        candidates = []
-        if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
-            for raw in entries_df["raw_json"]:
-                try:
-                    obj = json.loads(raw)
-                except Exception:
-                    continue
-                title = obj.get("title") or obj.get("name") or ""
-                cited = obj.get("cited_by_count")
-                try:
-                    cited_count = int(cited) if cited is not None else 0
-                except Exception:
-                    cited_count = 0
-                doi = obj.get("doi") or ""
-                doi_url = f"https://doi.org/{doi}" if doi else None
-                candidates.append({"title": title, "cited_by_count": cited_count, "doi_url": doi_url})
-
-        if candidates:
-            counts_df = pd.DataFrame.from_records(candidates)
-            counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
-            for _, row in counts_df.iterrows():
-                doi_url = row.get("doi_url")
-                title = str(row.get("title") or "")
-                article_link = f"[View]({doi_url})" if doi_url else ""
-                most_cited_rows.append(
-                    {
-                        "article_link": article_link,
-                        "title": title,
-                        "cited_by_count": int(row["cited_by_count"]),
-                    }
-                )
+        if entries_df is None or entries_df.empty:
+            return []
+        needed = {"title", "cited_by_count", "doi"}
+        if not needed.issubset(entries_df.columns):
+            return []
+        df = entries_df[list(needed)].copy()
+        df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0).astype(int)
+        df = df.sort_values("cited_by_count", ascending=False).head(20)
+        rows = []
+        for _, row in df.iterrows():
+            doi = str(row.get("doi") or "")
+            doi_url = f"https://doi.org/{doi}" if doi else None
+            rows.append({
+                "article_link":   f"[View]({doi_url})" if doi_url else "",
+                "title":          str(row.get("title") or ""),
+                "cited_by_count": int(row["cited_by_count"]),
+            })
+        return rows
     except Exception:
-        most_cited_rows = []
-    return most_cited_rows
+        return []
 
 
 def register_epmc_callbacks(app):
@@ -188,17 +172,10 @@ def register_epmc_callbacks(app):
         if year_filter and "pub_year" in filtered.columns:
             filtered = filtered[filtered["pub_year"].astype(str) == str(year_filter)]
         
-        if affiliation_filter and "raw_json" in filtered.columns:
-            def _has_affiliation(raw):
-                try:
-                    obj = json.loads(raw) if isinstance(raw, str) else raw
-                except Exception:
-                    return False
-                aff = obj.get("affiliation") or obj.get("affiliations") or ""
-                if isinstance(aff, list):
-                    aff = " ".join([str(a) for a in aff if a])
-                return affiliation_filter.lower() in aff.lower()
-            filtered = filtered[filtered["raw_json"].apply(_has_affiliation)]
+        if affiliation_filter and "affiliation" in filtered.columns:
+            filtered = filtered[
+                filtered["affiliation"].astype(str).str.contains(affiliation_filter, case=False, na=False)
+            ]
         
         # Sort by pub_year descending (most recent first)
         if "pub_year" in filtered.columns:
@@ -250,25 +227,13 @@ def register_epmc_callbacks(app):
 
         entry = filtered_df.iloc[selected_rows[0]]
 
-        raw = entry.get("raw_json") or "{}"
-        try:
-            parsed = json.loads(raw) if isinstance(raw, str) else raw
-        except Exception:
-            parsed = {}
+        abstract  = entry.get("abstract_text") or "No abstract available"
+        pub_year  = entry.get("pub_year") or "N/A"
+        language  = entry.get("language") or "N/A"
+        doi       = entry.get("doi") or ""
+        doi_url   = f"https://doi.org/{doi}" if doi else None
+        pm_id     = entry.get("pm_id") or None
 
-        abstract = parsed.get("abstract_text") or parsed.get("abstract") or "No abstract available"
-        pub_year = entry.get("pub_year") or parsed.get("pub_year") or parsed.get("year") or "N/A"
-        language = parsed.get("language") or parsed.get("lang") or "N/A"
-        doi = entry.get("doi") or parsed.get("doi") or ""
-        doi_url = f"https://doi.org/{doi}" if doi else None
-
-        pm_id = (
-            parsed.get("pm_id")
-            or parsed.get("pmid")
-            or parsed.get("pmId")
-            or parsed.get("article_id")
-            or parsed.get("id")
-        )
         affiliation_rows = get_affiliations_by_article(pm_id) if pm_id else []
         affiliation_rows = [r for r in affiliation_rows if isinstance(r, dict)]
 
