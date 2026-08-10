@@ -39,6 +39,8 @@ ALL_SECTION_IDS = [
     "funder-only-charts",
     # researcher-only charts
     "researcher-charts",
+    # developer-only charts
+    "developer-charts",
 ]
 
 # dbc.Col KPI cards — shown with {} (let Bootstrap flex handle sizing)
@@ -75,7 +77,7 @@ PERSONA_SHOW = {
                      "funder-kpi-yoy", "funder-kpi-avg-citations"],
     },
     "developer": {
-        "sections": ["servicemap", "metrics", "github", "pypi"],
+        "sections": ["servicemap", "metrics", "github", "pypi", "developer-charts"],
         "cols":     [],  # EPMC KPIs hidden — not relevant for developer view
     },
 }
