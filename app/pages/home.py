@@ -530,6 +530,7 @@ html.Div(
                         "border-orange",
                     ),
                     md=2,
+                    id="kpi-authors",
                 ),
                 dbc.Col(
                     indicator_card(
@@ -538,6 +539,7 @@ html.Div(
                         "border-green",
                     ),
                     md=2,
+                    id="kpi-citations",
                 ),
                 dbc.Col(
                     indicator_card(
@@ -546,6 +548,7 @@ html.Div(
                         "border-lightblue",
                     ),
                     md=2,
+                    id="kpi-countries",
                 ),
                 dbc.Col(
                     indicator_card(
