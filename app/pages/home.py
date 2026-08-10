@@ -31,6 +31,7 @@ from app.layouts.datatables_layout import get_datatables_layout
 # Persona layout components
 from app.layouts.funder_layout import get_publication_charts_section, get_funder_only_charts_section
 from app.layouts.researcher_layout import get_researcher_charts_section
+from app.layouts.developer_layout import get_developer_charts_section
 
 # Prepare all EPMC data once (calls consolidated prepare_epmc_data which fetches all APIs in one pass)
 (_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries,
@@ -75,6 +76,7 @@ _funding_bodies_count = _epmc_funding_data.get("total_unique", 0) if isinstance(
 _publication_charts  = get_publication_charts_section(_epmc_entries_df)
 _funder_only_charts  = get_funder_only_charts_section(_agencies_list)
 _researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
+_developer_charts    = get_developer_charts_section(_gh_df, _pypi_first_releases.to_dict("records") if not _pypi_first_releases.empty else [], standards_df, services_df)
 
 # Prepare PyPI layout
 _pypi_layout = get_pypi_layout(_pypi_details, _pypi_total)
@@ -686,6 +688,8 @@ html.Div(
     id="pypi",
     className="pypi-section",
 ),
+
+_developer_charts,
 
 # ---------- TABLES ----------
 html.Div(
