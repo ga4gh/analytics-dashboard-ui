@@ -81,24 +81,16 @@ def _pypi_releases_per_year_figure(first_releases: list) -> go.Figure:
     return fig
 
 
-def _standards_service_count_figure(standards_df: pd.DataFrame, services_df: pd.DataFrame) -> go.Figure:
-    if standards_df is None or standards_df.empty or services_df is None or services_df.empty:
+def _standards_service_count_figure(services_df: pd.DataFrame) -> go.Figure:
+    if services_df is None or services_df.empty:
         return go.Figure().update_layout(title="No implementation registry data available")
-
-    if "versions" not in standards_df.columns or "abbreviation" not in standards_df.columns:
-        return go.Figure().update_layout(title="Missing standards columns")
-
-    version_to_abbr = {}
-    for row in standards_df.itertuples():
-        for v in (row.versions or []):
-            version_to_abbr[v["id"]] = row.abbreviation
 
     if "standardVersion" not in services_df.columns:
         return go.Figure().update_layout(title="Missing standardVersion column")
 
     abbr_series = (
         services_df["standardVersion"]
-        .apply(lambda v: version_to_abbr.get(v.get("id"), None) if isinstance(v, dict) else None)
+        .apply(lambda v: v.get("ga4ghProduct") if isinstance(v, dict) else None)
         .dropna()
         .astype(str)
     )
@@ -130,7 +122,7 @@ def _standards_service_count_figure(standards_df: pd.DataFrame, services_df: pd.
 # ---------------------------------------------------------------------------
 
 def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
-                                  standards_df: pd.DataFrame, services_df: pd.DataFrame):
+                                  services_df: pd.DataFrame):
     """
     Developer-specific charts: GitHub repos by workstream, PyPI releases per year,
     GA4GH standards by service count.
@@ -138,7 +130,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
     """
     fig_workstream = _repos_by_workstream_figure(gh_df)
     fig_pypi       = _pypi_releases_per_year_figure(first_releases)
-    fig_standards  = _standards_service_count_figure(standards_df, services_df)
+    fig_standards  = _standards_service_count_figure(services_df)
 
     return html.Div(
         [
