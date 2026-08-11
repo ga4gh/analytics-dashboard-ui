@@ -1,5 +1,3 @@
-import json
-
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -45,25 +43,18 @@ def get_datatables_layout(
                 for y in sorted(years, reverse=True)
             ]
 
-        if "raw_json" in epmc_entries_df.columns:
+        if "affiliation" in epmc_entries_df.columns:
             affiliations = set()
-            for raw in epmc_entries_df["raw_json"].dropna():
-                try:
-                    parsed = json.loads(raw) if isinstance(raw, str) else raw
-                except (json.JSONDecodeError, TypeError):
-                    parsed = {}
-                if not isinstance(parsed, dict):
+            for aff_text in epmc_entries_df["affiliation"].dropna():
+                aff_text = str(aff_text).strip()
+                if not aff_text:
                     continue
-                aff_val = parsed.get("affiliation") or parsed.get("affiliations") or ""
-                aff_list = aff_val if isinstance(aff_val, list) else [aff_val]
-                for item in aff_list:
-                    if isinstance(item, dict):
-                        text = item.get("name") or item.get("text") or item.get("label") or ""
-                    else:
-                        text = str(item) if item else ""
-                    text = text.strip() if text else ""
-                    if text:
-                        affiliations.add(text)
+                # Split on semicolons — the affiliation field is a concatenated string
+                # of institutions separated by "; "
+                for part in aff_text.split(";"):
+                    part = part.strip()
+                    if part:
+                        affiliations.add(part)
             epmc_affiliation_options = [
                 {"label": html.Span(a, title=a, className="epmc-affiliation-option"), "value": a, "search": a}
                 for a in sorted(affiliations)
