@@ -41,6 +41,8 @@ ALL_SECTION_IDS = [
     "researcher-charts",
     # developer-only charts
     "developer-charts",
+    # community-only charts
+    "community-charts",
 ]
 
 # dbc.Col KPI cards — shown with {} (let Bootstrap flex handle sizing)

@@ -32,6 +32,7 @@ from app.layouts.datatables_layout import get_datatables_layout
 from app.layouts.funder_layout import get_publication_charts_section, get_funder_only_charts_section
 from app.layouts.researcher_layout import get_researcher_charts_section
 from app.layouts.developer_layout import get_developer_charts_section
+from app.layouts.community_layout import get_community_charts_section
 
 # Prepare all EPMC data once (calls consolidated prepare_epmc_data which fetches all APIs in one pass)
 (_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries,
@@ -77,6 +78,10 @@ _publication_charts  = get_publication_charts_section(_epmc_entries_df)
 _funder_only_charts  = get_funder_only_charts_section(_agencies_list)
 _researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
 _developer_charts    = get_developer_charts_section(_gh_df, _pypi_first_releases.to_dict("records") if not _pypi_first_releases.empty else [], services_df)
+_community_charts    = get_community_charts_section(
+    _epmc_entries_df, _gh_df, _pypi_first_releases,
+    epmc_count=_epmc_article_count, gh_count=_gh_total, pypi_count=_pypi_total,
+)
 
 # Prepare PyPI layout
 _pypi_layout = get_pypi_layout(_pypi_details, _pypi_total)
@@ -690,6 +695,8 @@ html.Div(
 ),
 
 _developer_charts,
+
+_community_charts,
 
 # ---------- TABLES ----------
 html.Div(
