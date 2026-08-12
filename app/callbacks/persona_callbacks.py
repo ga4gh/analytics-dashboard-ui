@@ -54,7 +54,6 @@ ALL_COL_IDS = [
     # Persona-specific KPIs
     "funder-kpi-yoy",
     "funder-kpi-avg-citations",
-    "funder-kpi-funding-bodies",
 ]
 
 ALL_CONTROLLED_IDS = ALL_SECTION_IDS + ALL_COL_IDS
@@ -71,7 +70,7 @@ PERSONA_SHOW = {
     "funder": {
         "sections": ["metrics", "epmc", "publication-charts", "funder-only-charts"],
         "cols":     ["kpi-authors", "kpi-citations", "kpi-countries",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations", "funder-kpi-funding-bodies"],
+                     "funder-kpi-yoy", "funder-kpi-avg-citations"],
     },
     "researcher": {
         "sections": ["metrics", "epmc", "tables", "publication-charts", "researcher-charts"],
@@ -87,7 +86,7 @@ PERSONA_SHOW = {
                      "publication-charts", "funder-only-charts", "researcher-charts",
                      "developer-charts", "community-charts"],
         "cols":     ["kpi-authors", "kpi-citations", "kpi-countries",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations", "funder-kpi-funding-bodies"],
+                     "funder-kpi-yoy", "funder-kpi-avg-citations"],
     },
 }
 

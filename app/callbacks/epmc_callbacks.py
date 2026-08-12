@@ -1,4 +1,4 @@
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx, no_update
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
@@ -10,8 +10,13 @@ from app.services.epmc_client import prepare_epmc_data, get_affiliations_by_arti
 from app.constants.constants import COUNTRIES_WHITELIST
 
 
-def fig_epmc_countries_pie(countries_df):
-    """Pie chart – article count by affiliation country."""
+def fig_epmc_countries_pie(countries_df, hidden_labels=None):
+    """Pie chart – article count by affiliation country.
+
+    hidden_labels: collection of country names currently toggled off in the
+    legend.  Percentages are recalculated against the visible-only total so
+    the displayed values stay correct after toggling.
+    """
     if countries_df is None or countries_df.empty:
         return go.Figure().update_layout(title="No country data available")
 
@@ -34,24 +39,32 @@ def fig_epmc_countries_pie(countries_df):
         return go.Figure().update_layout(title="No country data available (after filtering)")
 
     counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
-    total = counts.sum()
-    if total <= 0:
-        return go.Figure().update_layout(title="No country data available (zero total)")
-
     df = df.copy()
     df["count"] = counts
     df = df.sort_values("count", ascending=False).reset_index(drop=True)
 
-    percents = (df["count"] / total * 100)
+    hidden = set(hidden_labels) if hidden_labels else set()
+    visible_mask = ~df["country_normalized"].isin(hidden)
+    visible_total = df.loc[visible_mask, "count"].sum()
+    if visible_total <= 0:
+        visible_total = df["count"].sum()
+    if visible_total <= 0:
+        return go.Figure().update_layout(title="No country data available (zero total)")
+
     slice_text = []
     hover_text = []
-    for cn, cnt, pct in zip(df["country_normalized"], df["count"], percents):
-        pct_fmt = f"{pct:.1f}%"
-        if pct > 5.0:
-            slice_text.append(f"{cn}<br>{pct_fmt}")
+    for cn, cnt, is_vis in zip(df["country_normalized"], df["count"], visible_mask):
+        if not is_vis:
+            slice_text.append("")
+            hover_text.append("")
         else:
-            slice_text.append(f"{pct_fmt}")
-        hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
+            pct = cnt / visible_total * 100
+            pct_fmt = f"{pct:.1f}%"
+            if pct > 5.0:
+                slice_text.append(f"{cn}<br>{pct_fmt}")
+            else:
+                slice_text.append(pct_fmt)
+            hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
 
     text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
 
@@ -84,6 +97,8 @@ def fig_epmc_countries_pie(countries_df):
             x=0.5,
         ),
     )
+    if hidden:
+        fig.update_layout(hiddenlabels=list(hidden))
     return fig
 
 
@@ -424,11 +439,18 @@ def register_epmc_callbacks(app):
         Output("epmc-countries-pie", "figure"),
         Output("epmc-authors-bar", "figure"),
         Output("epmc-authors-card-body", "style"),
-        Input("epmc-top-n-slider", "value"),  # Responds to slider but uses same cached authors
+        Input("epmc-top-n-slider", "value"),
+        Input("epmc-countries-pie", "relayoutData"),
     )
-    def update_epmc_graphs(top_n):
+    def update_epmc_graphs(top_n, relayout_data):
+        # Legend toggle on the pie — only rebuild the pie with updated percentages
+        if ctx.triggered_id == "epmc-countries-pie":
+            hidden = (relayout_data or {}).get("hiddenlabels") or []
+            if "hiddenlabels" not in (relayout_data or {}):
+                return no_update, no_update, no_update
+            return fig_epmc_countries_pie(countries_df, hidden_labels=hidden), no_update, no_update
+
         fig_pie = fig_epmc_countries_pie(countries_df)
-        # Use pre-fetched top_authors_default (no API call needed)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
         graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
         return fig_pie, fig_bar, {"minHeight": f"{graph_height + 96}px"}
@@ -463,3 +485,4 @@ def register_epmc_callbacks(app):
             html.Span(first_affiliation or "Affiliations"),
         ]
         return new_state, label
+

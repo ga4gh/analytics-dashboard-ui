@@ -538,8 +538,11 @@ html.Div(
         ),
 
         # ---------- KPI INDICATORS ----------
+        # Order: Publications → Citations → Authors → Countries → GitHub → PyPI
+        # Funder/researcher-specific KPIs are interspersed and hidden by default
         dbc.Row(
             [
+                # --- Publications group ---
                 dbc.Col(
                     indicator_card(
                         f"{_epmc_article_count:,}",
@@ -550,13 +553,16 @@ html.Div(
                 ),
                 dbc.Col(
                     indicator_card(
-                        f"{_epmc_unique_authors:,}",
-                        "Total Authors",
+                        f"+{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None and _epmc_yoy_growth_pct >= 0
+                        else (f"{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None else "N/A"),
+                        "YoY Publication Growth",
                         "border-orange",
                     ),
                     md=2,
-                    id="kpi-authors",
+                    id="funder-kpi-yoy",
+                    style={"display": "none"},
                 ),
+                # --- Citations group ---
                 dbc.Col(
                     indicator_card(
                         f"{_epmc_total_citations:,}",
@@ -568,6 +574,26 @@ html.Div(
                 ),
                 dbc.Col(
                     indicator_card(
+                        str(_epmc_avg_citations),
+                        "Avg Citations / Paper",
+                        "border-purple",
+                    ),
+                    md=2,
+                    id="funder-kpi-avg-citations",
+                    style={"display": "none"},
+                ),
+                # --- Authors group ---
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_unique_authors:,}",
+                        "Total Authors",
+                        "border-orange",
+                    ),
+                    md=2,
+                    id="kpi-authors",
+                ),
+                dbc.Col(
+                    indicator_card(
                         f"{_epmc_unique_countries:,}",
                         "Total Countries",
                         "border-lightblue",
@@ -575,6 +601,7 @@ html.Div(
                     md=2,
                     id="kpi-countries",
                 ),
+                # --- GitHub / PyPI group ---
                 dbc.Col(
                     indicator_card(
                         f"{_gh_total:,}",
@@ -591,45 +618,10 @@ html.Div(
                     ),
                     md=2,
                 ),
-                # Funder-specific KPIs — hidden by default, shown when Funder persona is active
-                dbc.Col(
-                    indicator_card(
-                        f"+{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None and _epmc_yoy_growth_pct >= 0
-                        else (f"{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None else "N/A"),
-                        "YoY Publication Growth",
-                        "border-orange",
-                    ),
-                    md=2,
-                    id="funder-kpi-yoy",
-                    className="mt-3",
-                    style={"display": "none"},
-                ),
-                dbc.Col(
-                    indicator_card(
-                        str(_epmc_avg_citations),
-                        "Avg Citations / Paper",
-                        "border-purple",
-                    ),
-                    md=2,
-                    id="funder-kpi-avg-citations",
-                    className="mt-3",
-                    style={"display": "none"},
-                ),
-                dbc.Col(
-                    indicator_card(
-                        f"{_funding_bodies_count:,}" if _funding_bodies_count else "N/A",
-                        "Unique Funding Bodies",
-                        "border-darkgreen",
-                    ),
-                    md=2,
-                    id="funder-kpi-funding-bodies",
-                    className="mt-3",
-                    style={"display": "none"},
-                ),
             ],
-            className="mb-4",
+            className="mb-4 gy-3",
         ),
-            
+
         # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
 
 html.Div(
