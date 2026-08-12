@@ -80,6 +80,13 @@ PERSONA_SHOW = {
         "sections": ["servicemap", "metrics", "github", "pypi", "developer-charts"],
         "cols":     [],  # EPMC KPIs hidden — not relevant for developer view
     },
+    "community": {
+        "sections": ["servicemap", "metrics", "epmc", "github", "pypi", "tables",
+                     "publication-charts", "funder-only-charts", "researcher-charts",
+                     "developer-charts", "community-charts"],
+        "cols":     ["kpi-authors", "kpi-citations", "kpi-countries",
+                     "funder-kpi-yoy", "funder-kpi-avg-citations", "funder-kpi-funding-bodies"],
+    },
 }
 
 
