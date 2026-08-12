@@ -57,7 +57,7 @@ _pypi_total = get_total_packages()
 _pypi_first_releases = pd.DataFrame.from_records(get_first_releases())
 
 # Prepare GitHub module data
-_gh_df, _, _, _, _gh_total, workstreams = prepare_github_data()
+_gh_df, _, _, _gh_interest_df, _gh_total, workstreams = prepare_github_data()
 
 # Prepare Service Map module data
 standards_df, services_df, deployments_df = prepare_service_map_data()
@@ -80,11 +80,7 @@ _funder_only_charts  = get_funder_only_charts_section(_agencies_list)
 _researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
 _developer_charts    = get_developer_charts_section(_gh_df, _pypi_first_releases.to_dict("records") if not _pypi_first_releases.empty else [], services_df)
 _summary_overview    = get_summary_overview()
-_community_charts    = get_community_charts_section(
-    _epmc_entries_df, _gh_df, _pypi_first_releases,
-    epmc_count=_epmc_article_count, gh_count=_gh_total, pypi_count=_pypi_total,
-    freshness_data=_summary_overview,
-)
+_community_charts    = get_community_charts_section(_gh_df, _gh_interest_df)
 
 # Prepare PyPI layout
 _pypi_layout = get_pypi_layout(_pypi_details, _pypi_total)
@@ -178,18 +174,37 @@ html.Div(
                     "Whether you're a Work Stream contributor looking to understand how your efforts are landing, a product lead shaping the next development cycle, or a stakeholder making the case for genomic data sharing — this dashboard gives you the evidence to do it. Explore trends, spot implementation gaps, and see over a decade of open science translated into data.",
                     className="dashboard-summary",
                 ),
+
             ],
             className="hero-content-box",
         ),
 
-        # ---------- INFO BADGES (hero right panel) ----------
+        # ---------- INFO BADGES (hero right panel / logo section) ----------
         html.Div(
             [
-                dbc.Badge("Data Updated: 2026-03-13",                              className="hero-badge"),
-                dbc.Badge("Created by: GA4GH Technical Team",                      className="hero-badge"),
+                dbc.Badge("Created by: GA4GH Technical Team", className="hero-badge"),
                 dbc.Badge("Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry", className="hero-badge"),
+                html.Div(
+                    [
+                        dbc.Badge("Data Updated:", className="hero-badge"),
+                        dbc.Badge(
+                            f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
+                            className="hero-badge",
+                        ),
+                        dbc.Badge(
+                            f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
+                            className="hero-badge",
+                        ),
+                        dbc.Badge(
+                            f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
+                            className="hero-badge",
+                        ),
+                    ],
+                    style={"display": "flex", "flexWrap": "wrap", "gap": "6px"},
+                ),
             ],
             className="hero-right-panel",
+            style={"alignItems": "flex-start"},
         ),
     ],
     className="hero-section",

@@ -1,127 +1,100 @@
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
-
-from app.layouts.combined_layout import _build_source_year_df
 
 
 # ---------------------------------------------------------------------------
 # Figure builders
 # ---------------------------------------------------------------------------
 
-_SOURCE_COLORS = {
-    "Publications": "#1b75bb",
-    "GitHub Repos": "#2a9d8f",
-    "PyPI Packages": "#6a4c93",
+_STATUS_COLORS = {
+    "Active":            "#2a9d8f",
+    "Moderate activity": "#f4a261",
+    "Inactive":          "#e76f51",
+    "Archived":          "#adb5bd",
 }
 
+_STATUS_ORDER = ["Active", "Moderate activity", "Inactive", "Archived"]
 
-def _cross_source_growth_figure(
-    epmc_df: pd.DataFrame,
-    gh_df: pd.DataFrame,
-    pypi_first_releases_df: pd.DataFrame,
-) -> go.Figure:
-    """
-    Cumulative growth of EPMC publications, GitHub repos, and PyPI packages
-    on a single timeline — one line per source.
-    """
-    epmc_year_df = _build_source_year_df(epmc_df, "pub_year", "title", "Publications")
 
-    gh_source = gh_df.copy() if gh_df is not None and not gh_df.empty else pd.DataFrame()
-    if not gh_source.empty and "created_on" in gh_source.columns:
-        gh_source["created_year"] = pd.to_datetime(
-            gh_source["created_on"], errors="coerce", utc=True
-        ).dt.year
-        gh_source["repo_name"] = gh_source.get("name", gh_source.index.astype(str))
-        gh_year_df = _build_source_year_df(gh_source, "created_year", "repo_name", "GitHub Repos")
-    else:
-        gh_year_df = pd.DataFrame(columns=["year", "item", "Source"])
+def _workstream_activity_figure(gh_df: pd.DataFrame) -> go.Figure:
+    if gh_df is None or gh_df.empty:
+        return go.Figure().update_layout(title="No GitHub data available")
 
-    pypi_source = pypi_first_releases_df.copy() if pypi_first_releases_df is not None and not pypi_first_releases_df.empty else pd.DataFrame()
-    if not pypi_source.empty and "release_date" in pypi_source.columns:
-        pypi_source["release_year"] = pd.to_datetime(
-            pypi_source["release_date"], errors="coerce", utc=True
-        ).dt.year
-        pypi_year_df = _build_source_year_df(pypi_source, "release_year", "project_name", "PyPI Packages")
-    else:
-        pypi_year_df = pd.DataFrame(columns=["year", "item", "Source"])
+    if "workstream" not in gh_df.columns or "activity_status" not in gh_df.columns:
+        return go.Figure().update_layout(title="Missing workstream or activity_status column")
 
-    fig = go.Figure()
+    df = gh_df[["workstream", "activity_status"]].copy()
+    df["workstream"] = df["workstream"].fillna("Unknown").astype(str).str.strip().replace("", "Unknown")
+    df["activity_status"] = df["activity_status"].fillna("Unknown").astype(str)
 
-    for source_df, source_name in [
-        (epmc_year_df, "Publications"),
-        (gh_year_df, "GitHub Repos"),
-        (pypi_year_df, "PyPI Packages"),
-    ]:
-        if source_df.empty:
-            continue
-        yearly = (
-            source_df.groupby("year", as_index=False)
-            .agg(count=("item", "count"))
-            .sort_values("year")
-        )
-        yearly["cumulative"] = yearly["count"].cumsum()
-        color = _SOURCE_COLORS[source_name]
-        fig.add_trace(go.Scatter(
-            x=yearly["year"],
-            y=yearly["cumulative"],
-            mode="lines+markers",
-            name=source_name,
-            line={"color": color, "width": 2},
-            marker={"color": color, "size": 6},
-            hovertemplate=f"{source_name}<br>Year: %{{x}}<br>New this year: %{{customdata}}<br>Total to date: %{{y}}<extra></extra>",
-            customdata=yearly["count"],
-        ))
+    counts = (
+        df.groupby(["workstream", "activity_status"])
+        .size()
+        .reset_index(name="count")
+    )
 
-    fig.update_layout(
+    fig = px.bar(
+        counts,
+        x="count",
+        y="workstream",
+        color="activity_status",
+        orientation="h",
+        category_orders={"activity_status": _STATUS_ORDER},
+        color_discrete_map=_STATUS_COLORS,
+        labels={"count": "Repositories", "workstream": "Work Stream", "activity_status": "Status"},
         template="simple_white",
-        height=420,
-        margin={"l": 40, "r": 20, "t": 30, "b": 50},
-        xaxis={"title": "Year", "tickmode": "linear", "dtick": 2},
-        yaxis={"title": "Cumulative Count"},
-        legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+    )
+    fig.update_traces(hovertemplate="%{y} — %{fullData.name}<br>Repos: %{x}<extra></extra>")
+    fig.update_layout(
+        height=440,
+        margin={"l": 10, "r": 20, "t": 30, "b": 50},
+        xaxis={"title": "Number of Repositories"},
+        yaxis={"title": "", "automargin": True},
+        legend={"title": "Activity Status", "orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+        barmode="stack",
     )
     return fig
 
 
-def _freshness_panel(freshness_data: dict | None, epmc_count: int, gh_count: int, pypi_count: int):
-    """
-    Data freshness summary panel. Uses real last_ingested timestamps when
-    freshness_data is provided by the backend /summary/overview endpoint;
-    falls back to 'Pending' until that endpoint is available.
-    """
-    def _last(key):
-        if freshness_data and key in freshness_data:
-            return freshness_data[key].get("last_ingested", "Pending")
-        return "Pending"
+def _top_repos_interest_figure(gh_interest_df: pd.DataFrame) -> go.Figure:
+    if gh_interest_df is None or gh_interest_df.empty:
+        return go.Figure().update_layout(title="No GitHub interest data available")
 
-    rows = [
-        ("Europe PMC",  epmc_count,  _last("epmc"),   "#1b75bb"),
-        ("GitHub",      gh_count,    _last("github"),  "#2a9d8f"),
-        ("PyPI",        pypi_count,  _last("pypi"),    "#6a4c93"),
-    ]
+    df = gh_interest_df.copy()
+    if "name" not in df.columns or "total_interest" not in df.columns:
+        return go.Figure().update_layout(title="Missing name or total_interest column")
 
-    cards = []
-    for label, count, last_ingested, color in rows:
-        cards.append(
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardBody([
-                        html.Div(label, style={"fontWeight": "600", "fontSize": "14px", "color": color}),
-                        html.H4(f"{count:,}", style={"margin": "4px 0"}),
-                        html.Div(
-                            [html.Span("Last ingested: ", style={"color": "#888", "fontSize": "12px"}),
-                             html.Span(last_ingested, style={"fontSize": "12px"})],
-                        ),
-                    ]),
-                    className="shadow-sm",
-                    style={"borderRadius": "12px", "borderTop": f"3px solid {color}"},
-                ),
-                md=4,
-            )
+    df = df.sort_values("total_interest", ascending=True)
+
+    fig = px.bar(
+        df,
+        x="total_interest",
+        y="name",
+        orientation="h",
+        labels={"total_interest": "Community Interest Score", "name": "Repository"},
+        template="simple_white",
+        color_discrete_sequence=["#1b75bb"],
+        custom_data=["stargazers_count", "forks_count", "subscribers_count"],
+    )
+    fig.update_traces(
+        hovertemplate=(
+            "%{y}<br>"
+            "Stars: %{customdata[0]}<br>"
+            "Forks: %{customdata[1]}<br>"
+            "Watchers: %{customdata[2]}<br>"
+            "Total: %{x}<extra></extra>"
         )
-    return dbc.Row(cards, className="mb-4")
+    )
+    fig.update_layout(
+        height=400,
+        margin={"l": 10, "r": 20, "t": 30, "b": 50},
+        xaxis={"title": "Stars + Forks + Watchers"},
+        yaxis={"title": "", "automargin": True},
+    )
+    return fig
 
 
 # ---------------------------------------------------------------------------
@@ -129,51 +102,69 @@ def _freshness_panel(freshness_data: dict | None, epmc_count: int, gh_count: int
 # ---------------------------------------------------------------------------
 
 def get_community_charts_section(
-    epmc_df: pd.DataFrame,
     gh_df: pd.DataFrame,
-    pypi_first_releases_df: pd.DataFrame,
-    epmc_count: int,
-    gh_count: int,
-    pypi_count: int,
-    freshness_data: dict | None = None,
+    gh_interest_df: pd.DataFrame,
 ):
     """
-    GA4GH Community charts: cross-source cumulative growth and data freshness panel.
+    GA4GH Community charts: GitHub workstream × activity status stacked bar
+    and top 10 repos by community interest.
     Hidden by default; persona callback sets display:block.
     """
-    fig_growth = _cross_source_growth_figure(epmc_df, gh_df, pypi_first_releases_df)
+    fig_workstream = _workstream_activity_figure(gh_df)
+    fig_interest   = _top_repos_interest_figure(gh_interest_df)
 
     return html.Div(
         [
             html.Div("GA4GH Community Overview", className="section-title"),
 
-            # Data freshness panel
-            _freshness_panel(freshness_data, epmc_count, gh_count, pypi_count),
-
-            # Cross-source growth chart
+            # Row: workstream × activity + top repos side by side
             dbc.Row(
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            html.Figure([
-                                html.H5("Cumulative Growth by Source",
-                                        style={"marginBottom": "8px"}),
-                                dcc.Graph(
-                                    id="community-cross-source-growth",
-                                    figure=fig_growth,
-                                    config={"displayModeBar": False},
-                                ),
-                                html.Figcaption(
-                                    "Cumulative count of GA4GH publications (Europe PMC), repositories (GitHub), and packages (PyPI) over time.",
-                                    style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
-                                ),
-                            ])
+                [
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                html.Figure([
+                                    html.H5("GitHub Repositories by Work Stream & Activity",
+                                            style={"marginBottom": "8px"}),
+                                    dcc.Graph(
+                                        id="community-workstream-activity",
+                                        figure=fig_workstream,
+                                        config={"displayModeBar": False},
+                                    ),
+                                    html.Figcaption(
+                                        "Activity status breakdown per GA4GH work stream — Active (pushed within 1 year), Moderate (1–3 years), Inactive (3+ years), Archived.",
+                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                    ),
+                                ])
+                            ),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
                         ),
-                        className="mb-4 shadow-sm",
-                        style={"borderRadius": "12px"},
+                        md=7,
                     ),
-                    width=12,
-                ),
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                html.Figure([
+                                    html.H5("Top 10 Repos by Community Interest",
+                                            style={"marginBottom": "8px"}),
+                                    dcc.Graph(
+                                        id="community-top-repos-interest",
+                                        figure=fig_interest,
+                                        config={"displayModeBar": False},
+                                    ),
+                                    html.Figcaption(
+                                        "Ranked by combined stars, forks, and watchers count.",
+                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                    ),
+                                ])
+                            ),
+                            className="mb-4 shadow-sm",
+                            style={"borderRadius": "12px"},
+                        ),
+                        md=5,
+                    ),
+                ],
             ),
         ],
         id="community-charts",
