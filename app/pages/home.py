@@ -33,6 +33,7 @@ from app.layouts.funder_layout import get_publication_charts_section, get_funder
 from app.layouts.researcher_layout import get_researcher_charts_section
 from app.layouts.developer_layout import get_developer_charts_section
 from app.layouts.community_layout import get_community_charts_section
+from app.services.summary_client import get_summary_overview
 
 # Prepare all EPMC data once (calls consolidated prepare_epmc_data which fetches all APIs in one pass)
 (_epmc_entries_df, _epmc_countries_df, _epmc_authors_df, _epmc_total_entries,
@@ -78,9 +79,11 @@ _publication_charts  = get_publication_charts_section(_epmc_entries_df)
 _funder_only_charts  = get_funder_only_charts_section(_agencies_list)
 _researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
 _developer_charts    = get_developer_charts_section(_gh_df, _pypi_first_releases.to_dict("records") if not _pypi_first_releases.empty else [], services_df)
+_summary_overview    = get_summary_overview()
 _community_charts    = get_community_charts_section(
     _epmc_entries_df, _gh_df, _pypi_first_releases,
     epmc_count=_epmc_article_count, gh_count=_gh_total, pypi_count=_pypi_total,
+    freshness_data=_summary_overview,
 )
 
 # Prepare PyPI layout

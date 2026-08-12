@@ -37,3 +37,6 @@ EPMC_AFFILIATION_BY_ARTICLE = BASE_API + "/epmc/get-affiliations-by-article-id/"
 EPMC_FUNDING_AGENCIES = BASE_API + "/epmc/funding-agencies"
 EPMC_ARTICLES_LIGHT   = BASE_API + "/epmc/articles-light"
 EPMC_PUBLICATION_TYPES = BASE_API + "/epmc/publication-types"
+
+# Summary API endpoint
+SUMMARY_OVERVIEW = BASE_API + "/summary/overview"
