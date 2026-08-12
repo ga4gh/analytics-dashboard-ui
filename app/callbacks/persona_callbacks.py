@@ -5,7 +5,7 @@ PERSONA_BUTTONS = [
     "persona-btn-funder",
     "persona-btn-researcher",
     "persona-btn-developer",
-    "persona-btn-internal",
+    "persona-btn-community",
 ]
 
 BUTTON_TO_PERSONA = {
@@ -13,7 +13,7 @@ BUTTON_TO_PERSONA = {
     "persona-btn-funder":     "funder",
     "persona-btn-researcher": "researcher",
     "persona-btn-developer":  "developer",
-    "persona-btn-internal":   "internal",
+    "persona-btn-community":  "community",
 }
 
 # ---------------------------------------------------------------------------

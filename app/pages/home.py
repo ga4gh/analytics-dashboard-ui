@@ -204,7 +204,7 @@ html.Div(
                         dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                         dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                         dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("GA4GH Internal", id="persona-btn-internal",   n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                     ],
                     className="persona-btn-group",
                 ),
