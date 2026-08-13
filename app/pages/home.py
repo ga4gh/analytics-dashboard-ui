@@ -30,6 +30,7 @@ from app.layouts.datatables_layout import get_datatables_layout
 
 # Persona layout components
 from app.layouts.funder_layout import get_publication_charts_section, get_funder_only_charts_section
+from app.callbacks.epmc_callbacks import fig_epmc_countries_choropleth
 from app.layouts.researcher_layout import get_researcher_charts_section
 from app.layouts.developer_layout import get_developer_charts_section
 from app.layouts.community_layout import get_community_charts_section
@@ -75,7 +76,8 @@ _epmc_layout = get_epmc_layout(
 _agencies_list = _epmc_funding_data.get("agencies", []) if isinstance(_epmc_funding_data, dict) else []
 _funding_bodies_count = _epmc_funding_data.get("total_unique", 0) if isinstance(_epmc_funding_data, dict) else 0
 
-_publication_charts  = get_publication_charts_section(_epmc_entries_df)
+_choropleth_fig      = fig_epmc_countries_choropleth(_epmc_countries_df)
+_publication_charts  = get_publication_charts_section(_epmc_entries_df, _choropleth_fig)
 _funder_only_charts  = get_funder_only_charts_section(_agencies_list)
 _researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
 _developer_charts    = get_developer_charts_section(_gh_df, _pypi_first_releases.to_dict("records") if not _pypi_first_releases.empty else [], services_df)

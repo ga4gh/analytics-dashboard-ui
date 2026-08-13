@@ -102,6 +102,70 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
     return fig
 
 
+def fig_epmc_countries_choropleth(countries_df):
+    """Choropleth world map — each country's % share of total author affiliations."""
+    if countries_df is None or countries_df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    cols = list(countries_df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col   = next(c for c in cols if c.lower() == "count")
+        df = countries_df[[country_col, count_col]].copy()
+        df.columns = ["country", "count"]
+    else:
+        df = countries_df.iloc[:, :2].copy()
+        df.columns = ["country", "count"]
+
+    whitelist = {c.strip().lower() for c in COUNTRIES_WHITELIST}
+    df["country"] = df["country"].astype(str).str.strip()
+    df = df[df["country"].str.lower().isin(whitelist)].copy()
+    df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0)
+
+    if df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    total = df["count"].sum()
+    df["pct"] = (df["count"] / total * 100).round(2)
+    df["hover_text"] = df.apply(
+        lambda r: f"{r['country']}<br>{r['pct']}% of author affiliations", axis=1
+    )
+
+    fig = px.choropleth(
+        df,
+        locations="country",
+        locationmode="country names",
+        color="pct",
+        color_continuous_scale="Reds",
+        custom_data=["pct"],
+        labels={"pct": "Share (%)", "country": "Country"},
+        template="simple_white",
+    )
+    fig.update_traces(
+        hovertemplate="<b>%{location}</b><br>%{customdata[0]:.2f}% of author affiliations<extra></extra>",
+        marker_line_color="white",
+        marker_line_width=0.5,
+    )
+    fig.update_layout(
+        autosize=True,
+        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        coloraxis_colorbar={
+            "title": "Share (%)",
+            "thickness": 12,
+            "ticksuffix": "%",
+        },
+    )
+    fig.update_geos(
+        showland=True,    landcolor="#DAECC1",
+        showocean=True,   oceancolor="#BBDFF1",
+        showlakes=True,   lakecolor="#BBDFF1",
+        showcountries=True, countrycolor="#999999",
+        projection_type="natural earth",
+        showframe=False,
+    )
+    return fig
+
+
 def fig_epmc_top_authors_bar(authors_data, top_n=15):
     """Bar chart – top N authors by publication count."""
     if not authors_data:
