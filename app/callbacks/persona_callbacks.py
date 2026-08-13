@@ -5,7 +5,7 @@ PERSONA_BUTTONS = [
     "persona-btn-funder",
     "persona-btn-researcher",
     "persona-btn-developer",
-    "persona-btn-internal",
+    "persona-btn-community",
 ]
 
 BUTTON_TO_PERSONA = {
@@ -13,7 +13,7 @@ BUTTON_TO_PERSONA = {
     "persona-btn-funder":     "funder",
     "persona-btn-researcher": "researcher",
     "persona-btn-developer":  "developer",
-    "persona-btn-internal":   "internal",
+    "persona-btn-community":  "community",
 }
 
 # ---------------------------------------------------------------------------
@@ -41,6 +41,8 @@ ALL_SECTION_IDS = [
     "researcher-charts",
     # developer-only charts
     "developer-charts",
+    # community-only charts
+    "community-charts",
 ]
 
 # dbc.Col KPI cards — shown with {} (let Bootstrap flex handle sizing)
@@ -79,6 +81,13 @@ PERSONA_SHOW = {
     "developer": {
         "sections": ["servicemap", "metrics", "github", "pypi", "developer-charts"],
         "cols":     [],  # EPMC KPIs hidden — not relevant for developer view
+    },
+    "community": {
+        "sections": ["servicemap", "metrics", "epmc", "github", "pypi", "tables",
+                     "publication-charts", "funder-only-charts", "researcher-charts",
+                     "developer-charts", "community-charts"],
+        "cols":     ["kpi-authors", "kpi-citations", "kpi-countries",
+                     "funder-kpi-yoy", "funder-kpi-avg-citations", "funder-kpi-funding-bodies"],
     },
 }
 
