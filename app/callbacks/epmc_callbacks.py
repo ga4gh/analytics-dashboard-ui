@@ -550,3 +550,21 @@ def register_epmc_callbacks(app):
         ]
         return new_state, label
 
+    # -----------------------
+    # Interactive YoY growth KPI
+    # -----------------------
+    @app.callback(
+        Output("yoy-growth-value", "children"),
+        Input("yoy-year-selector", "value"),
+        State("yearly-pub-counts", "data"),
+    )
+    def update_yoy_growth(selected_year, yearly_counts):
+        if not selected_year or not yearly_counts:
+            return "N/A"
+        curr = yearly_counts.get(str(selected_year)) or yearly_counts.get(selected_year)
+        prev = yearly_counts.get(str(selected_year - 1)) or yearly_counts.get(selected_year - 1)
+        if curr is None or prev is None or prev == 0:
+            return "N/A"
+        pct = round((curr - prev) / prev * 100, 1)
+        return f"+{pct}%" if pct >= 0 else f"{pct}%"
+

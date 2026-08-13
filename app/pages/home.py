@@ -52,6 +52,29 @@ _epmc_total_citations  = _epmc_kpis["total_citations"]
 _epmc_funding_data     = get_funding_agencies(limit=50)
 _epmc_pub_types        = get_publication_types()
 
+# Yearly publication counts for interactive YoY KPI card
+import datetime as _dt
+_current_year = _dt.datetime.now().year
+if not _epmc_entries_df.empty and "pub_year" in _epmc_entries_df.columns:
+    _yearly_pub_counts = {
+        int(k): int(v)
+        for k, v in _epmc_entries_df[
+            _epmc_entries_df["pub_year"].notna() & (_epmc_entries_df["pub_year"] < _current_year)
+        ].groupby("pub_year").size().items()
+    }
+else:
+    _yearly_pub_counts = {}
+_yoy_year_options = [{"label": str(y), "value": y} for y in sorted(_yearly_pub_counts.keys())]
+_yoy_default_year = max(_yearly_pub_counts.keys()) if _yearly_pub_counts else None
+
+# Open Access rate — computed from entries_df (no extra API needed)
+if not _epmc_entries_df.empty and "is_open_access" in _epmc_entries_df.columns:
+    _oa_count = int(_epmc_entries_df["is_open_access"].sum())
+    _oa_rate  = round(_oa_count / len(_epmc_entries_df) * 100, 1)
+else:
+    _oa_count = 0
+    _oa_rate  = 0.0
+
 # Prepare PyPI module data
 _pypi_details = get_pypi_details()
 _pypi_total = get_total_packages()
@@ -219,6 +242,7 @@ html.Div(
 
         # ---------- PERSONA SELECTOR ----------
         dcc.Store(id="active-persona", storage_type="session", data="default"),
+        dcc.Store(id="yearly-pub-counts", data=_yearly_pub_counts),
 
         html.Div(
             [
@@ -552,13 +576,24 @@ html.Div(
                         "border-red",
                     ),
                     md=2,
+                    id="kpi-publications",
                 ),
                 dbc.Col(
-                    indicator_card(
-                        f"+{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None and _epmc_yoy_growth_pct >= 0
-                        else (f"{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None else "N/A"),
-                        "YoY Publication Growth",
-                        "border-orange",
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.Div([
+                                html.H3(id="yoy-growth-value", className="indicator-value", style={"margin": 0, "flex": "1"}),
+                                dcc.Dropdown(
+                                    id="yoy-year-selector",
+                                    options=_yoy_year_options,
+                                    value=_yoy_default_year,
+                                    clearable=False,
+                                    style={"fontSize": "11px", "width": "72px", "minHeight": "unset"},
+                                ),
+                            ], style={"display": "flex", "alignItems": "center", "gap": "8px", "justifyContent": "space-between"}),
+                            html.Div("YoY Publication Growth", className="indicator-label"),
+                        ], style={"padding": "12px 16px", "minHeight": "unset"}),
+                        className="indicator-card shadow-sm border-orange",
                     ),
                     md=2,
                     id="funder-kpi-yoy",
@@ -611,6 +646,7 @@ html.Div(
                         "border-darkblue",
                     ),
                     md=2,
+                    id="kpi-github",
                 ),
                 dbc.Col(
                     indicator_card(
@@ -619,6 +655,18 @@ html.Div(
                         "border-purple",
                     ),
                     md=2,
+                    id="kpi-pypi",
+                ),
+                # --- Researcher-specific KPIs — hidden by default ---
+                dbc.Col(
+                    indicator_card(
+                        f"{_oa_rate}%",
+                        "Open Access Rate",
+                        "border-green",
+                    ),
+                    md=2,
+                    id="researcher-kpi-open-access",
+                    style={"display": "none"},
                 ),
             ],
             className="mb-4 gy-3",
