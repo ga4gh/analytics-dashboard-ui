@@ -1,4 +1,4 @@
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx, no_update
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
@@ -10,8 +10,13 @@ from app.services.epmc_client import prepare_epmc_data, get_affiliations_by_arti
 from app.constants.constants import COUNTRIES_WHITELIST
 
 
-def fig_epmc_countries_pie(countries_df):
-    """Pie chart – article count by affiliation country."""
+def fig_epmc_countries_pie(countries_df, hidden_labels=None):
+    """Pie chart – article count by affiliation country.
+
+    hidden_labels: collection of country names currently toggled off in the
+    legend.  Percentages are recalculated against the visible-only total so
+    the displayed values stay correct after toggling.
+    """
     if countries_df is None or countries_df.empty:
         return go.Figure().update_layout(title="No country data available")
 
@@ -34,24 +39,32 @@ def fig_epmc_countries_pie(countries_df):
         return go.Figure().update_layout(title="No country data available (after filtering)")
 
     counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
-    total = counts.sum()
-    if total <= 0:
-        return go.Figure().update_layout(title="No country data available (zero total)")
-
     df = df.copy()
     df["count"] = counts
     df = df.sort_values("count", ascending=False).reset_index(drop=True)
 
-    percents = (df["count"] / total * 100)
+    hidden = set(hidden_labels) if hidden_labels else set()
+    visible_mask = ~df["country_normalized"].isin(hidden)
+    visible_total = df.loc[visible_mask, "count"].sum()
+    if visible_total <= 0:
+        visible_total = df["count"].sum()
+    if visible_total <= 0:
+        return go.Figure().update_layout(title="No country data available (zero total)")
+
     slice_text = []
     hover_text = []
-    for cn, cnt, pct in zip(df["country_normalized"], df["count"], percents):
-        pct_fmt = f"{pct:.1f}%"
-        if pct > 5.0:
-            slice_text.append(f"{cn}<br>{pct_fmt}")
+    for cn, cnt, is_vis in zip(df["country_normalized"], df["count"], visible_mask):
+        if not is_vis:
+            slice_text.append("")
+            hover_text.append("")
         else:
-            slice_text.append(f"{pct_fmt}")
-        hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
+            pct = cnt / visible_total * 100
+            pct_fmt = f"{pct:.1f}%"
+            if pct > 5.0:
+                slice_text.append(f"{cn}<br>{pct_fmt}")
+            else:
+                slice_text.append(pct_fmt)
+            hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
 
     text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
 
@@ -83,6 +96,72 @@ def fig_epmc_countries_pie(countries_df):
             xanchor="center",
             x=0.5,
         ),
+    )
+    if hidden:
+        fig.update_layout(hiddenlabels=list(hidden))
+    return fig
+
+
+def fig_epmc_countries_choropleth(countries_df):
+    """Choropleth world map — each country's % share of total author affiliations."""
+    if countries_df is None or countries_df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    cols = list(countries_df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col   = next(c for c in cols if c.lower() == "count")
+        df = countries_df[[country_col, count_col]].copy()
+        df.columns = ["country", "count"]
+    else:
+        df = countries_df.iloc[:, :2].copy()
+        df.columns = ["country", "count"]
+
+    whitelist = {c.strip().lower() for c in COUNTRIES_WHITELIST}
+    df["country"] = df["country"].astype(str).str.strip()
+    df = df[df["country"].str.lower().isin(whitelist)].copy()
+    df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0)
+
+    if df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    total = df["count"].sum()
+    df["pct"] = (df["count"] / total * 100).round(2)
+    df["hover_text"] = df.apply(
+        lambda r: f"{r['country']}<br>{r['pct']}% of author affiliations", axis=1
+    )
+
+    fig = px.choropleth(
+        df,
+        locations="country",
+        locationmode="country names",
+        color="pct",
+        color_continuous_scale="Reds",
+        custom_data=["pct"],
+        labels={"pct": "Share (%)", "country": "Country"},
+        template="simple_white",
+    )
+    fig.update_traces(
+        hovertemplate="<b>%{location}</b><br>%{customdata[0]:.2f}% of author affiliations<extra></extra>",
+        marker_line_color="white",
+        marker_line_width=0.5,
+    )
+    fig.update_layout(
+        autosize=True,
+        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        coloraxis_colorbar={
+            "title": "Share (%)",
+            "thickness": 12,
+            "ticksuffix": "%",
+        },
+    )
+    fig.update_geos(
+        showland=True,    landcolor="#DAECC1",
+        showocean=True,   oceancolor="#BBDFF1",
+        showlakes=True,   lakecolor="#BBDFF1",
+        showcountries=True, countrycolor="#999999",
+        projection_type="natural earth",
+        showframe=False,
     )
     return fig
 
@@ -424,11 +503,18 @@ def register_epmc_callbacks(app):
         Output("epmc-countries-pie", "figure"),
         Output("epmc-authors-bar", "figure"),
         Output("epmc-authors-card-body", "style"),
-        Input("epmc-top-n-slider", "value"),  # Responds to slider but uses same cached authors
+        Input("epmc-top-n-slider", "value"),
+        Input("epmc-countries-pie", "relayoutData"),
     )
-    def update_epmc_graphs(top_n):
+    def update_epmc_graphs(top_n, relayout_data):
+        # Legend toggle on the pie — only rebuild the pie with updated percentages
+        if ctx.triggered_id == "epmc-countries-pie":
+            hidden = (relayout_data or {}).get("hiddenlabels") or []
+            if "hiddenlabels" not in (relayout_data or {}):
+                return no_update, no_update, no_update
+            return fig_epmc_countries_pie(countries_df, hidden_labels=hidden), no_update, no_update
+
         fig_pie = fig_epmc_countries_pie(countries_df)
-        # Use pre-fetched top_authors_default (no API call needed)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
         graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
         return fig_pie, fig_bar, {"minHeight": f"{graph_height + 96}px"}
@@ -463,3 +549,22 @@ def register_epmc_callbacks(app):
             html.Span(first_affiliation or "Affiliations"),
         ]
         return new_state, label
+
+    # -----------------------
+    # Interactive YoY growth KPI
+    # -----------------------
+    @app.callback(
+        Output("yoy-growth-value", "children"),
+        Input("yoy-year-selector", "value"),
+        State("yearly-pub-counts", "data"),
+    )
+    def update_yoy_growth(selected_year, yearly_counts):
+        if not selected_year or not yearly_counts:
+            return "N/A"
+        curr = yearly_counts.get(str(selected_year)) or yearly_counts.get(selected_year)
+        prev = yearly_counts.get(str(selected_year - 1)) or yearly_counts.get(selected_year - 1)
+        if curr is None or prev is None or prev == 0:
+            return "N/A"
+        pct = round((curr - prev) / prev * 100, 1)
+        return f"+{pct}%" if pct >= 0 else f"{pct}%"
+

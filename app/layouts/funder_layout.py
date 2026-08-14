@@ -144,16 +144,18 @@ def _kpi_card(value, label, color_class):
 # Public layout builders
 # ---------------------------------------------------------------------------
 
-def get_publication_charts_section(entries_df):
+def get_publication_charts_section(entries_df, choropleth_fig=None):
     """
-    Annual publications bar — shared across personas (funder + researcher).
-    Hidden by default; persona callback sets display:block.
+    Annual publications bar + global author distribution choropleth.
+    Shared across funder + researcher personas; hidden by default.
     """
     annual_fig = _annual_publications_figure(entries_df)
 
     return html.Div(
         [
             html.Div("Publication Trends", className="section-title"),
+
+            # Row 1: annual bar chart
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
@@ -166,6 +168,33 @@ def get_publication_charts_section(entries_df):
                                 ),
                                 html.Figcaption(
                                     "Annual count of GA4GH-related publications indexed in Europe PMC.",
+                                    style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                ),
+                            ])
+                        ),
+                        className="mb-4 shadow-sm",
+                        style={"borderRadius": "12px"},
+                    ),
+                    width=12,
+                ),
+                className="mb-2",
+            ),
+
+            # Row 2: full-width choropleth
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            html.Figure([
+                                html.H5("Global Author Affiliation Distribution", style={"marginBottom": "6px"}),
+                                dcc.Graph(
+                                    id="epmc-countries-choropleth",
+                                    figure=choropleth_fig or go.Figure(),
+                                    config={"displayModeBar": False},
+                                    style={"height": "650px"},
+                                ),
+                                html.Figcaption(
+                                    "Each country's share (%) of total author affiliations across all GA4GH-related publications. Hover over a country to see its exact percentage.",
                                     style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
                                 ),
                             ])

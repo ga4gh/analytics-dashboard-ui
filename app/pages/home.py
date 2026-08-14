@@ -30,6 +30,7 @@ from app.layouts.datatables_layout import get_datatables_layout
 
 # Persona layout components
 from app.layouts.funder_layout import get_publication_charts_section, get_funder_only_charts_section
+from app.callbacks.epmc_callbacks import fig_epmc_countries_choropleth
 from app.layouts.researcher_layout import get_researcher_charts_section
 from app.layouts.developer_layout import get_developer_charts_section
 from app.layouts.community_layout import get_community_charts_section
@@ -50,6 +51,29 @@ _epmc_total_citations  = _epmc_kpis["total_citations"]
 
 _epmc_funding_data     = get_funding_agencies(limit=50)
 _epmc_pub_types        = get_publication_types()
+
+# Yearly publication counts for interactive YoY KPI card
+import datetime as _dt
+_current_year = _dt.datetime.now().year
+if not _epmc_entries_df.empty and "pub_year" in _epmc_entries_df.columns:
+    _yearly_pub_counts = {
+        int(k): int(v)
+        for k, v in _epmc_entries_df[
+            _epmc_entries_df["pub_year"].notna() & (_epmc_entries_df["pub_year"] < _current_year)
+        ].groupby("pub_year").size().items()
+    }
+else:
+    _yearly_pub_counts = {}
+_yoy_year_options = [{"label": str(y), "value": y} for y in sorted(_yearly_pub_counts.keys())]
+_yoy_default_year = max(_yearly_pub_counts.keys()) if _yearly_pub_counts else None
+
+# Open Access rate — computed from entries_df (no extra API needed)
+if not _epmc_entries_df.empty and "is_open_access" in _epmc_entries_df.columns:
+    _oa_count = int(_epmc_entries_df["is_open_access"].sum())
+    _oa_rate  = round(_oa_count / len(_epmc_entries_df) * 100, 1)
+else:
+    _oa_count = 0
+    _oa_rate  = 0.0
 
 # Prepare PyPI module data
 _pypi_details = get_pypi_details()
@@ -75,7 +99,8 @@ _epmc_layout = get_epmc_layout(
 _agencies_list = _epmc_funding_data.get("agencies", []) if isinstance(_epmc_funding_data, dict) else []
 _funding_bodies_count = _epmc_funding_data.get("total_unique", 0) if isinstance(_epmc_funding_data, dict) else 0
 
-_publication_charts  = get_publication_charts_section(_epmc_entries_df)
+_choropleth_fig      = fig_epmc_countries_choropleth(_epmc_countries_df)
+_publication_charts  = get_publication_charts_section(_epmc_entries_df, _choropleth_fig)
 _funder_only_charts  = get_funder_only_charts_section(_agencies_list)
 _researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
 _developer_charts    = get_developer_charts_section(_gh_df, _pypi_first_releases.to_dict("records") if not _pypi_first_releases.empty else [], services_df)
@@ -217,6 +242,7 @@ html.Div(
 
         # ---------- PERSONA SELECTOR ----------
         dcc.Store(id="active-persona", storage_type="session", data="default"),
+        dcc.Store(id="yearly-pub-counts", data=_yearly_pub_counts),
 
         html.Div(
             [
@@ -538,8 +564,11 @@ html.Div(
         ),
 
         # ---------- KPI INDICATORS ----------
+        # Order: Publications → Citations → Authors → Countries → GitHub → PyPI
+        # Funder/researcher-specific KPIs are interspersed and hidden by default
         dbc.Row(
             [
+                # --- Publications group ---
                 dbc.Col(
                     indicator_card(
                         f"{_epmc_article_count:,}",
@@ -547,16 +576,30 @@ html.Div(
                         "border-red",
                     ),
                     md=2,
+                    id="kpi-publications",
                 ),
                 dbc.Col(
-                    indicator_card(
-                        f"{_epmc_unique_authors:,}",
-                        "Total Authors",
-                        "border-orange",
+                    dbc.Card(
+                        dbc.CardBody([
+                            html.Div([
+                                html.H3(id="yoy-growth-value", className="indicator-value", style={"margin": 0, "flex": "1"}),
+                                dcc.Dropdown(
+                                    id="yoy-year-selector",
+                                    options=_yoy_year_options,
+                                    value=_yoy_default_year,
+                                    clearable=False,
+                                    style={"fontSize": "11px", "width": "72px", "minHeight": "unset"},
+                                ),
+                            ], style={"display": "flex", "alignItems": "center", "gap": "8px", "justifyContent": "space-between"}),
+                            html.Div("YoY Publication Growth", className="indicator-label"),
+                        ], style={"padding": "12px 16px", "minHeight": "unset"}),
+                        className="indicator-card shadow-sm border-orange",
                     ),
                     md=2,
-                    id="kpi-authors",
+                    id="funder-kpi-yoy",
+                    style={"display": "none"},
                 ),
+                # --- Citations group ---
                 dbc.Col(
                     indicator_card(
                         f"{_epmc_total_citations:,}",
@@ -568,6 +611,26 @@ html.Div(
                 ),
                 dbc.Col(
                     indicator_card(
+                        str(_epmc_avg_citations),
+                        "Avg Citations / Paper",
+                        "border-purple",
+                    ),
+                    md=2,
+                    id="funder-kpi-avg-citations",
+                    style={"display": "none"},
+                ),
+                # --- Authors group ---
+                dbc.Col(
+                    indicator_card(
+                        f"{_epmc_unique_authors:,}",
+                        "Total Authors",
+                        "border-orange",
+                    ),
+                    md=2,
+                    id="kpi-authors",
+                ),
+                dbc.Col(
+                    indicator_card(
                         f"{_epmc_unique_countries:,}",
                         "Total Countries",
                         "border-lightblue",
@@ -575,6 +638,7 @@ html.Div(
                     md=2,
                     id="kpi-countries",
                 ),
+                # --- GitHub / PyPI group ---
                 dbc.Col(
                     indicator_card(
                         f"{_gh_total:,}",
@@ -582,6 +646,7 @@ html.Div(
                         "border-darkblue",
                     ),
                     md=2,
+                    id="kpi-github",
                 ),
                 dbc.Col(
                     indicator_card(
@@ -590,46 +655,23 @@ html.Div(
                         "border-purple",
                     ),
                     md=2,
+                    id="kpi-pypi",
                 ),
-                # Funder-specific KPIs — hidden by default, shown when Funder persona is active
+                # --- Researcher-specific KPIs — hidden by default ---
                 dbc.Col(
                     indicator_card(
-                        f"+{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None and _epmc_yoy_growth_pct >= 0
-                        else (f"{_epmc_yoy_growth_pct}%" if _epmc_yoy_growth_pct is not None else "N/A"),
-                        "YoY Publication Growth",
-                        "border-orange",
+                        f"{_oa_rate}%",
+                        "Open Access Rate",
+                        "border-green",
                     ),
                     md=2,
-                    id="funder-kpi-yoy",
-                    className="mt-3",
-                    style={"display": "none"},
-                ),
-                dbc.Col(
-                    indicator_card(
-                        str(_epmc_avg_citations),
-                        "Avg Citations / Paper",
-                        "border-purple",
-                    ),
-                    md=2,
-                    id="funder-kpi-avg-citations",
-                    className="mt-3",
-                    style={"display": "none"},
-                ),
-                dbc.Col(
-                    indicator_card(
-                        f"{_funding_bodies_count:,}" if _funding_bodies_count else "N/A",
-                        "Unique Funding Bodies",
-                        "border-darkgreen",
-                    ),
-                    md=2,
-                    id="funder-kpi-funding-bodies",
-                    className="mt-3",
+                    id="researcher-kpi-open-access",
                     style={"display": "none"},
                 ),
             ],
-            className="mb-4",
+            className="mb-4 gy-3",
         ),
-            
+
         # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
 
 html.Div(

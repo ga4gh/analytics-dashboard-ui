@@ -47,14 +47,19 @@ ALL_SECTION_IDS = [
 
 # dbc.Col KPI cards — shown with {} (let Bootstrap flex handle sizing)
 ALL_COL_IDS = [
-    # Default KPIs — EPMC-derived; hidden for Developer persona
+    # EPMC KPIs
+    "kpi-publications",
     "kpi-authors",
     "kpi-citations",
     "kpi-countries",
-    # Persona-specific KPIs
+    # GitHub / PyPI KPIs — now persona-controlled
+    "kpi-github",
+    "kpi-pypi",
+    # Funder / researcher shared KPIs
     "funder-kpi-yoy",
     "funder-kpi-avg-citations",
-    "funder-kpi-funding-bodies",
+    # Researcher-only KPI
+    "researcher-kpi-open-access",
 ]
 
 ALL_CONTROLLED_IDS = ALL_SECTION_IDS + ALL_COL_IDS
@@ -66,28 +71,32 @@ ALL_CONTROLLED_IDS = ALL_SECTION_IDS + ALL_COL_IDS
 PERSONA_SHOW = {
     "default": {
         "sections": ["servicemap", "metrics", "epmc", "github", "pypi", "tables"],
-        "cols":     ["kpi-authors", "kpi-citations", "kpi-countries"],
+        "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
+                     "kpi-github", "kpi-pypi"],
     },
     "funder": {
         "sections": ["metrics", "epmc", "publication-charts", "funder-only-charts"],
-        "cols":     ["kpi-authors", "kpi-citations", "kpi-countries",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations", "funder-kpi-funding-bodies"],
+        "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
+                     "funder-kpi-yoy", "funder-kpi-avg-citations"],
     },
     "researcher": {
         "sections": ["metrics", "epmc", "tables", "publication-charts", "researcher-charts"],
-        "cols":     ["kpi-authors", "kpi-citations", "kpi-countries",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations"],
+        "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
+                     "funder-kpi-yoy", "funder-kpi-avg-citations",
+                     "researcher-kpi-open-access"],
     },
     "developer": {
         "sections": ["servicemap", "metrics", "github", "pypi", "developer-charts"],
-        "cols":     [],  # EPMC KPIs hidden — not relevant for developer view
+        "cols":     ["kpi-github", "kpi-pypi"],
     },
     "community": {
         "sections": ["servicemap", "metrics", "epmc", "github", "pypi", "tables",
                      "publication-charts", "funder-only-charts", "researcher-charts",
                      "developer-charts", "community-charts"],
-        "cols":     ["kpi-authors", "kpi-citations", "kpi-countries",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations", "funder-kpi-funding-bodies"],
+        "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
+                     "kpi-github", "kpi-pypi",
+                     "funder-kpi-yoy", "funder-kpi-avg-citations",
+                     "researcher-kpi-open-access"],
     },
 }
 
