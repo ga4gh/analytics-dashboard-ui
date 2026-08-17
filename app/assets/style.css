@@ -3,6 +3,16 @@ body {
     background-color: #ffffff;
 }
 
+/* Remove Bootstrap's default 1.5rem container-fluid x-gutter so page
+   sections can run edge-to-edge. */
+.container-fluid {
+    --bs-gutter-x: 0;
+}
+
+.gy-3 {
+    margin-top: 1rem;
+}
+
 text {
     font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
 }
@@ -10,7 +20,7 @@ text {
 .my-button {
     background-color: #007BFF;
     color: white;
-    padding: 10px;
+    padding: 0.5rem;
     border-radius: 5px;
     font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
 }
@@ -26,7 +36,7 @@ text {
     overflow: visible;
     line-height: 1.3;
     min-height: 96px;
-    padding: 8px;
+    padding: 0.5rem;
 }
 
 .epmc-affiliation-option {
@@ -54,7 +64,7 @@ text {
 /* Keep DataTable export and pagination controls on one bottom row. */
 .datatable-controls-inline .dash-table-container {
     position: relative;
-    padding-bottom: 40px;
+    padding-bottom: 2.5rem;
 }
 
 .datatable-controls-inline .dash-spreadsheet-menu {
@@ -110,6 +120,10 @@ text {
     --dark: #363636;              /* Dark */
     --black: #000000;             /* Black */
 
+    /* new_ga4gh base/_colours.scss $grey/$lightgrey (distinct from --grey/--lightgrey above) */
+    --ga4gh-mid-grey: #767676;
+    --ga4gh-light-grey: #efefef;
+
     /* ---------- Gradient Variables ---------- */
     --gradient-orange-secondary-orange: linear-gradient(to right, var(--orange), var(--secondary-orange));
     --gradient-red-pink: linear-gradient(to right, var(--red), var(--pink));
@@ -123,6 +137,32 @@ text {
     --gradient-lightblue-darkblue: linear-gradient(270deg, var(--lightblue), var(--darkblue));
     --gradient-lightblue-green: linear-gradient(270deg, var(--green), var(--lightblue));
     --gradient-green-darkgreen: linear-gradient(270deg, var(--darkgreen), var(--green));
+
+    /* new_ga4gh base/_colours.scss $lightgrey-grey: standard-page hero background */
+    --gradient-lightgrey-grey: linear-gradient(270deg, var(--ga4gh-mid-grey) 0%, var(--ga4gh-light-grey) 100%);
+
+    /* new_ga4gh base/_typography.scss's fluid type scale, so text shrinks with
+       the viewport instead of overflowing fixed-size containers (e.g. the KPI
+       indicator cards). --text-sm's max corrects an apparent typo in the
+       source (0.11rem, smaller than its own min) — every other step scales
+       up monotonically, so this should read 1.1rem. */
+    --text-xs: clamp(0.65rem, 0.75vw, 0.9rem);
+    --text-sm: clamp(0.85rem, 0.9vw, 1.1rem);
+    --text-base: clamp(0.95rem, 1.15vw, 1.25rem);
+    --text-md: clamp(1.05rem, 1.2vw, 1.3rem);
+    --text-lg: clamp(1.1rem, 1.3vw, 1.4rem);
+    --text-xl: clamp(1.25rem, 1.5vw, 1.6rem);
+    --text-2xl: clamp(1.5rem, 1.9vw, 2rem);
+    --text-3xl: clamp(1.75rem, 2.4vw, 2.5rem);
+    --text-4xl: clamp(2rem, 3vw, 3.5rem);
+
+    /* new_ga4gh base/_typography.scss's $font-* maps (family stacks only —
+       plain CSS has no @include font($font) mixin, so font-weight is still
+       set alongside each var() reference). Named to match new_ga4gh exactly. */
+    --font-ws-bold: "WorkSans-Bold", "Work Sans", sans-serif;
+    --font-fi-regular: "Figtree-Regular", "Figtree", sans-serif;
+    --font-fi-semibold: "Figtree-SemiBold", "Figtree", sans-serif;
+    --font-sg-bold: "SpaceGrotesk-Bold", "Space Grotesk", sans-serif;
 }
 
 .border-heroblue   { border-right: 12px solid var(--heroblue); }
@@ -146,20 +186,42 @@ text {
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Space+Grotesk:wght@400;700&family=Roboto:wght@100;400;700&family=Open+Sans:wght@300;400;600&family=Figtree:wght@300;400;600;700&display=swap');
 
 .dashboard-title {
-    margin-bottom: 25px;
-    margin-top: 30px;
+    margin-bottom: 1.5rem;
+    margin-top: 2rem;
     font-size: clamp(2rem, 4vw, 3.5rem);
     font-weight: 700;
     line-height: 146%;
-    font-family: "WorkSans-Bold", "Work Sans", sans-serif;
+    font-family: var(--font-ws-bold);
     color: var(--darkblue);
 }
 
-.logo-img {
-    width: 100%;
-    max-height: 120px;
-    object-fit: contain;
+/* Navbar brand lockup, matching refcloud-ui's components/layout/Navbar.tsx */
+.brand-link {
+    text-decoration: none;
+    cursor: pointer;
 }
+
+.brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.brand-logo-img {
+    width: 40px;
+    height: 40px;
+}
+
+.brand-text-primary,
+.brand-text-base {
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+}
+
+.brand-text-primary { color: var(--darkblue); }
+.brand-text-base { color: var(--dark); }
 
 .indicator-card {
     border-radius: 10px;
@@ -167,18 +229,40 @@ text {
 }
 
 .indicator-card-body {
-    padding: 12px 16px;
+    padding: 0.5rem;
+}
+
+/* Spacing between KPI cards comes from the row's own gap now, not each
+   card's left/right padding — zero out Bootstrap's column gutters (both
+   axes, since .gy-3 sets --bs-gutter-y too) so they don't stack on top of
+   the gap when cards wrap to multiple lines on narrow viewports. */
+.kpi-row {
+    --bs-gutter-x: 0;
+    --bs-gutter-y: 0;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Always 3 cards per row on desktop, overriding each column's own Bootstrap
+   md=2 (which fits up to 6 per row) — accounts for the row's 1rem gap so
+   3 columns plus 2 gaps exactly fill the row width, regardless of how many
+   cards are currently visible for the active persona. */
+@media (min-width: 768px) {
+    .kpi-row > div {
+        flex: 0 0 calc((100% - 2rem) / 3);
+        width: calc((100% - 2rem) / 3);
+    }
 }
 
 .indicator-value {
     margin: 0;
-    font-size: 26px;
+    font-size: var(--text-xl);
     font-weight: 600;
     color: var(--dark);
 }
 
 .indicator-label {
-    font-size: 14px;
+    font-size: var(--text-md);
     color: var(--border-grey);
 }
 
@@ -193,7 +277,7 @@ text {
     font-size: clamp(1rem, 1.2vw, 1.25rem);
     line-height: 1.5;
     color: var(--dark);
-    font-family: "Figtree-Regular", "Figtree", sans-serif;
+    font-family: var(--font-fi-regular);
 }
 
 .section-spacer {
@@ -204,9 +288,9 @@ text {
 .section-title {
     font-size: clamp(1.5rem, 2.5vw, 2.25rem); /* responsive scaling */
     line-height: 1.22;
-    font-family: "WorkSans-Bold","Work Sans",sans-serif;
+    font-family: var(--font-ws-bold);
     font-weight: 700;
-    margin-left: 40px;   /* 👈 indent from left */
+    margin-left: 2.5rem;   /* 👈 indent from left */
 }
 
 @media (max-width: 768px) {
@@ -218,99 +302,124 @@ text {
 
 .servicemap-section, .metrics-section, .epmc-section, .github-section, .pypi-section, .tables-section {
     background: var(--lightgrey);
-    padding: 40px;
+    padding: 2.5rem;
     border-radius: 20px;
     border: solid 1px var(--grey);
     margin-top: clamp(1em, 4vw, 4em);
     margin-bottom: clamp(1em, 4vw, 4em);
 }
 
+/* Standard-page hero, matching new_ga4gh's layout/_page-heroes.scss
+   `.page-hero-standard-wrapper.none` (the neutral grey/logo fallback used by
+   pages with no work-stream section) + `.page-hero-standard` + `.summary-standard` */
 .hero-section {
     position: relative;
-    height: 700px;
-    background: var(--gradient-green-darkgreen);
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-top: 120px;
+    background: var(--gradient-lightgrey-grey);
+    padding-top: 9rem; /* clear the fixed .top-bar */
     overflow: hidden;
 }
 
 .hero-section::before {
     content: "";
     position: absolute;
-    inset: 0;             /* shorthand for top/left/right/bottom */
+    inset: 0;
 
-    opacity: 0.15;
-    background-image: url("/assets/logo-tower-white.svg");
-    background-repeat: repeat-y;
-    background-size: calc(120% + 40vh);
-    background-position: 40% 60%;
+    opacity: 0.25;
+    background-image: url("/assets/logo-mark-white.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: clamp(30rem, 65vw, 70rem);
     z-index: 0;           /* 👈 sit behind content */
 }
 
+.hero-standard {
+    position: relative;
+    z-index: 1;
+    min-height: 20rem;
+    display: flex;
+    align-items: center;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Shared horizontal box model matching the hero's actual content offset:
+   hero-standard's 2rem inset + hero-summary's own 2rem inset stack to 4rem,
+   so sections below the hero (methods/terms expander, KPI row, etc.) line
+   up with the hero title/paragraph edges, not just hero-standard's outer box. */
+.section-standard-width {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 4rem;
+    padding-right: 4rem;
+}
 
 /* WHITE BOX */
-.hero-content-box {
-    width: 45vw;
-    max-width: 1280px;
-    margin-left: 40px;
-    background: white;
-    padding: 40px;
-    z-index: 1;
+.hero-summary {
+    width: 100%;
+    background: var(--white);
+    padding: 0 2rem;
 }
 
-.hero-right-panel {
+.hr-hero {
+    background-color: var(--ga4gh-mid-grey);
+    height: 1px;
+    margin-bottom: 1rem;
+    border: none;
+}
+
+.hero-badges-row {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 0 40px 40px 20px;
-    z-index: 1;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1.5rem;
 }
 
+/* Matches new_ga4gh's layout/_article-page.scss .category-tags + base/_typography.scss .label,
+   ported by refcloud-ui as .ga4gh-tag */
+/* !important: dbc.Badge renders with a "badge bg-secondary" class by default
+   (dash-bootstrap-components' own defaultProps), and Bootstrap's .bg-secondary
+   utility sets background-color with !important, which otherwise wins over
+   this same-specificity single-class selector regardless of stylesheet order. */
 .hero-badge {
-    display: inline-block;
-    padding: 8px 14px;
-    background-color: rgba(255, 255, 255, 0.15);
-    color: var(--white);
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    text-align: left;
-    white-space: nowrap;
+    display: inline-block !important;
+    padding: 0.5rem !important;
+    background-color: var(--ga4gh-light-grey) !important;
+    color: var(--dark) !important;
+    border: solid 1px var(--ga4gh-mid-grey) !important;
+    border-radius: 0 !important;
+    font-family: var(--font-sg-bold) !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    line-height: 1.41 !important;
+    text-transform: uppercase !important;
+    text-align: left !important;
+    white-space: nowrap !important;
 }
 
 @media (max-width: 768px) {
 
     .hero-section {
-        height: auto;
-        flex-direction: column;
-        align-items: center;
-        padding-bottom: 40px;
-        padding-top: 350px;
+        padding-top: 22rem;
     }
 
-    .hero-right-panel {
-        align-items: center;
-        padding: 20px 20px 0 20px;
-        width: 90%;
+    .hero-standard {
+        padding: 1rem;
+    }
+
+    .hero-summary {
+        padding: 2rem 1.5rem;
+        text-align: center;
+    }
+
+    .hero-badges-row {
+        justify-content: center;
     }
 
     .hero-badge {
         text-align: center;
         max-width: 100%;
-    }
-
-    .hero-content-box {
-        width: 90%;
-        margin: 0 auto;
-        margin-bottom: -60px;
-        padding: 30px 20px;
-        text-align: center;
-        margin-top: 2em;
     }
 
     .dashboard-title {
@@ -324,20 +433,32 @@ text {
 }
 
 /* ---------- TOP BAR ---------- */
+/* Matches new_ga4gh's layout/_page.scss `header` + layout/_header.scss #menu-primary */
 .top-bar {
+    /* Bootstrap's .row sets --bs-gutter-x: 1.5rem on itself, unconditionally —
+       it does NOT inherit the 0 set on .container-fluid, since .row's own
+       declaration wins over inheritance. Without this, the row's negative
+       left/right margins (-0.75rem each) shift the whole bar left, leaving
+       its right edge ~12px short of the true viewport edge. */
+    --bs-gutter-x: 0;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;        /* full width */
     z-index: 1000;
-    background-color: white;
-    padding: 20px 40px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    background-color: var(--white);
+    padding: 1.5rem 2.5rem;
+    box-shadow: 0 12px 10px -12px #262626;
     border-bottom: 2px solid #000;
+}
+
+.top-bar-row {
+    align-items: center;   /* vertically align nav links with the logo/title */
 }
 
 .menu-container {
     display: flex;
+    align-items: center;
     gap: 30px;
     flex-wrap: wrap;       /* ✅ allows items to wrap */
     justify-content: flex-end; /* keep them aligned right in the row */
@@ -356,7 +477,7 @@ text {
         width: 100%;
         display: flex;
         justify-content: center;
-        margin-bottom: 10px;
+        margin-bottom: 0.5rem;
     }
 
     .menu-col {
@@ -372,16 +493,18 @@ text {
 }
 
 .menu-link {
-    color: var(--darkblue);
-    line-height: 129%;
-    font-family: "WorkSans-Bold", "Work Sans", sans-serif;
+    color: var(--dark);
+    font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: 1.1rem;
-    text-decoration: none; /* remove default */
+    font-size: clamp(0.85rem, 0.9vw, 1.1rem);
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
-.menu-link:hover {
-    text-decoration: underline;
+.menu-link:hover,
+.menu-link:focus-visible {
+    color: var(--darkblue);
 }
 
 
@@ -391,18 +514,144 @@ text {
 #epmc,
 #github,
 #pypi, #tables {
-    scroll-margin-top: 100px;  /* adjust to your sticky top-bar height */
+    scroll-margin-top: 6.5rem;  /* adjust to your sticky top-bar height */
 }
 
-.footer{
+/* Footer, matching refcloud-ui's components/layout/Footer.tsx + styles/globals.css */
+.footer {
     background-color: var(--dark);
     color: var(--white);
+    padding: 2.5rem;
+}
+
+.ga4gh-footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+}
+
+.f-logo {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    text-align: left;
+}
+
+.f-logo-img {
+    width: 60px;
+    height: auto;
+}
+
+.f-logo-text {
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
     font-size: 1.125rem;
     line-height: 133%;
-    font-family: WorkSans-Bold,"Work Sans",sans-serif;
+}
+
+.f-logo p {
+    max-width: 32rem;
+    margin: 0;
+}
+
+.f-social {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ga4gh-btn-light {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: clamp(40px, 10vw, 50px);
+    aspect-ratio: 270 / 60;
+    padding-inline: clamp(1rem, 2cqw, 2rem);
+    padding-block: 0;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.46);
+    color: var(--white);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.ga4gh-btn-light::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc(100% - 2px);
+    width: 100%;
+    height: 2px;
+    background-color: var(--white);
+    transition: all 0.3s ease;
+}
+
+.ga4gh-btn-light:hover::after,
+.ga4gh-btn-light:focus-visible::after {
+    top: 0;
+    height: 100%;
+}
+
+.ga4gh-btn-light:hover,
+.ga4gh-btn-light:focus-visible {
+    color: var(--dark);
+}
+
+.ga4gh-btn-light .btn-text {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-ws-bold);
     font-weight: 700;
-    padding: 40px;
-    text-align: center;
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+/* new_ga4gh's own icon font, base/_fonts.scss's FontAwesomeBrands @font-face
+   (Font Awesome Free 7.2.0's fa-brands-400.woff2) — bundled locally rather
+   than pulled from a CDN. */
+@font-face {
+    font-family: "FontAwesomeBrands";
+    src: url("/assets/fonts/fa-brands-400.woff2") format("woff2");
+}
+
+/* Matches new_ga4gh's components/_buttons.scss `btn-icon($font, $glyph)`
+   mixin exactly: the glyph sits on .btn-text::before, not a separate icon
+   element. Same codepoints new_ga4gh uses for .btn-icon-youtube/-linkedin;
+   .btn-icon-facebook isn't part of new_ga4gh's own footer (it uses Bluesky
+   there instead), so this uses Font Awesome's standard fa-facebook glyph. */
+.btn-icon-youtube.btn-text::before,
+.btn-icon-linkedin.btn-text::before,
+.btn-icon-facebook.btn-text::before {
+    font-family: "FontAwesomeBrands";
+    font-style: normal;
+    font-weight: normal;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.btn-icon-youtube.btn-text::before {
+    content: "\f167";
+}
+
+.btn-icon-linkedin.btn-text::before {
+    content: "\f08c";
+}
+
+.btn-icon-facebook.btn-text::before {
+    content: "\f09a";
 }
 
 .card-body{
@@ -421,20 +670,117 @@ text {
     height:700px !important
 }
 
-#epmc-authors-card-body {
+#epmc-authors-card-body,
+.methods-card-body {
     min-height: auto;
+}
+
+/* new_ga4gh's own icon font, base/_fonts.scss's FontAwesomeSolid @font-face
+   (Font Awesome Free 7.2.0's fa-solid-900.woff2) — bundled locally rather
+   than pulled from a CDN. */
+@font-face {
+    font-family: "FontAwesomeSolid";
+    src: url("/assets/fonts/fa-solid-900.woff2") format("woff2");
+}
+
+/* Matches new_ga4gh's header nav toggle exactly (layout/_header.scss
+   #menu-primary's b > .icon-chevron-up-down): the Font Awesome chevron-down
+   glyph (\f078) via the same icon font, flipping via rotateX(180deg) on
+   expand rather than swapping triangle characters. */
+.methods-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    color: var(--darkblue);
+    cursor: pointer;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: clamp(0.95rem, 1.15vw, 1.25rem);
+    margin-bottom: 1rem;
+    transition: color 0.3s ease;
+}
+
+.methods-toggle:hover {
+    color: var(--lightblue);
+}
+
+.methods-toggle-chevron {
+    display: inline-flex;
+    color: inherit;
+    transition: transform 300ms ease;
+}
+
+.methods-toggle-chevron.is-open {
+    transform: rotateX(180deg);
+}
+
+.methods-toggle-chevron::before {
+    font-family: "FontAwesomeSolid";
+    font-style: normal;
+    font-weight: normal;
+    content: "\f078";
+}
+
+.methods-intro-row,
+.methods-cards-row {
+    margin-bottom: 1.5rem;
+}
+
+.circle-sublist {
+    list-style-type: circle;
+    padding-left: 1.5rem;
+}
+
+/* Equal-height cards: Bootstrap's .row is already flex with stretch by
+   default, so each .col already matches the row's tallest column — the
+   card itself just needs to fill that column instead of sizing to its
+   own content. */
+.methods-cards-row > div {
+    display: flex;
+}
+
+.methods-cards-row .card {
+    height: 100%;
+    width: 100%;
+}
+
+/* YoY Publication Growth KPI card (funder persona) */
+.yoy-value-heading {
+    margin: 0;
+    flex: 1;
+}
+
+.yoy-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.yoy-card-body {
+    padding: 0.5rem;
+    min-height: unset;
+}
+
+.yoy-year-dropdown {
+    font-size: 1rem;
+    width: 72px;
+    min-height: unset;
 }
 
 /* ---------- Persona Selector ---------- */
 
+/* Left/right padding is 4rem (not 2rem) because this single element combines
+   both layers of the hero's box model — hero-standard's own 2rem inset AND
+   hero-summary's own 2rem inset stack to a 4rem total content offset. */
 .persona-selector-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 24px;
-    padding: 20px 0 16px 0;
-    margin-bottom: 4px;
-    border-bottom: 2px solid var(--grey);
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 4rem;
 }
 
 .persona-selector-label {
@@ -446,33 +792,43 @@ text {
     letter-spacing: 0.06em;
 }
 
+/* Matches new_ga4gh's layout/_object-tabs.scss .object-tabs-nav + .object-tab-btn
+   (the tab bar used on object template pages: product.php, work_stream.php, etc.) */
 .persona-btn-group {
     display: flex;
-    flex: 1;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    border-bottom: 2px solid var(--ga4gh-light-grey);
 }
 
 .persona-btn {
-    flex: 1 !important;
-    font-size: 15px !important;
+    flex: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    border: 1px solid var(--ga4gh-light-grey) !important;
+    border-bottom: none !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    margin-bottom: -2px !important;
+    padding: 0.75rem 1.5rem !important;
+    background: var(--ga4gh-light-grey) !important;
+    color: var(--ga4gh-mid-grey) !important;
+    font-family: var(--font-fi-semibold) !important;
     font-weight: 600 !important;
-    padding: 10px 20px !important;
-    border-radius: 8px !important;
-    border: 2px solid var(--darkblue) !important;
-    color: var(--darkblue) !important;
-    background-color: transparent !important;
-    transition: background-color 0.18s, color 0.18s, box-shadow 0.18s;
-    letter-spacing: 0.02em;
+    font-size: clamp(0.95rem, 1.15vw, 1.25rem) !important;
+    letter-spacing: normal;
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .persona-btn:hover {
-    background-color: var(--darkblue) !important;
-    color: var(--white) !important;
-    box-shadow: 0 4px 12px rgba(2, 38, 106, 0.18) !important;
+    background: var(--white) !important;
+    color: var(--dark) !important;
+    box-shadow: none !important;
 }
 
 .active-persona {
-    background-color: var(--darkblue) !important;
-    color: var(--white) !important;
-    box-shadow: 0 4px 12px rgba(2, 38, 106, 0.22) !important;
+    background: var(--white) !important;
+    color: var(--darkblue) !important;
+    border-color: var(--ga4gh-light-grey) !important;
+    border-bottom: 2px solid var(--white) !important;
+    box-shadow: none !important;
 }

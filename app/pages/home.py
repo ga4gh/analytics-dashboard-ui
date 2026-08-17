@@ -153,9 +153,21 @@ layout = dbc.Container(
 dbc.Row(
     [
         dbc.Col(
-            html.Img(
-                src="/assets/logo-full-color.svg",
-                className="logo-img",
+            html.A(
+                html.Span(
+                    [
+                        html.Img(
+                            src="/assets/logo-mark-color.svg",
+                            alt="The Global Alliance for Genomics and Health",
+                            className="brand-logo-img",
+                        ),
+                        html.Span("GA4GH", className="brand-text-primary"),
+                        html.Span("Analytics Dashboard", className="brand-text-base"),
+                    ],
+                    className="brand-lockup",
+                ),
+                href="/",
+                className="brand-link",
             ),
             width="auto",
             className="logo-col",
@@ -181,10 +193,13 @@ dbc.Row(
 ),
 
       # ---------- HERO ----------
+      # Matches new_ga4gh's layout/_page-heroes.scss `.page-hero-standard-wrapper.none`
+      # (the neutral grey/logo treatment used by standard pages with no work-stream section)
 html.Div(
-    [
+    html.Div(
         html.Div(
             [
+
                 html.H1(
                     "GA4GH Analytics Dashboard",
                     className="dashboard-title",
@@ -200,22 +215,19 @@ html.Div(
                     className="dashboard-summary",
                 ),
 
-            ],
-            className="hero-content-box",
-        ),
+                # ---------- INFO BADGES ----------
+                html.Div(
+                    [
+                        dbc.Badge("Created by: GA4GH Technical Team", className="hero-badge"),
+                        dbc.Badge("Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry", className="hero-badge"),
+                    ],
+                    className="hero-badges-row",
+                ),
 
-        # ---------- INFO BADGES (hero right panel / logo section) ----------
-        html.Div(
-            [
-                dbc.Badge("Created by: GA4GH Technical Team", className="hero-badge"),
-                dbc.Badge("Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry", className="hero-badge"),
+                # ---------- DATA UPDATED BADGES (own row) ----------
                 html.Div(
                     [
                         dbc.Badge("Data Updated:", className="hero-badge"),
-                        dbc.Badge(
-                            f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
-                            className="hero-badge",
-                        ),
                         dbc.Badge(
                             f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
                             className="hero-badge",
@@ -224,14 +236,18 @@ html.Div(
                             f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
                             className="hero-badge",
                         ),
+                         dbc.Badge(
+                            f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
+                            className="hero-badge",
+                        ),
                     ],
-                    style={"display": "flex", "flexWrap": "wrap", "gap": "6px"},
+                    className="hero-badges-row",
                 ),
             ],
-            className="hero-right-panel",
-            style={"alignItems": "flex-start"},
+            className="hero-summary",
         ),
-    ],
+        className="hero-standard",
+    ),
     className="hero-section",
     id="overview",
 ),
@@ -240,48 +256,20 @@ html.Div(
 
         html.Div(className="section-spacer"),
 
-        # ---------- PERSONA SELECTOR ----------
         dcc.Store(id="active-persona", storage_type="session", data="default"),
         dcc.Store(id="yearly-pub-counts", data=_yearly_pub_counts),
-
-        html.Div(
-            [
-                html.Span("View as:", className="persona-selector-label"),
-                html.Div(
-                    [
-                        dbc.Button("Default",        id="persona-btn-default",    n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
-                        dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                    ],
-                    className="persona-btn-group",
-                ),
-            ],
-            className="persona-selector-row",
-        ),
 
         # ---------- METHODS CARDS -----------
         html.Div(
                 [
                     html.Div(
                             [
-                                html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
                                 html.Span("Show methods and terms "),
-                                html.Span("▼", style={"fontSize": "12px"}),
+                                html.Span(className="methods-toggle-chevron"),
                         ],
                         id="collapse-button",
                         n_clicks=0,
-                        style={
-                            "color": "#0d9cf0",
-                            "cursor": "pointer",
-                            "fontWeight": "600",
-                            "fontSize": "16px",
-                            "display": "inline-flex",
-                            "alignItems": "center",
-                            "gap": "4px",
-                            "marginBottom": "1rem",
-                        }
+                        className="methods-toggle",
                     ),
                 dbc.Collapse(
                     html.Div(
@@ -323,14 +311,12 @@ html.Div(
                                                         "Rather than focusing on one platform in isolation, the following metrics, figures, and tables act as an executive snapshot of the full GA4GH value chain—from standards implementation, to community adoption, to scientific and clinical impact."
                                                     ]),
                                                 ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
+                                                className="methods-card-body"
                                             )
                                         ),
                                     )
                                 ],
-                                style={"marginBottom": "20px"}
+                                className="methods-intro-row",
                             ),
                             dbc.Row(
                                 [
@@ -378,7 +364,7 @@ html.Div(
                                                                         ])
                                                                     ),
                                                                 ],
-                                                                style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                                className="circle-sublist",
                                                             ),
                                                             html.Li("Data tables and downstream figures are rebuilt on a regular cadence.")
                                                         ]
@@ -407,9 +393,7 @@ html.Div(
                                                         ]
                                                     )
                                                 ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
+                                                className="methods-card-body"
                                             )
                                         ),
                                     ),
@@ -453,7 +437,7 @@ html.Div(
                                                                 ])
                                                             ),
                                                         ],
-                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                        className="circle-sublist",
                                                     ),
                                                     html.Li("Data tables and downstream figures are rebuilt on a regular cadence."),
                                                 ]),
@@ -485,9 +469,7 @@ html.Div(
                                                     ),
                                                 ])
                                             ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
+                                                className="methods-card-body"
                                             )
                                         ),
                                     ),
@@ -514,7 +496,7 @@ html.Div(
                                                             html.Li("Package metadata (name, description, authors, emails)"),
                                                             html.Li("Number of published versions"),
                                                         ],
-                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                        className="circle-sublist",
                                                     ),
                                                     html.Li("Data tables and downstream figures are rebuilt on a regular cadence."),
                                                 ]),
@@ -542,25 +524,42 @@ html.Div(
                                                                 ])
                                                             ),
                                                         ],
-                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                        className="circle-sublist",
                                                     ),
                                                 ]),
                                             ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
+                                                className="methods-card-body"
                                             ),
                                         ),
                                     ),
                                 ],
-                                style={"marginBottom": "20px"}
+                                className="methods-cards-row",
                             ),
                         ],
                     ),
                     id="collapse",
                     is_open=False,
                 ),
-            ]
+            ],
+            className="section-standard-width",
+        ),
+
+        # ---------- PERSONA SELECTOR ----------
+        html.Div(
+            [
+                html.Span("View as:", className="persona-selector-label"),
+                html.Div(
+                    [
+                        dbc.Button("Default",        id="persona-btn-default",    n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
+                        dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                    ],
+                    className="persona-btn-group",
+                ),
+            ],
+            className="persona-selector-row",
         ),
 
         # ---------- KPI INDICATORS ----------
@@ -582,17 +581,17 @@ html.Div(
                     dbc.Card(
                         dbc.CardBody([
                             html.Div([
-                                html.H3(id="yoy-growth-value", className="indicator-value", style={"margin": 0, "flex": "1"}),
+                                html.H3(id="yoy-growth-value", className="indicator-value yoy-value-heading"),
                                 dcc.Dropdown(
                                     id="yoy-year-selector",
                                     options=_yoy_year_options,
                                     value=_yoy_default_year,
                                     clearable=False,
-                                    style={"fontSize": "11px", "width": "72px", "minHeight": "unset"},
+                                    className="yoy-year-dropdown",
                                 ),
-                            ], style={"display": "flex", "alignItems": "center", "gap": "8px", "justifyContent": "space-between"}),
+                            ], className="yoy-header-row"),
                             html.Div("YoY Publication Growth", className="indicator-label"),
-                        ], style={"padding": "12px 16px", "minHeight": "unset"}),
+                        ], className="yoy-card-body"),
                         className="indicator-card shadow-sm border-orange",
                     ),
                     md=2,
@@ -669,7 +668,7 @@ html.Div(
                     style={"display": "none"},
                 ),
             ],
-            className="mb-4 gy-3",
+            className="mb-4 gy-3 section-standard-width kpi-row",
         ),
 
         # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
@@ -779,11 +778,6 @@ html.Div(
     className="tables-section",
 ),
 
-        # ---------- FOOTER ----------
-        html.Div(
-            "© 2026 Global Alliance for Genomics and Health",
-            className="footer",
-        ),
     ],
     fluid=True,
 )
