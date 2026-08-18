@@ -8,7 +8,7 @@ on:
     branches:
       - develop
       - main # temporary until we get a "develop" branch set up
-      - ci-github-actions # temporary branch for testing, to be removed once workflow is verified
+      - dc-deployment-pipeline # temporary branch for testing, to be removed once workflow is verified
 permissions:
   id-token: write
 jobs:
@@ -27,10 +27,6 @@ jobs:
           echo "DOCKER_REPO=analytics-dashboard-ui" >> $GITHUB_ENV
           echo "DOCKER_TAG=$(git describe)" >> $GITHUB_ENV
 
-      - name: build docker image
-        id: build-docker-image
-        run: docker build -t ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }} -t ${{ env.DOCKER_REPO }}:latest -t ${{ env.DOCKER_REPO }}:develop .
-
       - name: configure aws credentials
         id: configure-aws-credentials
         uses: aws-actions/configure-aws-credentials@v6.1.0
@@ -38,10 +34,23 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: push to ecr
-        id: push-to-ecr
-        uses: jwalton/gh-ecr-push@v2
-        with:
-          region: ${{ secrets.AWS_REGION }}
-          local-image: ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
-          image: ${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}, ${{ env.DOCKER_REPO }}:latest, ${{ env.DOCKER_REPO }}:develop
+      - name: set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: build and push docker image
+        id: build-push-docker-image
+        run: |
+          docker buildx build \
+            --platform linux/arm64 \
+            --push \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }} \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.DOCKER_REPO }}:latest \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.DOCKER_REPO }}:develop \
+            .
