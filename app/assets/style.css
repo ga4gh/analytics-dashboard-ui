@@ -182,29 +182,6 @@ text {
     color: var(--border-grey);
 }
 
-.info-badge {
-    padding: 8px 12px;
-    background-color: var(--dark); 
-    color:  var(--white);
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.info-badges-row {
-    display: flex;
-    justify-content: center;  /* horizontal centering */
-    align-items: center;      /* vertical alignment */
-    gap: 1em;                /* spacing between badges */
-    flex-wrap: wrap;          /* prevents overflow */
-  margin:clamp(2em, 4vw, 4em);
-}
-
-@media (max-width: 768px) {
-    .info-badges-row {
-        flex-direction: column;
-        align-items: center;  /* keep centered */
-    }
-}
 
 .dashboard-text {
     font-size: clamp(0.9rem, 1vw, 1.1rem);
@@ -249,13 +226,14 @@ text {
 }
 
 .hero-section {
-    position: relative;   /* 👈 REQUIRED */
+    position: relative;
     height: 700px;
     background: var(--gradient-green-darkgreen);
     display: flex;
     align-items: flex-end;
+    justify-content: space-between;
     padding-top: 120px;
-    overflow: hidden;     /* 👈 prevents bleed */
+    overflow: hidden;
 }
 
 .hero-section::before {
@@ -282,20 +260,56 @@ text {
     z-index: 1;
 }
 
+.hero-right-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 0 40px 40px 20px;
+    z-index: 1;
+}
+
+.hero-badge {
+    display: inline-block;
+    padding: 8px 14px;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-align: left;
+    white-space: nowrap;
+}
+
 @media (max-width: 768px) {
 
     .hero-section {
-        height: auto; /* 👈 let it grow naturally on small screens */
+        height: auto;
+        flex-direction: column;
+        align-items: center;
         padding-bottom: 40px;
-            padding-top: 350px;
+        padding-top: 350px;
+    }
+
+    .hero-right-panel {
+        align-items: center;
+        padding: 20px 20px 0 20px;
+        width: 90%;
+    }
+
+    .hero-badge {
+        text-align: center;
+        max-width: 100%;
     }
 
     .hero-content-box {
         width: 90%;
-        margin: 0 auto;          /* 👈 center horizontally */
-        margin-bottom: -60px;    /* 👈 softer overlap */
+        margin: 0 auto;
+        margin-bottom: -60px;
         padding: 30px 20px;
-        text-align: center;      /* 👈 center all text */
+        text-align: center;
         margin-top: 2em;
     }
 
@@ -409,4 +423,56 @@ text {
 
 #epmc-authors-card-body {
     min-height: auto;
+}
+
+/* ---------- Persona Selector ---------- */
+
+.persona-selector-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 0 16px 0;
+    margin-bottom: 4px;
+    border-bottom: 2px solid var(--grey);
+}
+
+.persona-selector-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--border-grey);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.persona-btn-group {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+}
+
+.persona-btn {
+    flex: 1 !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    border: 2px solid var(--darkblue) !important;
+    color: var(--darkblue) !important;
+    background-color: transparent !important;
+    transition: background-color 0.18s, color 0.18s, box-shadow 0.18s;
+    letter-spacing: 0.02em;
+}
+
+.persona-btn:hover {
+    background-color: var(--darkblue) !important;
+    color: var(--white) !important;
+    box-shadow: 0 4px 12px rgba(2, 38, 106, 0.18) !important;
+}
+
+.active-persona {
+    background-color: var(--darkblue) !important;
+    color: var(--white) !important;
+    box-shadow: 0 4px 12px rgba(2, 38, 106, 0.22) !important;
 }

@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 8050
 
 # Run with gunicorn (recommended for production)
-CMD ["gunicorn", "run:server", "--bind", "0.0.0.0:8050", "--workers", "2"]
+CMD ["sh", "-c", "gunicorn run:server --bind 0.0.0.0:${GA4GH_ANALYTICS_DASHBOARD_UI_PORT:-8050} --workers 2"]

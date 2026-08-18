@@ -1,8 +1,7 @@
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx, no_update
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
-import json
 import re
 import plotly.express as px
 import plotly.graph_objects as go
@@ -11,8 +10,13 @@ from app.services.epmc_client import prepare_epmc_data, get_affiliations_by_arti
 from app.constants.constants import COUNTRIES_WHITELIST
 
 
-def fig_epmc_countries_pie(countries_df):
-    """Pie chart – article count by affiliation country."""
+def fig_epmc_countries_pie(countries_df, hidden_labels=None):
+    """Pie chart – article count by affiliation country.
+
+    hidden_labels: collection of country names currently toggled off in the
+    legend.  Percentages are recalculated against the visible-only total so
+    the displayed values stay correct after toggling.
+    """
     if countries_df is None or countries_df.empty:
         return go.Figure().update_layout(title="No country data available")
 
@@ -35,24 +39,32 @@ def fig_epmc_countries_pie(countries_df):
         return go.Figure().update_layout(title="No country data available (after filtering)")
 
     counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
-    total = counts.sum()
-    if total <= 0:
-        return go.Figure().update_layout(title="No country data available (zero total)")
-
     df = df.copy()
     df["count"] = counts
     df = df.sort_values("count", ascending=False).reset_index(drop=True)
 
-    percents = (df["count"] / total * 100)
+    hidden = set(hidden_labels) if hidden_labels else set()
+    visible_mask = ~df["country_normalized"].isin(hidden)
+    visible_total = df.loc[visible_mask, "count"].sum()
+    if visible_total <= 0:
+        visible_total = df["count"].sum()
+    if visible_total <= 0:
+        return go.Figure().update_layout(title="No country data available (zero total)")
+
     slice_text = []
     hover_text = []
-    for cn, cnt, pct in zip(df["country_normalized"], df["count"], percents):
-        pct_fmt = f"{pct:.1f}%"
-        if pct > 5.0:
-            slice_text.append(f"{cn}<br>{pct_fmt}")
+    for cn, cnt, is_vis in zip(df["country_normalized"], df["count"], visible_mask):
+        if not is_vis:
+            slice_text.append("")
+            hover_text.append("")
         else:
-            slice_text.append(f"{pct_fmt}")
-        hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
+            pct = cnt / visible_total * 100
+            pct_fmt = f"{pct:.1f}%"
+            if pct > 5.0:
+                slice_text.append(f"{cn}<br>{pct_fmt}")
+            else:
+                slice_text.append(pct_fmt)
+            hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
 
     text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
 
@@ -84,6 +96,72 @@ def fig_epmc_countries_pie(countries_df):
             xanchor="center",
             x=0.5,
         ),
+    )
+    if hidden:
+        fig.update_layout(hiddenlabels=list(hidden))
+    return fig
+
+
+def fig_epmc_countries_choropleth(countries_df):
+    """Choropleth world map — each country's % share of total author affiliations."""
+    if countries_df is None or countries_df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    cols = list(countries_df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col   = next(c for c in cols if c.lower() == "count")
+        df = countries_df[[country_col, count_col]].copy()
+        df.columns = ["country", "count"]
+    else:
+        df = countries_df.iloc[:, :2].copy()
+        df.columns = ["country", "count"]
+
+    whitelist = {c.strip().lower() for c in COUNTRIES_WHITELIST}
+    df["country"] = df["country"].astype(str).str.strip()
+    df = df[df["country"].str.lower().isin(whitelist)].copy()
+    df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0)
+
+    if df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    total = df["count"].sum()
+    df["pct"] = (df["count"] / total * 100).round(2)
+    df["hover_text"] = df.apply(
+        lambda r: f"{r['country']}<br>{r['pct']}% of author affiliations", axis=1
+    )
+
+    fig = px.choropleth(
+        df,
+        locations="country",
+        locationmode="country names",
+        color="pct",
+        color_continuous_scale="Reds",
+        custom_data=["pct"],
+        labels={"pct": "Share (%)", "country": "Country"},
+        template="simple_white",
+    )
+    fig.update_traces(
+        hovertemplate="<b>%{location}</b><br>%{customdata[0]:.2f}% of author affiliations<extra></extra>",
+        marker_line_color="white",
+        marker_line_width=0.5,
+    )
+    fig.update_layout(
+        autosize=True,
+        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        coloraxis_colorbar={
+            "title": "Share (%)",
+            "thickness": 12,
+            "ticksuffix": "%",
+        },
+    )
+    fig.update_geos(
+        showland=True,    landcolor="#DAECC1",
+        showocean=True,   oceancolor="#BBDFF1",
+        showlakes=True,   lakecolor="#BBDFF1",
+        showcountries=True, countrycolor="#999999",
+        projection_type="natural earth",
+        showframe=False,
     )
     return fig
 
@@ -124,42 +202,27 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
 
 def build_most_cited_rows(entries_df):
     """Build rows for the Most Cited GA4GH Publications table."""
-    most_cited_rows = []
     try:
-        candidates = []
-        if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
-            for raw in entries_df["raw_json"]:
-                try:
-                    obj = json.loads(raw)
-                except Exception:
-                    continue
-                title = obj.get("title") or obj.get("name") or ""
-                cited = obj.get("cited_by_count")
-                try:
-                    cited_count = int(cited) if cited is not None else 0
-                except Exception:
-                    cited_count = 0
-                doi = obj.get("doi") or ""
-                doi_url = f"https://doi.org/{doi}" if doi else None
-                candidates.append({"title": title, "cited_by_count": cited_count, "doi_url": doi_url})
-
-        if candidates:
-            counts_df = pd.DataFrame.from_records(candidates)
-            counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
-            for _, row in counts_df.iterrows():
-                doi_url = row.get("doi_url")
-                title = str(row.get("title") or "")
-                article_link = f"[View]({doi_url})" if doi_url else ""
-                most_cited_rows.append(
-                    {
-                        "article_link": article_link,
-                        "title": title,
-                        "cited_by_count": int(row["cited_by_count"]),
-                    }
-                )
+        if entries_df is None or entries_df.empty:
+            return []
+        needed = {"title", "cited_by_count", "doi"}
+        if not needed.issubset(entries_df.columns):
+            return []
+        df = entries_df[list(needed)].copy()
+        df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0).astype(int)
+        df = df.sort_values("cited_by_count", ascending=False).head(20)
+        rows = []
+        for _, row in df.iterrows():
+            doi = str(row.get("doi") or "")
+            doi_url = f"https://doi.org/{doi}" if doi else None
+            rows.append({
+                "article_link":   f"[View]({doi_url})" if doi_url else "",
+                "title":          str(row.get("title") or ""),
+                "cited_by_count": int(row["cited_by_count"]),
+            })
+        return rows
     except Exception:
-        most_cited_rows = []
-    return most_cited_rows
+        return []
 
 
 def register_epmc_callbacks(app):
@@ -188,17 +251,10 @@ def register_epmc_callbacks(app):
         if year_filter and "pub_year" in filtered.columns:
             filtered = filtered[filtered["pub_year"].astype(str) == str(year_filter)]
         
-        if affiliation_filter and "raw_json" in filtered.columns:
-            def _has_affiliation(raw):
-                try:
-                    obj = json.loads(raw) if isinstance(raw, str) else raw
-                except Exception:
-                    return False
-                aff = obj.get("affiliation") or obj.get("affiliations") or ""
-                if isinstance(aff, list):
-                    aff = " ".join([str(a) for a in aff if a])
-                return affiliation_filter.lower() in aff.lower()
-            filtered = filtered[filtered["raw_json"].apply(_has_affiliation)]
+        if affiliation_filter and "affiliation" in filtered.columns:
+            filtered = filtered[
+                filtered["affiliation"].astype(str).str.contains(affiliation_filter, case=False, na=False)
+            ]
         
         # Sort by pub_year descending (most recent first)
         if "pub_year" in filtered.columns:
@@ -250,25 +306,13 @@ def register_epmc_callbacks(app):
 
         entry = filtered_df.iloc[selected_rows[0]]
 
-        raw = entry.get("raw_json") or "{}"
-        try:
-            parsed = json.loads(raw) if isinstance(raw, str) else raw
-        except Exception:
-            parsed = {}
+        abstract  = entry.get("abstract_text") or "No abstract available"
+        pub_year  = entry.get("pub_year") or "N/A"
+        language  = entry.get("language") or "N/A"
+        doi       = entry.get("doi") or ""
+        doi_url   = f"https://doi.org/{doi}" if doi else None
+        pm_id     = entry.get("pm_id") or None
 
-        abstract = parsed.get("abstract_text") or parsed.get("abstract") or "No abstract available"
-        pub_year = entry.get("pub_year") or parsed.get("pub_year") or parsed.get("year") or "N/A"
-        language = parsed.get("language") or parsed.get("lang") or "N/A"
-        doi = entry.get("doi") or parsed.get("doi") or ""
-        doi_url = f"https://doi.org/{doi}" if doi else None
-
-        pm_id = (
-            parsed.get("pm_id")
-            or parsed.get("pmid")
-            or parsed.get("pmId")
-            or parsed.get("article_id")
-            or parsed.get("id")
-        )
         affiliation_rows = get_affiliations_by_article(pm_id) if pm_id else []
         affiliation_rows = [r for r in affiliation_rows if isinstance(r, dict)]
 
@@ -417,14 +461,18 @@ def register_epmc_callbacks(app):
                 html.H6("Affiliations: ", className="fw-bold"),
                 
                 html.Div([
-                    html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
+                    html.Span("▶ ", style={
+                        "fontSize": "12px",
+                        "marginRight": "4px",
+                        "display": "inline" if rest_aff_components else "none",
+                    }),
                     first_aff_component,
                 ], id="aff-collapse-button", n_clicks=0, style={
                     "color": "#0d9cf0",
-                    "cursor": "pointer",
+                    "cursor": "pointer" if rest_aff_components else "default",
                     "fontWeight": "600",
                     "fontSize": "13px",
-                    "display": "inline-flex" if rest_aff_components else "none",
+                    "display": "inline-flex",
                     "alignItems": "center",
                     "marginBottom": "0.5rem",
                 }),
@@ -455,11 +503,18 @@ def register_epmc_callbacks(app):
         Output("epmc-countries-pie", "figure"),
         Output("epmc-authors-bar", "figure"),
         Output("epmc-authors-card-body", "style"),
-        Input("epmc-top-n-slider", "value"),  # Responds to slider but uses same cached authors
+        Input("epmc-top-n-slider", "value"),
+        Input("epmc-countries-pie", "relayoutData"),
     )
-    def update_epmc_graphs(top_n):
+    def update_epmc_graphs(top_n, relayout_data):
+        # Legend toggle on the pie — only rebuild the pie with updated percentages
+        if ctx.triggered_id == "epmc-countries-pie":
+            hidden = (relayout_data or {}).get("hiddenlabels") or []
+            if "hiddenlabels" not in (relayout_data or {}):
+                return no_update, no_update, no_update
+            return fig_epmc_countries_pie(countries_df, hidden_labels=hidden), no_update, no_update
+
         fig_pie = fig_epmc_countries_pie(countries_df)
-        # Use pre-fetched top_authors_default (no API call needed)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
         graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
         return fig_pie, fig_bar, {"minHeight": f"{graph_height + 96}px"}
@@ -494,3 +549,22 @@ def register_epmc_callbacks(app):
             html.Span(first_affiliation or "Affiliations"),
         ]
         return new_state, label
+
+    # -----------------------
+    # Interactive YoY growth KPI
+    # -----------------------
+    @app.callback(
+        Output("yoy-growth-value", "children"),
+        Input("yoy-year-selector", "value"),
+        State("yearly-pub-counts", "data"),
+    )
+    def update_yoy_growth(selected_year, yearly_counts):
+        if not selected_year or not yearly_counts:
+            return "N/A"
+        curr = yearly_counts.get(str(selected_year)) or yearly_counts.get(selected_year)
+        prev = yearly_counts.get(str(selected_year - 1)) or yearly_counts.get(selected_year - 1)
+        if curr is None or prev is None or prev == 0:
+            return "N/A"
+        pct = round((curr - prev) / prev * 100, 1)
+        return f"+{pct}%" if pct >= 0 else f"{pct}%"
+
