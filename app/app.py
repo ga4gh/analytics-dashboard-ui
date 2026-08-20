@@ -6,6 +6,7 @@ from app.callbacks.github_callbacks import register_github_callbacks
 from app.callbacks.home_callbacks import register_home_callbacks
 from app.callbacks.epmc_callbacks import register_epmc_callbacks
 from app.callbacks.persona_callbacks import register_persona_callbacks
+from app.callbacks.map_callbacks import register_map_callbacks
 from app.layouts.footer_layout import get_footer
 
 def create_app():
@@ -28,6 +29,7 @@ def create_app():
     register_github_callbacks(app)
     register_epmc_callbacks(app)
     register_persona_callbacks(app)
+    register_map_callbacks(app)
 
     return app
 

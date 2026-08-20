@@ -102,29 +102,34 @@ def get_pypi_layout(pypi_details, total_packages):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    html.H5(id="datatable-bar-title", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="datatable-bar"),
                                     html.Figcaption("Total number of versions for the top GA4GH-related PyPI packages, sorted in descending order by number of versions.")
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    dcc.Graph(id="category-distribution"),
+                                    html.H5("Category Distribution", style={"marginBottom": "8px"}),
+                                    dcc.Graph(id="category-distribution", style={"minHeight": "900px", "flex": "1 1 auto"}),
                                     html.Figcaption("Relative proportion of package category for GA4GH-related PyPI packages.")
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
-                ]
+                ],
+                className="mb-4",
             ),
 
 

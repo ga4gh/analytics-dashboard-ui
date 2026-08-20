@@ -7,7 +7,7 @@ import plotly.io as pio
 # COLORS
 # ------------------------------------------------------------------
 COLORS = {
-    "heroblue": "#02266a",
+    "heroblue": "#01266a",
     "darkblue": "#1b75bb",
     "lightblue": "#4faedc",
     "purple": "#9f79b0",
@@ -19,9 +19,11 @@ COLORS = {
     "secondary_orange": "#F15B27",
     "pink": "#ED2079",
     "secondary_purple": "#A72176",
-    "lightgrey": "#f4f4f4",
-    "grey": "#e8e8e8",
-    "border_grey": "#77787b",
+    "midnight_blue": "#01225f",
+    "mamba": "#9c879b",
+    "forest_green": "#4a7c2e",
+    "lightgrey": "#efefef",
+    "grey": "#767676",
     "dark": "#363636",
     "white": "#ffffff",
     "black": "#000000",
@@ -32,23 +34,70 @@ COLORS = {
 # ------------------------------------------------------------------
 COLORWAY = [
     COLORS["darkblue"],
+    COLORS["orange"],
     COLORS["green"],
     COLORS["red"],
-    COLORS["lightblue"],
     COLORS["purple"],
-    COLORS["orange"],
+    COLORS["darkgreen"],
+    COLORS["lightblue"],
     COLORS["secondary_blue"],
-    COLORS["pink"],
     COLORS["secondary_orange"],
+    COLORS["pink"],
     COLORS["secondary_purple"],
+    COLORS["midnight_blue"],
+    COLORS["mamba"],
+    COLORS["forest_green"],
 ]
+
+# ------------------------------------------------------------------
+# SECTION-SPECIFIC COLOR SEQUENCES
+# ------------------------------------------------------------------
+PUBLICATIONS_COLORWAY = [
+    COLORS["red"],
+    COLORS["orange"],
+    COLORS["secondary_orange"],
+    COLORS["pink"],
+]
+
+GITHUB_COLORWAY = [
+    COLORS["green"],
+    COLORS["darkgreen"],
+    COLORS["forest_green"],
+]
+
+PYPI_COLORWAY = [
+    COLORS["purple"],
+    COLORS["secondary_purple"],
+    COLORS["mamba"],
+]
+
+FUNDING_COLORWAY = [
+    COLORS["darkblue"],
+    COLORS["lightblue"],
+    COLORS["secondary_blue"],
+    COLORS["midnight_blue"],
+]
+
+# Fixed per-workstream colors so a given workstream renders the same color on
+# every GitHub chart, regardless of sort order or which filter is active.
+WORKSTREAM_COLORS = {
+    "Genomic Knowledge Standards":      COLORS["orange"],
+    "Tech/TASC":                        COLORS["darkblue"],
+    "Cloud":                            COLORS["lightblue"],
+    "Large Scale Genomics":             COLORS["green"],
+    "Clinical and Phenotypic":          COLORS["red"],
+    "Data Discovery":                   COLORS["purple"],
+    "Regulatory and Ethics":            COLORS["secondary_purple"],
+    "Data Security":                    COLORS["darkgreen"],
+    "Data Use and Researcher Identity": COLORS["pink"],
+}
 
 # ------------------------------------------------------------------
 # SHARED AXIS STYLE
 # ------------------------------------------------------------------
 AXIS_BASE = dict(
     gridcolor=COLORS["grey"],
-    linecolor=COLORS["border_grey"],
+    linecolor=COLORS["grey"],
     zerolinecolor=COLORS["grey"],
     title_font=dict(size=16),
     automargin=True,          # prevents overlap
@@ -98,7 +147,7 @@ def apply_ga4gh_styling(fig: go.Figure, height: Optional[int] = 600) -> go.Figur
         hoverlabel=dict(
             bgcolor=COLORS["white"],
             font_size=14,
-            font_family="Work Sans",
+            font_family="Figtree, sans-serif",
         ),
     )
 
@@ -172,7 +221,9 @@ def apply_table_layout(fig: go.Figure, chart_domain=(0.35, 1.0), table_domain=(0
 # ------------------------------------------------------------------
 pio.templates["dashboard_theme"] = dict(
     layout=dict(
-        font=dict(family="Work Sans, Open Sans, sans-serif"),
+        # new_ga4gh's body/data font (Figtree Regular) — chart text (axis
+        # labels, legends, hover) reads as data, not as a heading.
+        font=dict(family="Figtree, sans-serif"),
         margin=dict(l=80, r=40, t=60, b=80),
         xaxis=AXIS_BASE,
         yaxis=AXIS_BASE,

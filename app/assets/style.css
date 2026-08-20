@@ -1,5 +1,6 @@
 body {
-    font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-fi-regular);
+    font-size: var(--text-base);
     background-color: #ffffff;
 }
 
@@ -13,21 +14,79 @@ body {
     margin-top: 1rem;
 }
 
+/* Plotly renders chart text (axis labels, legends, hover) as SVG <text>
+   nodes — this is the only way to brand that text, since it isn't reachable
+   through the app's own component tree. */
 text {
-    font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-fi-regular);
+}
+
+figcaption {
+    text-align: center;
+}
+
+/* Tables section captions read as left-aligned intro text for each table,
+   not a chart caption — charts keep the centered default above. */
+.tables-section figcaption {
+    text-align: left;
+}
+
+/* Every chart card wraps [title?, dcc.Graph, figcaption] in a <figure> inside
+   .card-body. Bootstrap's .card-body already stretches to fill the card's
+   full height (h-100 cards, equal-height rows) — turning the figure itself
+   into a flex column lets the graph (.dash-graph, Dash's own wrapper class)
+   flex-grow to fill whatever space is left after the title and caption,
+   instead of sitting at a fixed pixel height with leftover space stranded
+   below it. The caption then gets a fixed 2rem gap above it (not the chart's
+   own fixed height), so it lands 2rem under the graph in every card
+   regardless of that card's actual height, and cards in the same row still
+   line up since the graph itself absorbs whatever height differs between
+   them. Note: a pie/bar chart's legend renders as part of the Plotly SVG
+   itself, not a separate DOM node, so this can size the *graph* against the
+   caption precisely, but can't independently pin the legend a fixed 2rem
+   above the caption — that inner spacing is set per-chart via each figure's
+   own margin/legend-position in Python instead. */
+.card-body > figure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-body > figure > .dash-graph {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.card-body > figure > .dash-graph .js-plotly-plot,
+.card-body > figure > .dash-graph .plot-container {
+    height: 100% !important;
+}
+
+.card-body > figure figcaption {
+    margin-top: 2rem;
+    flex: 0 0 auto;
 }
 
 .my-button {
     background-color: #007BFF;
     color: white;
     padding: 0.5rem;
-    border-radius: 5px;
-    font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
+    border-radius: 0.5rem;
+    font-family: var(--font-ws-bold);
 }
+
+/* new_ga4gh base/_typography.scss's heading scale: h1-h5 are Work Sans Bold
+   at the --text-4xl..--text-lg steps; h6 is deliberately left unstyled
+   there too, inheriting the body's Figtree Regular / --text-base. */
+h1 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-4xl); }
+h2 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-3xl); }
+h3 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-2xl); }
+h4 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-xl); }
+h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-lg); }
 
 /* EPMC affiliation dropdown: wider menu and wrapped text for long institution names. */
 #epmc-affiliation-filter .Select-menu-outer {
-    width: min(900px, 92vw);
+    width: min(56.5rem, 92vw);
 }
 
 #epmc-affiliation-filter .Select-option,
@@ -35,7 +94,7 @@ text {
     white-space: normal;
     overflow: visible;
     line-height: 1.3;
-    min-height: 96px;
+    min-height: 6rem;
     padding: 0.5rem;
 }
 
@@ -46,11 +105,11 @@ text {
 }
 
 .custom-dropdown .Select-control {
-    border-radius: 5px !important;
+    border-radius: 0.5rem !important;
     border: 1px solid #ccc !important;
     box-shadow: none !important;
-    height: 38px !important;
-    line-height: 38px !important;
+    height: 2.5rem !important;
+    line-height: 2.5rem !important;
 }
 
 .epmc-most-cited-item,
@@ -81,9 +140,110 @@ text {
     margin: 0;
 }
 
+/* refcloud-ui's .ga4gh-pagination treatment (globals.css), ported onto the
+   DataTable's own "1 / 86" page indicator + prev/next/first/last arrows
+   rather than switching to refcloud's clickable page-number-list layout. */
+.previous-next-container {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* !important throughout: dash_table's own bundle.js injects a hardcoded
+   hotpink :hover rule for these buttons at runtime, after our stylesheet —
+   same-specificity tie that its later load order would otherwise win. */
+.previous-next-container button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem;
+    color: var(--lightblue) !important;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.previous-next-container button::after {
+    content: "";
+    position: absolute;
+    left: 0.35rem;
+    right: 0.35rem;
+    bottom: 0;
+    height: 2px;
+    background-color: var(--darkblue);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.previous-next-container button:hover:not(:disabled) {
+    color: var(--darkblue) !important;
+    opacity: 1;
+}
+
+.previous-next-container button:hover:not(:disabled)::after {
+    opacity: 1;
+}
+
+.previous-next-container button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.previous-next-container .page-number {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--dark);
+}
+
+/* The editable "current page" box — strip Dash's default bordered input
+   look and replace with refcloud's active-page underline instead. */
+.previous-next-container .current-page-container {
+    position: relative;
+    padding-bottom: 3px;
+}
+
+.previous-next-container .current-page-container::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 3px;
+    background-color: var(--darkblue);
+}
+
+.previous-next-container .current-page {
+    border: none;
+    background: none;
+    color: var(--dark);
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 0;
+}
+
+.previous-next-container .current-page-shadow {
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.previous-next-container .last-page {
+    color: var(--dark);
+    opacity: 0.6;
+}
+
 :root {
     /* ---------- Colors ---------- */
-    --heroblue: #02266a;          /* Green Vogue */
+    --heroblue: #01266a;          /* Green Vogue — corrected from #02266a to match new_ga4gh's actual $heroblue */
     --darkblue: #1b75bb;          /* Denim */
     --faint-darkblue: #1b75bb50;
 
@@ -104,25 +264,30 @@ text {
 
 /* Secondary Colours */
 
-    --secondary-blue:#6492BE;     /* Blue Jeans */
-    --secondary-orange: #F15B27;    /* Flame */
-    --pink: #ED2079;       /* Razzmatazz */
-    --secondary-purple: #A72176;       /* Red Violet */
+    --secondary-blue:#6492BE;     /* Blue Jeans / new_ga4gh $cerulean-frost */
+    --secondary-orange: #F15B27;    /* Flame / new_ga4gh $flamingo */
+    --pink: #ED2079;       /* Razzmatazz / new_ga4gh $razzmatazz */
+    --secondary-purple: #A72176;       /* Red Violet / new_ga4gh $violet-purple */
+    --midnight-blue: #01225f;      /* new_ga4gh $midnight-blue */
+    --mamba: #9c879b;              /* new_ga4gh $mamba */
 
     --darkgreen: #00a99d;
+    --faint-darkgreen: #00a99d50;
+
+    /* Not in new_ga4gh's palette — added as a 4th distinct green for the
+       GitHub colorway (app/utils/ga4gh_theme.py's COLORS["forest_green"]). */
+    --forest-green: #4a7c2e;
+    --faint-forest-green: #4a7c2e50;
 
     --headergrey: #f8f8f8;        /* Alabaster */
-    --border-grey: #77787b;       /* Jumbo */
-    --lightgrey: #f4f4f4;
-    --grey: #e8e8e8;             /* Platinum */
+
+    /* new_ga4gh base/_colours.scss's three greys: $lightgrey/$grey/$dark */
+    --lightgrey: #efefef;
+    --grey: #767676;
 
     --white: #ffffff;             /* White */
     --dark: #363636;              /* Dark */
     --black: #000000;             /* Black */
-
-    /* new_ga4gh base/_colours.scss $grey/$lightgrey (distinct from --grey/--lightgrey above) */
-    --ga4gh-mid-grey: #767676;
-    --ga4gh-light-grey: #efefef;
 
     /* ---------- Gradient Variables ---------- */
     --gradient-orange-secondary-orange: linear-gradient(to right, var(--orange), var(--secondary-orange));
@@ -139,7 +304,7 @@ text {
     --gradient-green-darkgreen: linear-gradient(270deg, var(--darkgreen), var(--green));
 
     /* new_ga4gh base/_colours.scss $lightgrey-grey: standard-page hero background */
-    --gradient-lightgrey-grey: linear-gradient(270deg, var(--ga4gh-mid-grey) 0%, var(--ga4gh-light-grey) 100%);
+    --gradient-lightgrey-grey: linear-gradient(270deg, var(--grey) 0%, var(--lightgrey) 100%);
 
     /* new_ga4gh base/_typography.scss's fluid type scale, so text shrinks with
        the viewport instead of overflowing fixed-size containers (e.g. the KPI
@@ -173,6 +338,8 @@ text {
 .border-red        { border-right: 12px solid var(--red); }
 .border-green      { border-right: 12px solid var(--green); }
 .border-darkgreen  { border-right: 12px solid var(--darkgreen); }
+.border-pink       { border-right: 12px solid var(--pink); }
+.border-secondary-orange { border-right: 12px solid var(--secondary-orange); }
 
 .bg-faint-darkblue  { background-color: var(--faint-darkblue); }
 .bg-faint-lightblue { background-color: var(--faint-lightblue); }
@@ -180,6 +347,29 @@ text {
 .bg-faint-orange    { background-color: var(--faint-orange); }
 .bg-faint-red       { background-color: var(--faint-red); }
 .bg-faint-green     { background-color: var(--faint-green); }
+
+/* new_ga4gh components/_status-badges.scss's .status pill (also ported as
+   refcloud-ui's .ga4gh-status) — colored border + faint (31%-alpha) fill of
+   the same color, rather than Bootstrap's solid-fill dbc.Badge default. */
+/* !important: dbc.Badge with no explicit `color` prop defaults to
+   "secondary", adding Bootstrap's .badge.bg-secondary alongside this one. */
+.ga4gh-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 100px !important;
+    padding: 0.5rem 1rem !important;
+    border: 2px solid transparent;
+    font-family: var(--font-fi-regular);
+    font-weight: 800;
+    font-size: var(--text-xs) !important;
+    white-space: nowrap;
+    color: var(--dark) !important;
+}
+
+.ga4gh-pill-green        { border-color: var(--green) !important; background-color: var(--faint-green) !important; }
+.ga4gh-pill-darkgreen    { border-color: var(--darkgreen) !important; background-color: var(--faint-darkgreen) !important; }
+.ga4gh-pill-forest-green { border-color: var(--forest-green) !important; background-color: var(--faint-forest-green) !important; }
 
 /* Font Imports */
 
@@ -210,8 +400,8 @@ text {
 }
 
 .brand-logo-img {
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
 }
 
 .brand-text-primary,
@@ -224,8 +414,8 @@ text {
 .brand-text-base { color: var(--dark); }
 
 .indicator-card {
-    border-radius: 10px;
-    height: 72px;
+    border-radius: 0.5rem;
+    height: 4.5rem;
 }
 
 .indicator-card-body {
@@ -263,7 +453,7 @@ text {
 
 .indicator-label {
     font-size: var(--text-md);
-    color: var(--border-grey);
+    color: var(--grey);
 }
 
 
@@ -291,6 +481,7 @@ text {
     font-family: var(--font-ws-bold);
     font-weight: 700;
     margin-left: 2.5rem;   /* 👈 indent from left */
+    margin-bottom: 2rem;
 }
 
 @media (max-width: 768px) {
@@ -303,8 +494,6 @@ text {
 .servicemap-section, .metrics-section, .epmc-section, .github-section, .pypi-section, .tables-section {
     background: var(--lightgrey);
     padding: 2.5rem;
-    border-radius: 20px;
-    border: solid 1px var(--grey);
     margin-top: clamp(1em, 4vw, 4em);
     margin-bottom: clamp(1em, 4vw, 4em);
 }
@@ -315,7 +504,7 @@ text {
 .hero-section {
     position: relative;
     background: var(--gradient-lightgrey-grey);
-    padding-top: 9rem; /* clear the fixed .top-bar */
+    padding-top: 7rem; /* clear the fixed .top-bar (now ~4rem tall) */
     overflow: hidden;
 }
 
@@ -363,7 +552,7 @@ text {
 }
 
 .hr-hero {
-    background-color: var(--ga4gh-mid-grey);
+    background-color: var(--grey);
     height: 1px;
     margin-bottom: 1rem;
     border: none;
@@ -372,7 +561,7 @@ text {
 .hero-badges-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 0.5rem;
     margin-top: 1.5rem;
 }
 
@@ -385,9 +574,9 @@ text {
 .hero-badge {
     display: inline-block !important;
     padding: 0.5rem !important;
-    background-color: var(--ga4gh-light-grey) !important;
+    background-color: var(--lightgrey) !important;
     color: var(--dark) !important;
-    border: solid 1px var(--ga4gh-mid-grey) !important;
+    border: solid 1px var(--grey) !important;
     border-radius: 0 !important;
     font-family: var(--font-sg-bold) !important;
     font-weight: 700 !important;
@@ -447,7 +636,9 @@ text {
     width: 100%;        /* full width */
     z-index: 1000;
     background-color: var(--white);
-    padding: 1.5rem 2.5rem;
+    /* refcloud-ui's navbar (DaisyUI .navbar) is 4rem/64px tall — matched here
+       via vertical padding, since content height (logo) + border stay fixed. */
+    padding: 0.5rem 2.5rem;
     box-shadow: 0 12px 10px -12px #262626;
     border-bottom: 2px solid #000;
 }
@@ -459,7 +650,7 @@ text {
 .menu-container {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 2rem;
     flex-wrap: wrap;       /* ✅ allows items to wrap */
     justify-content: flex-end; /* keep them aligned right in the row */
     transition: all 0.3s ease;
@@ -488,7 +679,7 @@ text {
     .menu-container {
         flex-direction: column;  /* already added, keep it */
         align-items: center;
-        gap: 12px;
+        gap: 1rem;
     }
 }
 
@@ -514,7 +705,7 @@ text {
 #epmc,
 #github,
 #pypi, #tables {
-    scroll-margin-top: 6.5rem;  /* adjust to your sticky top-bar height */
+    scroll-margin-top: 4.5rem;  /* adjust to your sticky top-bar height */
 }
 
 /* Footer, matching refcloud-ui's components/layout/Footer.tsx + styles/globals.css */
@@ -545,7 +736,7 @@ text {
 }
 
 .f-logo-img {
-    width: 60px;
+    width: 4rem;
     height: auto;
 }
 
@@ -574,7 +765,7 @@ text {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    height: clamp(40px, 10vw, 50px);
+    height: clamp(2.5rem, 10vw, 3rem);
     aspect-ratio: 270 / 60;
     padding-inline: clamp(1rem, 2cqw, 2rem);
     padding-block: 0;
@@ -619,6 +810,84 @@ text {
     text-transform: uppercase;
 }
 
+/* new_ga4gh components/_buttons.scss's .btn-dark (btn-theme($lightgrey,
+   $dark, $dark, $white)) — used for the tables section's row-detail links
+   (View Article, View on PyPI, Latest Release, View on GitHub, Open
+   Repository) instead of Bootstrap's default button colors. */
+.ga4gh-btn-dark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: clamp(2.5rem, 10vw, 3rem);
+    aspect-ratio: 270 / 60;
+    padding-inline: clamp(1rem, 2cqw, 2rem);
+    padding-block: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+    overflow: hidden;
+    /* !important: dbc.Button with no explicit `color` prop defaults to
+       "primary", adding Bootstrap's .btn-primary classes alongside this one —
+       same-specificity single-class rules, so without !important Bootstrap's
+       blue wins by load order. */
+    background-color: var(--lightgrey) !important;
+    color: var(--dark) !important;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.ga4gh-btn-dark::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc(100% - 2px);
+    width: 100%;
+    height: 2px;
+    background-color: var(--dark);
+    transition: all 0.3s ease;
+}
+
+.ga4gh-btn-dark:hover::after,
+.ga4gh-btn-dark:focus-visible::after {
+    top: 0;
+    height: 100%;
+}
+
+.ga4gh-btn-dark:hover,
+.ga4gh-btn-dark:focus-visible {
+    color: var(--white) !important;
+}
+
+.ga4gh-btn-dark .btn-text {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+/* new_ga4gh's .btn-disabled: dim the whole button and stop the hover
+   sweep/color-flip from firing on a link with nothing to open. */
+.ga4gh-btn-dark:disabled,
+.ga4gh-btn-dark.disabled {
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+}
+
+.ga4gh-btn-dark:disabled:hover::after,
+.ga4gh-btn-dark.disabled:hover::after {
+    top: calc(100% - 2px);
+    height: 2px;
+}
+
+.ga4gh-btn-dark:disabled:hover,
+.ga4gh-btn-dark.disabled:hover {
+    color: var(--dark);
+}
+
 /* new_ga4gh's own icon font, base/_fonts.scss's FontAwesomeBrands @font-face
    (Font Awesome Free 7.2.0's fa-brands-400.woff2) — bundled locally rather
    than pulled from a CDN. */
@@ -655,7 +924,7 @@ text {
 }
 
 .card-body{
-    min-height: 750px;
+    min-height: 47rem;
 }
 
 .rc-slider-track{
@@ -753,7 +1022,7 @@ text {
 .yoy-header-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
     justify-content: space-between;
 }
 
@@ -764,7 +1033,7 @@ text {
 
 .yoy-year-dropdown {
     font-size: 1rem;
-    width: 72px;
+    width: 4.5rem;
     min-height: unset;
 }
 
@@ -777,16 +1046,16 @@ text {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 24px;
+    gap: 1.5rem;
     max-width: 1440px;
     margin: 0 auto;
     padding: 0 4rem;
 }
 
 .persona-selector-label {
-    font-size: 15px;
+    font-size: 1rem;
     font-weight: 700;
-    color: var(--border-grey);
+    color: var(--grey);
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -798,20 +1067,20 @@ text {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
-    border-bottom: 2px solid var(--ga4gh-light-grey);
+    border-bottom: 2px solid var(--lightgrey);
 }
 
 .persona-btn {
     flex: none !important;
     display: inline-flex !important;
     align-items: center !important;
-    border: 1px solid var(--ga4gh-light-grey) !important;
+    border: 1px solid var(--lightgrey) !important;
     border-bottom: none !important;
     border-radius: 0.5rem 0.5rem 0 0 !important;
     margin-bottom: -2px !important;
     padding: 0.75rem 1.5rem !important;
-    background: var(--ga4gh-light-grey) !important;
-    color: var(--ga4gh-mid-grey) !important;
+    background: var(--lightgrey) !important;
+    color: var(--grey) !important;
     font-family: var(--font-fi-semibold) !important;
     font-weight: 600 !important;
     font-size: clamp(0.95rem, 1.15vw, 1.25rem) !important;
@@ -828,7 +1097,7 @@ text {
 .active-persona {
     background: var(--white) !important;
     color: var(--darkblue) !important;
-    border-color: var(--ga4gh-light-grey) !important;
+    border-color: var(--lightgrey) !important;
     border-bottom: 2px solid var(--white) !important;
     box-shadow: none !important;
 }

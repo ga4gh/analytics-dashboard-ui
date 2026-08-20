@@ -1,6 +1,8 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 
+from app.utils.ga4gh_theme import COLORS
+
 # ---------------------------------------------------------------------------
 # Page layout
 # ---------------------------------------------------------------------------
@@ -50,6 +52,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    html.H5(id="epmc-authors-bar-title", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="epmc-authors-bar"),
                                     html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
                                 ]),
@@ -69,7 +72,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    dcc.Graph(id="epmc-countries-pie"),
+                                    html.H5("Affiliation - Countries Represented", style={"marginBottom": "8px"}),
+                                    dcc.Graph(id="epmc-countries-pie", style={"minHeight": "1050px", "flex": "1 1 auto"}),
                                     html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author’s affiliation for all publications.")
                                 ])
                             ),
@@ -102,15 +106,15 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                                     "padding": "4px 6px",
                                                     "fontSize": "13px",
                                                     "lineHeight": "1.15",
-                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                    "fontFamily": "'Figtree-Regular', 'Figtree', sans-serif",
                                                     "whiteSpace": "normal",
                                                 },
                                                 style_header={
-                                                    "backgroundColor": "#2c3e50",
+                                                    "backgroundColor": COLORS["dark"],
                                                     "color": "white",
                                                     "fontWeight": "bold",
                                                     "padding": "5px 6px",
-                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                    "fontFamily": "'Figtree-SemiBold', 'Figtree', sans-serif",
                                                 },
                                                 style_data_conditional=[
                                                     {"if": {"column_id": "article_link"}, "width": "8%", "textAlign": "center"},
@@ -119,7 +123,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                                 ],
                                                 css=[
                                                     {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.1;"},
-                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": "display:inline-block; padding:2px 8px; border:1px solid #0d6efd; background-color:#0d6efd; color:#fff; border-radius:0.375rem; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1;"},
+                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:2px 8px; border:1px solid {COLORS['orange']}; background-color:{COLORS['orange']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1;"},
                                                 ],
                                                 markdown_options={"link_target": "_blank"},
                                             ),

@@ -2,8 +2,14 @@ from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
 
+from app.utils.ga4gh_theme import COLORS
 
-DATATABLE_FONT_FAMILY = "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif"
+
+# new_ga4gh base/_typography.scss's .list-table thead th: Figtree SemiBold
+# header, Figtree Regular body — the same family split used for figcaptions
+# and every other body/label pair across the app.
+DATATABLE_CELL_FONT_FAMILY = "'Figtree-Regular', 'Figtree', sans-serif"
+DATATABLE_HEADER_FONT_FAMILY = "'Figtree-SemiBold', 'Figtree', sans-serif"
 
 
 def get_datatables_layout(
@@ -133,13 +139,13 @@ def get_datatables_layout(
                                         "textAlign": "left",
                                         "padding": "10px",
                                         "whiteSpace": "normal",
-                                        "fontFamily": DATATABLE_FONT_FAMILY,
+                                        "fontFamily": DATATABLE_CELL_FONT_FAMILY,
                                     },
                                     style_header={
-                                        "backgroundColor": "#2c3e50",
+                                        "backgroundColor": COLORS["dark"],
                                         "color": "white",
                                         "fontWeight": "bold",
-                                        "fontFamily": DATATABLE_FONT_FAMILY,
+                                        "fontFamily": DATATABLE_HEADER_FONT_FAMILY,
                                     },
                                 ),
                                 className="datatable-controls-inline",
@@ -186,8 +192,8 @@ def get_datatables_layout(
                             selected_rows=[0],
                             page_size=15,
                             style_table={"overflowX": "auto"}, 
-                            style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", "fontFamily": DATATABLE_FONT_FAMILY }, 
-                            style_header={ "backgroundColor": "#2c3e50", "color": "white", "fontWeight": "bold", "fontFamily": DATATABLE_FONT_FAMILY }
+                            style_cell={ "textAlign": "left", "padding": "10px", "whiteSpace": "normal", "fontFamily": DATATABLE_CELL_FONT_FAMILY }, 
+                            style_header={ "backgroundColor": COLORS["dark"], "color": "white", "fontWeight": "bold", "fontFamily": DATATABLE_HEADER_FONT_FAMILY }
                         ),
                         className="datatable-controls-inline",
                     )
@@ -239,13 +245,13 @@ def get_datatables_layout(
                                 "textAlign": "left",
                                 "padding": "10px",
                                 "whiteSpace": "normal",
-                                "fontFamily": DATATABLE_FONT_FAMILY,
+                                "fontFamily": DATATABLE_CELL_FONT_FAMILY,
                             },
                             style_header={
-                                "backgroundColor": "#2c3e50",
+                                "backgroundColor": COLORS["dark"],
                                 "color": "white",
                                 "fontWeight": "bold",
-                                "fontFamily": DATATABLE_FONT_FAMILY,
+                                "fontFamily": DATATABLE_HEADER_FONT_FAMILY,
                             }
                         ),
                         className="datatable-controls-inline",

@@ -7,6 +7,8 @@ from dash import html
 import pandas as pd
 import numpy as np
 
+from app.utils.ga4gh_theme import WORKSTREAM_COLORS, GITHUB_COLORWAY, COLORS
+
 
 def fig_github_activity_status_pie(gh_activity_counts):
     df = gh_activity_counts.copy() if isinstance(gh_activity_counts, pd.DataFrame) else pd.DataFrame(gh_activity_counts)
@@ -20,10 +22,10 @@ def fig_github_activity_status_pie(gh_activity_counts):
         "Archived",
     ]
     color_map = {
-        "High": "#636EFA",
-        "Moderate": "#EF553B",
-        "Low": "#00CC96",
-        "Archived": "#8E8E93",
+        "High": GITHUB_COLORWAY[0],
+        "Moderate": GITHUB_COLORWAY[1],
+        "Low": GITHUB_COLORWAY[2],
+        "Archived": COLORS["grey"],
     }
 
     df["Category"] = pd.Categorical(df["Category"], categories=category_order, ordered=True)
@@ -34,26 +36,24 @@ def fig_github_activity_status_pie(gh_activity_counts):
             go.Pie(
                 labels=df["Category"],
                 values=df["Count"],
-                hole=0.4,
+                hole=1/3,
                 textinfo="percent",
+                insidetextfont=dict(color="white"),
                 hoverinfo="label+value+percent",
-                marker={"colors": [color_map.get(c, "#A0A0A0") for c in df["Category"]]},
+                marker={"colors": [color_map.get(c, COLORS["grey"]) for c in df["Category"]]},
             )
         ]
     )
 
     fig.update_layout(
-        title={
-            "text": "Activity Status of the GA4GH GitHub Repositories",
-            "x": 0.5,
-            "xanchor": "center",
-            "yanchor": "top",
-            "font": {"color": "#2C3E50"},
-        },
-        plot_bgcolor="#f9f9f9",
-        paper_bgcolor="#ffffff",
-        legend_title_text="Activity Status",
-        height=600,
+        plot_bgcolor=COLORS["white"],
+        paper_bgcolor=COLORS["white"],
+        legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
+        # Tall enough that the legend (however many rows it wraps to) never
+        # becomes the constraining dimension — width stays the limit, so the
+        # pie always fills its card's width the same as every other pie.
+        height=900,
+        hoverlabel=dict(font_color="white"),
     )
 
     return fig
@@ -99,14 +99,19 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
 
     fig.update_layout(
         template="simple_white",
-        title={"text": "Most active GA4GH Repositories by Work Stream", "x": 0.0},
         barmode="group",
-        xaxis=dict(tickangle=-45),
-        margin=dict(l=40, r=20, t=80, b=150),
+        # Many long, rotated repo names push well past the old 150px margin,
+        # which left the legend sitting on top of the tick labels rather than
+        # below them — this reserves enough room for both, with a fixed gap
+        # between the two rather than a plot-height-relative fraction (the
+        # tick label block's own height doesn't scale with the chart's).
+        xaxis=dict(tickangle=-45, automargin=True),
+        margin=dict(l=40, r=20, t=20, b=300),
         height=650,
         xaxis_title="Repo Name",
-        yaxis_title="Activity Score",
-        legend_title_text="Work Stream",
+        yaxis=dict(title="Activity Score", showgrid=True, gridcolor=COLORS["lightgrey"]),
+        legend=dict(title_text="Work Stream", orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
     )
 
     fig.update_traces(marker_line_width=0)
@@ -141,16 +146,17 @@ def fig_github_interest_metrics(gh_interest_df):
         df,
         x="name",
         y=["subscribers_count", "stargazers_count", "forks_count"],
-        title="Interest Metrics for GitHub Repositories",
         template="simple_white",
         category_orders={"name": df["name"].tolist()},
         labels=labels,
+        color_discrete_sequence=GITHUB_COLORWAY,
     )
 
     fig.update_layout(
         xaxis_title="Repo Name",
-        yaxis_title="Total Interest",
-        legend_title_text="Metric",
+        yaxis=dict(title="Total Interest", showgrid=True, gridcolor=COLORS["lightgrey"]),
+        legend=dict(title_text="Metric", orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
     )
 
     rename_map = {
@@ -166,7 +172,8 @@ def fig_github_interest_metrics(gh_interest_df):
     fig.update_layout(
         barmode="stack",
         xaxis_tickangle=-45,
-        margin=dict(l=40, r=20, t=80, b=150),
+        xaxis_automargin=True,
+        margin=dict(l=40, r=20, t=80, b=300),
         height=650,
     )
 
@@ -203,7 +210,7 @@ def fig_github_workstream_pie(gh_df):
         "Tech/TASC": "TT",
         "Large Scale Genomics": "LSG",
         "Clinical and Phenotypic": "Clin-Pheno",
-        "Discovery": "DD",
+        "Data Discovery": "DD",
         "Regulatory and Ethics": "REWS",
         "Data Security": "DS",
         "Data Use and Researcher Identity": "DURI",
@@ -213,18 +220,22 @@ def fig_github_workstream_pie(gh_df):
     legend_labels = counts["workstream"].tolist()
     hover_labels = [f"{lab}: {pct:.1f}%" for lab, pct in zip(counts["workstream"], counts["percent"])]
 
-    palette = px.colors.qualitative.Plotly
+    fallback_palette = px.colors.qualitative.Plotly
     provided_color_map = getattr(df, "attrs", {}).get("color_map", {})
-    colors = [provided_color_map.get(lab, palette[i % len(palette)]) for i, lab in enumerate(counts["workstream"])]
+    colors = [
+        provided_color_map.get(lab, WORKSTREAM_COLORS.get(lab, fallback_palette[i % len(fallback_palette)]))
+        for i, lab in enumerate(counts["workstream"])
+    ]
 
     fig = go.Figure(
         data=[
             go.Pie(
                 labels=legend_labels,
                 values=counts["count"],
-                hole=0.3,
+                hole=1/3,
                 text=[f"{lab}<br>{pct:.1f}%" for lab, pct in zip(slice_labels, counts["percent"])],
                 textinfo="text",
+                insidetextfont=dict(color="white"),
                 hovertext=hover_labels,
                 hoverinfo="text",
                 marker=dict(colors=colors),
@@ -233,10 +244,12 @@ def fig_github_workstream_pie(gh_df):
     )
 
     fig.update_layout(
-        title={"text": "GA4GH GitHub Repositories", "x": 0.5},
         template="simple_white",
-        height=550,
-        legend=dict(traceorder="normal"),
+        # Tall enough that this chart's larger (9-category) legend never
+        # becomes the constraining dimension — see fig_github_activity_status_pie.
+        height=900,
+        legend=dict(traceorder="normal", orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
     )
 
     return fig
@@ -278,26 +291,22 @@ def register_github_callbacks(app):
         return dbc.Card([
             dbc.CardHeader(
                 html.Div([
-                    html.H4(repo["name"], className="mb-0 me-3"),
-                    dbc.Badge(
-                        f"⭐ Stars: {repo['stargazers_count']}",
-                        color="primary",
-                        className="me-2 fs-6 p-2",
-                        pill=True,
-                    ),
-                    dbc.Badge(
-                        f"🍴 Forks: {repo['forks_count']}",
-                        color="secondary",
-                        className="me-2 fs-6 p-2",
-                        pill=True,
-                    ),
-                    dbc.Badge(
-                        f"👀 Watchers: {repo['watchers_count']}",
-                        color="dark",
-                        className="fs-6 p-2",
-                        pill=True,
-                    ),
-                ], style={"display": "flex", "alignItems": "center", "flexWrap": "wrap", "gap": "8px"})
+                    html.H4(repo["name"], className="mb-0"),
+                    html.Div([
+                        dbc.Badge(
+                            f"⭐ Stars: {repo['stargazers_count']}",
+                            className="ga4gh-pill ga4gh-pill-green",
+                        ),
+                        dbc.Badge(
+                            f"🍴 Forks: {repo['forks_count']}",
+                            className="ga4gh-pill ga4gh-pill-darkgreen",
+                        ),
+                        dbc.Badge(
+                            f"👀 Watchers: {repo['watchers_count']}",
+                            className="ga4gh-pill ga4gh-pill-forest-green",
+                        ),
+                    ], style={"display": "flex", "alignItems": "center", "flexWrap": "wrap", "gap": "8px"}),
+                ], style={"display": "flex", "alignItems": "center", "justifyContent": "space-between", "flexWrap": "wrap", "gap": "8px"})
             ),
 
             dbc.CardBody([
@@ -311,9 +320,11 @@ def register_github_callbacks(app):
                 #html.P(f"Archived: {repo['is_archived']}"),
                 html.Br(),
                 dbc.Button(
-                    "Open Repository",
+                    html.Span("Open Repository", className="btn-text"),
                     href=repo["repo_link"],
                     target="_blank",
+                    className="ga4gh-btn-dark",
+                    disabled=not repo["repo_link"],
                 )
 
             ])
@@ -377,13 +388,18 @@ def register_github_callbacks(app):
             .reset_index(name="Count")
         )
 
-        # Workstream color map (deterministic)
+        # Workstream color map — fixed per workstream name (app/utils/ga4gh_theme.py's
+        # WORKSTREAM_COLORS), so a workstream keeps the same color regardless of
+        # which filter is active or how the frequency ranking shifts.
         ws_series = df_filtered["workstream"].dropna().astype(str).str.strip() if "workstream" in df_filtered.columns else pd.Series([], dtype=str)
         ws_series = ws_series[ws_series != ""]
         labels = ws_series.value_counts().index.tolist()
 
-        palette = px.colors.qualitative.Plotly
-        color_map = {lab: palette[i % len(palette)] for i, lab in enumerate(labels)}
+        fallback_palette = px.colors.qualitative.Plotly
+        color_map = {
+            lab: WORKSTREAM_COLORS.get(lab, fallback_palette[i % len(fallback_palette)])
+            for i, lab in enumerate(labels)
+        }
 
         # Store color_map in DataFrame.attrs
         df_top.attrs["color_map"] = color_map

@@ -4,66 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-
-# ---------------------------------------------------------------------------
-# Figure builders
-# ---------------------------------------------------------------------------
-
-def _annual_publications_figure(entries_df):
-    if entries_df is None or entries_df.empty or "pub_year" not in entries_df.columns:
-        return go.Figure().update_layout(title="No publication year data available")
-
-    yearly = (
-        entries_df[entries_df["pub_year"].notna()]
-        .groupby("pub_year")
-        .size()
-        .reset_index(name="count")
-        .sort_values("pub_year")
-    )
-    yearly["pub_year"] = yearly["pub_year"].astype(int)
-
-    fig = px.bar(
-        yearly,
-        x="pub_year",
-        y="count",
-        labels={"pub_year": "Year", "count": "Publications"},
-        template="simple_white",
-        color_discrete_sequence=["#1b75bb"],
-    )
-    fig.update_traces(hovertemplate="Year: %{x}<br>Publications: %{y}<extra></extra>")
-    fig.update_layout(
-        height=380,
-        margin={"l": 40, "r": 20, "t": 30, "b": 50},
-        xaxis={"tickmode": "linear", "dtick": 1, "title": "Year"},
-        yaxis={"title": "Number of Publications"},
-        bargap=0.25,
-    )
-    return fig
-
-
-def _top_agencies_figure(agencies: list) -> go.Figure:
-    if not agencies:
-        return go.Figure().update_layout(title="No funding agency data available")
-
-    df = pd.DataFrame(agencies[:15]).sort_values("count", ascending=True)
-    fig = px.bar(
-        df,
-        x="count",
-        y="agency",
-        orientation="h",
-        labels={"count": "Number of Grants", "agency": "Funding Agency"},
-        template="simple_white",
-        color_discrete_sequence=["#1b75bb"],
-    )
-    fig.update_traces(hovertemplate="%{y}<br>Grants: %{x}<extra></extra>")
-    fig.update_layout(
-        height=480,
-        margin={"l": 10, "r": 20, "t": 30, "b": 50},
-        xaxis={"title": "Number of Grants"},
-        yaxis={"title": "", "automargin": True},
-    )
-    return fig
-
+from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS
 
 _REGION_MAP = {
     "US": [
@@ -88,6 +29,13 @@ _REGION_MAP = {
     ],
 }
 
+_REGION_COLORS = {
+    "US": FUNDING_COLORWAY[0],
+    "UK": FUNDING_COLORWAY[1],
+    "EU": FUNDING_COLORWAY[2],
+    "Other": FUNDING_COLORWAY[3],
+}
+
 
 def _classify_region(agency_name: str) -> str:
     for region, names in _REGION_MAP.items():
@@ -95,6 +43,73 @@ def _classify_region(agency_name: str) -> str:
             if name.lower() in agency_name.lower():
                 return region
     return "Other"
+
+
+# ---------------------------------------------------------------------------
+# Figure builders
+# ---------------------------------------------------------------------------
+
+def _annual_publications_figure(entries_df):
+    if entries_df is None or entries_df.empty or "pub_year" not in entries_df.columns:
+        return go.Figure().update_layout(title="No publication year data available")
+
+    yearly = (
+        entries_df[entries_df["pub_year"].notna()]
+        .groupby("pub_year")
+        .size()
+        .reset_index(name="count")
+        .sort_values("pub_year")
+    )
+    yearly["pub_year"] = yearly["pub_year"].astype(int)
+
+    fig = px.bar(
+        yearly,
+        x="pub_year",
+        y="count",
+        labels={"pub_year": "Year", "count": "Publications"},
+        template="simple_white",
+        color_discrete_sequence=[COLORS["pink"]],
+    )
+    fig.update_traces(hovertemplate="Year: %{x}<br>Publications: %{y}<extra></extra>")
+    fig.update_layout(
+        height=380,
+        margin={"l": 40, "r": 20, "t": 30, "b": 50},
+        xaxis={"tickmode": "linear", "dtick": 1, "title": "Year"},
+        yaxis={"title": "Number of Publications", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
+        bargap=0.25,
+        hoverlabel=dict(font_color="white"),
+    )
+    return fig
+
+
+def _top_agencies_figure(agencies: list) -> go.Figure:
+    if not agencies:
+        return go.Figure().update_layout(title="No funding agency data available")
+
+    df = pd.DataFrame(agencies[:15]).sort_values("count", ascending=False)
+    df["region"] = df["agency"].apply(_classify_region)
+
+    fig = px.bar(
+        df,
+        x="count",
+        y="agency",
+        color="region",
+        color_discrete_map=_REGION_COLORS,
+        category_orders={"agency": df["agency"].tolist()},
+        orientation="h",
+        labels={"count": "Number of Grants", "agency": "Funding Agency", "region": "Region"},
+        template="simple_white",
+    )
+    fig.update_traces(marker_line_width=0, hovertemplate="%{y}<br>Grants: %{x}<extra></extra>")
+    fig.update_layout(
+        height=480,
+        margin={"l": 10, "r": 20, "t": 30, "b": 90},
+        xaxis={"title": "Number of Grants", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
+        yaxis={"title": "", "automargin": True},
+        legend=dict(title_text="Region", orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
+    )
+    return fig
 
 
 def _region_pie_figure(agencies: list) -> go.Figure:
@@ -115,15 +130,23 @@ def _region_pie_figure(agencies: list) -> go.Figure:
         names="region",
         values="grants",
         color="region",
-        color_discrete_map={"US": "#1b75bb", "UK": "#e63946", "EU": "#2a9d8f", "Other": "#adb5bd"},
+        color_discrete_map=_REGION_COLORS,
         template="simple_white",
+        hole=1/3,
     )
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
+        textfont_color="white",
         hovertemplate="%{label}<br>Grants: %{value}<br>Share: %{percent}<extra></extra>",
     )
-    fig.update_layout(height=380, margin={"l": 20, "r": 20, "t": 30, "b": 20}, showlegend=True)
+    fig.update_layout(
+        height=900,
+        margin={"l": 20, "r": 20, "t": 30, "b": 20},
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
+    )
     return fig
 
 
@@ -168,7 +191,7 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                                 ),
                                 html.Figcaption(
                                     "Annual count of GA4GH-related publications indexed in Europe PMC.",
-                                    style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                    style={"color": COLORS["grey"], "marginTop": "6px"},
                                 ),
                             ])
                         ),
@@ -190,12 +213,12 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                                 dcc.Graph(
                                     id="epmc-countries-choropleth",
                                     figure=choropleth_fig or go.Figure(),
-                                    config={"displayModeBar": False},
                                     style={"height": "650px"},
                                 ),
+                                dcc.Store(id="epmc-countries-choropleth-zoom-clamp-dummy"),
                                 html.Figcaption(
                                     "Each country's share (%) of total author affiliations across all GA4GH-related publications. Hover over a country to see its exact percentage.",
-                                    style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                    style={"color": COLORS["grey"], "marginTop": "6px"},
                                 ),
                             ])
                         ),
@@ -237,14 +260,15 @@ def get_funder_only_charts_section(agencies_list):
                                     ),
                                     html.Figcaption(
                                         "Top 15 funding bodies by number of associated grants in the GA4GH publication dataset.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
-                        md=8,
+                        className="d-flex",
+                        md=6,
                     ),
                     dbc.Col(
                         dbc.Card(
@@ -255,19 +279,22 @@ def get_funder_only_charts_section(agencies_list):
                                         id="funder-region-pie",
                                         figure=region_fig,
                                         config={"displayModeBar": False},
+                                        style={"minHeight": "900px", "flex": "1 1 auto"},
                                     ),
                                     html.Figcaption(
                                         "Grant distribution grouped by funder region (US, UK, EU, Other).",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
-                        md=4,
+                        className="d-flex",
+                        md=6,
                     ),
                 ],
+                className="mb-4",
             ),
         ],
         id="funder-only-charts",

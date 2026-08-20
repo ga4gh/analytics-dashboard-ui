@@ -6,6 +6,8 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
+from app.utils.ga4gh_theme import COLORS
+
 LATITUDE=0
 LONGITUDE=1
 
@@ -98,16 +100,24 @@ def _make_service_map_figure(st_df, s_df, d_df):
         margin={"l": 0, "r": 0, "t": 0, "b": 0},
     )
 
+    # Matches new_ga4gh's services-map.js D3 map exactly — can't reference the
+    # CSS custom properties (--grey/--lightgrey/--faint-lightblue) directly
+    # from a Plotly figure, same limitation their own JS comment notes for its
+    # SCSS variables.
     fig.update_geos(
-        showland = True, landcolor='#DAECC1',
-        showocean=True, oceancolor='#BBDFF1',
-        showlakes=True, lakecolor='#BBDFF1',
-        showcountries=True, countrycolor='#999999',
+        showland = True, landcolor=COLORS["lightgrey"],
+        showocean=True, oceancolor="rgba(79, 174, 220, 0.31)",
+        showlakes=True, lakecolor="rgba(79, 174, 220, 0.31)",
+        showcountries=True, countrycolor=COLORS["grey"],
     )
 
+    # Matches new_ga4gh's .tooltip (layout/_services-map.scss): rgba($dark, .92)
+    # background with white text, instead of Plotly's default (which mirrors
+    # the marker's own blue).
     fig.update_traces(
-        marker=dict(color='#fe800e', size=12.5, opacity=1.0),
-        hovertemplate=HOVERTEMPLATE
+        marker=dict(color=COLORS["darkblue"], size=12.5, opacity=1.0),
+        hovertemplate=HOVERTEMPLATE,
+        hoverlabel=dict(bgcolor='rgba(54, 54, 54, 0.92)', font_color='white', font_size=13),
     )
 
     return fig
@@ -121,9 +131,10 @@ def get_service_map_layout(standards_df, services_df, deployments_df):
 
     return dbc.Card(
         dbc.CardBody([
-            html.H4("Map of Registered GA4GH Services"),
+            html.H5("Map of Registered GA4GH Services"),
             html.Figure([
                 dcc.Graph(id="service_map", figure=fig),
+                dcc.Store(id="service_map-zoom-clamp-dummy"),
                 html.Figcaption("Interactive map of registered services implementing GA4GH API specifications.")
             ])
         ]),

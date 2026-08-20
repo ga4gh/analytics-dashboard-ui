@@ -394,8 +394,10 @@ html.Div(
                                                     )
                                                 ],
                                                 className="methods-card-body"
-                                            )
+                                            ),
+                                            className="h-100 w-100",
                                         ),
+                                        className="d-flex",
                                     ),
                                     dbc.Col(
                                         dbc.Card(
@@ -470,8 +472,10 @@ html.Div(
                                                 ])
                                             ],
                                                 className="methods-card-body"
-                                            )
+                                            ),
+                                            className="h-100 w-100",
                                         ),
+                                        className="d-flex",
                                     ),
                                     dbc.Col(
                                         dbc.Card(
@@ -530,10 +534,12 @@ html.Div(
                                             ],
                                                 className="methods-card-body"
                                             ),
+                                            className="h-100 w-100",
                                         ),
+                                        className="d-flex",
                                     ),
                                 ],
-                                className="methods-cards-row",
+                                className="methods-cards-row mb-4",
                             ),
                         ],
                     ),
@@ -592,7 +598,7 @@ html.Div(
                             ], className="yoy-header-row"),
                             html.Div("YoY Publication Growth", className="indicator-label"),
                         ], className="yoy-card-body"),
-                        className="indicator-card shadow-sm border-orange",
+                        className="indicator-card shadow-sm border-pink",
                     ),
                     md=2,
                     id="funder-kpi-yoy",
@@ -603,7 +609,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_total_citations:,}",
                         "Total Citations",
-                        "border-green",
+                        "border-orange",
                     ),
                     md=2,
                     id="kpi-citations",
@@ -612,7 +618,7 @@ html.Div(
                     indicator_card(
                         str(_epmc_avg_citations),
                         "Avg Citations / Paper",
-                        "border-purple",
+                        "border-secondary-orange",
                     ),
                     md=2,
                     id="funder-kpi-avg-citations",
@@ -623,7 +629,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_unique_authors:,}",
                         "Total Authors",
-                        "border-orange",
+                        "border-lightblue",
                     ),
                     md=2,
                     id="kpi-authors",
@@ -632,7 +638,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_unique_countries:,}",
                         "Total Countries",
-                        "border-lightblue",
+                        "border-darkblue",
                     ),
                     md=2,
                     id="kpi-countries",
@@ -642,7 +648,7 @@ html.Div(
                     indicator_card(
                         f"{_gh_total:,}",
                         "GitHub Repositories",
-                        "border-darkblue",
+                        "border-green",
                     ),
                     md=2,
                     id="kpi-github",
@@ -661,7 +667,7 @@ html.Div(
                     indicator_card(
                         f"{_oa_rate}%",
                         "Open Access Rate",
-                        "border-green",
+                        "border-darkgreen",
                     ),
                     md=2,
                     id="researcher-kpi-open-access",
@@ -681,7 +687,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_service_map_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="servicemap",
@@ -696,7 +701,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_combined_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="metrics",
@@ -711,7 +715,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_epmc_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="epmc",
@@ -730,7 +733,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_github_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="github",
@@ -746,7 +748,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_pypi_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="pypi",
