@@ -104,12 +104,97 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     line-height: 1.3;
 }
 
-.custom-dropdown .Select-control {
-    border-radius: 0.5rem !important;
-    border: 1px solid #ccc !important;
+/* new_ga4gh components/_list-filters.scss .list-filter (extends .label):
+   the underline-only search box / dropdown used by every filterable list
+   on the reference site — ported here for the Tables section's search
+   boxes and year dropdown. */
+/* Scoped to the actual form element (input/select), not the bare class —
+   dcc.Dropdown puts this className on react-select's OUTER wrapper div,
+   which itself contains a nested .Select-control. Styling both as boxes
+   renders two stacked underlines, so the wrapper only carries the class
+   as a hook for the .Select-control rules below. */
+input.list-filter,
+select.list-filter {
+    font-family: var(--font-sg-bold);
+    font-size: var(--text-sm);
+    line-height: 1.41;
+    text-transform: uppercase;
+    border: none;
+    border-bottom: 2px solid var(--lightgrey);
+    border-radius: 0;
+    height: clamp(40px, 10vw, 50px);
+    padding: 0.5rem 1rem;
+    background: var(--white);
+    color: var(--dark);
+    box-shadow: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+input.list-filter:hover,
+input.list-filter:focus,
+select.list-filter:hover,
+select.list-filter:focus {
+    cursor: pointer;
+    color: var(--dark);
+    background-color: var(--lightgrey);
+    border-bottom-color: var(--dark);
+    outline: none;
+}
+
+input.list-filter[type="text"]::placeholder {
+    color: var(--grey);
+    opacity: 1;
+}
+
+/* dcc.Dropdown renders react-select's own markup (.Select-control etc.)
+   inside the element carrying our className, so the underline treatment
+   has to target that inner control rather than the wrapper itself. */
+.list-filter .Select-control {
+    display: flex !important;   /* react-select defaults to display:table, whose
+                                    row height grows with content — flex respects
+                                    the explicit height below instead. */
+    align-items: center;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: none !important;
+    border-bottom: 2px solid var(--lightgrey) !important;
+    border-radius: 0 !important;
+    background: var(--white) !important;
     box-shadow: none !important;
-    height: 2.5rem !important;
-    line-height: 2.5rem !important;
+    height: clamp(40px, 10vw, 50px) !important;
+    padding: 0.5rem 1rem;
+    min-width: 11rem;
+}
+
+.list-filter .Select-multi-value-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    height: 100%;
+    position: relative;
+}
+
+.list-filter .Select-placeholder,
+.list-filter .Select-value {
+    position: static;
+    padding: 0 !important;
+    line-height: normal !important;
+}
+
+.list-filter:hover .Select-control,
+.list-filter.is-focused .Select-control,
+.list-filter.is-open .Select-control {
+    background-color: var(--lightgrey) !important;
+    border-bottom-color: var(--dark) !important;
+}
+
+.list-filter .Select-placeholder,
+.list-filter .Select-value-label,
+.list-filter .Select-input > input {
+    font-family: var(--font-sg-bold);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    color: var(--dark);
 }
 
 .epmc-most-cited-item,
@@ -120,10 +205,12 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     line-height: 1.35;
 }
 
-/* Keep DataTable export and pagination controls on one bottom row. */
+/* Keep DataTable export and pagination controls on one bottom row, with a
+   1rem gap above them so they don't sit flush against the table's last row.
+   48px accounts for the Export button's own clamp(2.5rem,10vw,3rem) height. */
 .datatable-controls-inline .dash-table-container {
     position: relative;
-    padding-bottom: 2.5rem;
+    padding-bottom: calc(48px + 1rem);
 }
 
 .datatable-controls-inline .dash-spreadsheet-menu {
@@ -192,6 +279,72 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     cursor: not-allowed;
 }
 
+/* Match new_ga4gh's .btn-dark treatment (see .ga4gh-btn-dark, used by this
+   same tables section's row-detail links) on the DataTable's own
+   auto-generated Export button, so it reads as the same button language
+   instead of the browser default. !important throughout for the same
+   reason as .previous-next-container button above: dash_table's bundle.js
+   injects its own hotpink :hover rule at runtime, after our stylesheet. */
+.dash-spreadsheet-menu .export {
+    position: relative;
+    /* z-index:0 (not just position:relative) is required here: a positioned
+       box with z-index:auto does NOT establish its own stacking context per
+       CSS2.1, so the ::after's z-index:-1 below would otherwise escape to
+       the nearest ancestor that does establish one and paint behind that
+       instead — behind the whole table/card, not just behind this button's
+       text. */
+    z-index: 0;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: clamp(2.5rem, 10vw, 3rem);
+    aspect-ratio: 270 / 60;   /* same proportions as .ga4gh-btn-light/-dark */
+    padding-inline: clamp(1rem, 2cqw, 2rem);
+    padding-block: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    /* Inverse of .ga4gh-btn-dark/-light: dark at rest so it reads as its own
+       thing against the tables section's lightgrey page background, with a
+       rising WHITE bar on hover (text flips dark once the bar covers it) —
+       same mechanic as .ga4gh-btn-light, just starting from a solid dark
+       resting state instead of a translucent light one. */
+    background-color: var(--dark) !important;
+    color: var(--white) !important;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+/* The rising white-bar sweep — see .dash-spreadsheet-menu .export above for
+   why z-index:-1 (not a wrapped .btn-text span like .ga4gh-btn-dark uses)
+   is what keeps this button's plain "Export" text on top of the fill. */
+.dash-spreadsheet-menu .export::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    top: calc(100% - 2px);
+    width: 100%;
+    height: 2px;
+    background-color: var(--white);
+    transition: all 0.3s ease;
+}
+
+.dash-spreadsheet-menu .export:hover::after,
+.dash-spreadsheet-menu .export:focus-visible::after {
+    top: 0;
+    height: 100%;
+}
+
+.dash-spreadsheet-menu .export:hover,
+.dash-spreadsheet-menu .export:focus-visible {
+    color: var(--dark) !important;
+}
+
 .previous-next-container .page-number {
     display: flex;
     align-items: center;
@@ -200,6 +353,22 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     font-weight: 700;
     font-size: 1.1rem;
     color: var(--dark);
+}
+
+/* dash_table's runtime CSS also targets .page-number directly — a 3-class
+   selector (.dash-table-container .previous-next-container .page-number)
+   that beats our 2-class rule above on specificity alone, silencing our
+   display:flex/align-items:center. That's what let current-page-container's
+   3px padding-bottom (for the active-page underline) throw off baseline
+   alignment against the "/" and .last-page — flex+align-items:center makes
+   all three sit on the same visual center regardless of that padding.
+   Same fix pattern as the current-page border-bottom above: match/beat
+   their selector specificity, plus !important since font-family:monospace
+   would otherwise cascade down into the bare "/" text node too. */
+.datatable-controls-inline .dash-table-container .previous-next-container .page-number {
+    display: flex !important;
+    align-items: center !important;
+    font-family: var(--font-ws-bold) !important;
 }
 
 /* The editable "current page" box — strip Dash's default bordered input
@@ -219,21 +388,49 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     background-color: var(--darkblue);
 }
 
+/* !important throughout: dash_table's bundle.js injects its own runtime
+   CSS for these two elements (monospace font, a light grey border-bottom
+   on the input) after our stylesheet loads — same reason .previous-next-
+   container button and .export need it above. Without it, the page number
+   renders in the browser-default monospace font with a stray grey
+   underline from the input showing through beneath our intentional
+   darkblue accent bar (.current-page-container::after). */
 .previous-next-container .current-page {
-    border: none;
-    background: none;
-    color: var(--dark);
-    font-family: var(--font-ws-bold);
-    font-weight: 700;
-    font-size: 1.1rem;
+    border: none !important;
+    border-bottom: none !important;
+    background: none !important;
+    color: var(--dark) !important;
+    font-family: var(--font-ws-bold) !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
     text-align: center;
     padding: 0;
 }
 
+/* .current-page-shadow is a real DOM twin of the input that dash_table
+   uses purely to measure the rendered text width (inputs can't auto-size
+   to their own content) — the actual <input> is absolutely positioned
+   exactly on top of it. It was never actually hidden, so it painted its
+   own "1" directly under the input's, reading as a duplicated/overlapping
+   page number even after their fonts matched. visibility:hidden (not
+   display:none) keeps it in the layout so dash_table can still measure
+   its width, while making sure only the real input's text ever paints. */
 .previous-next-container .current-page-shadow {
-    font-family: var(--font-ws-bold);
-    font-weight: 700;
-    font-size: 1.1rem;
+    visibility: hidden;
+    font-family: var(--font-ws-bold) !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+}
+
+/* The border-bottom above still loses to dash_table's runtime rule — its
+   selector (.dash-table-container .previous-next-container .page-number
+   .current-page-container input.current-page) has 5 classes to our 2, so
+   equal !important falls back to specificity and theirs wins. Matching
+   their exact selector chain plus one more ancestor class guarantees a
+   strictly higher specificity, regardless of which stylesheet loads last. */
+.datatable-controls-inline .dash-table-container .previous-next-container
+    .page-number .current-page-container input.current-page {
+    border-bottom: none !important;
 }
 
 .previous-next-container .last-page {
@@ -650,7 +847,8 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
 .menu-container {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    column-gap: 1.25rem;
+    row-gap: 0.5rem;        /* capped at 0.5rem so wrapped rows stay tight */
     flex-wrap: wrap;       /* ✅ allows items to wrap */
     justify-content: flex-end; /* keep them aligned right in the row */
     transition: all 0.3s ease;
@@ -679,7 +877,7 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     .menu-container {
         flex-direction: column;  /* already added, keep it */
         align-items: center;
-        gap: 1rem;
+        gap: 0.5rem;
     }
 }
 
@@ -687,7 +885,7 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     color: var(--dark);
     font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: clamp(0.85rem, 0.9vw, 1.1rem);
+    font-size: clamp(0.7rem, 0.75vw, 0.95rem);
     text-transform: uppercase;
     text-decoration: none;
     transition: color 0.3s ease;
@@ -806,7 +1004,7 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     z-index: 1;
     font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: var(--text-xs);
     text-transform: uppercase;
 }
 
@@ -865,7 +1063,7 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     z-index: 1;
     font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: 1rem;
+    font-size: var(--text-xs);
     text-transform: uppercase;
 }
 
@@ -1083,7 +1281,7 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     color: var(--grey) !important;
     font-family: var(--font-fi-semibold) !important;
     font-weight: 600 !important;
-    font-size: clamp(0.95rem, 1.15vw, 1.25rem) !important;
+    font-size: var(--text-sm) !important;
     letter-spacing: normal;
     transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
@@ -1100,4 +1298,129 @@ h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-l
     border-color: var(--lightgrey) !important;
     border-bottom: 2px solid var(--white) !important;
     box-shadow: none !important;
+}
+
+/* ------------------------------------------------------------------
+   CHART EXPAND-TO-MODAL
+   Ported from new_ga4gh's components/_image-modal.scss (image lightbox):
+   same rgba(dark, .8) backdrop, flush white panel with no radius/shadow,
+   circular white-ring "×" close button, instant display toggle with no
+   open/close animation — their original has none either. See
+   chart_expand_button() in ga4gh_theme.py and assets/chart_modal.js.
+   ------------------------------------------------------------------ */
+
+/* Bootstrap's .card already has position:relative, so this sits pinned to
+   each chart card's own top-right corner without any extra wrapper. */
+.chart-expand-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 2;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--dark);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.card:hover .chart-expand-btn,
+.chart-expand-btn:focus-visible {
+    opacity: 1;
+}
+
+.chart-expand-btn:hover {
+    background: var(--white);
+}
+
+.chart-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+}
+
+.chart-modal.chart-modal-open {
+    display: block;
+    background: rgba(54, 54, 54, 0.8);   /* var(--dark) at new_ga4gh's own .8 */
+    padding: 0.25rem;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+    .chart-modal.chart-modal-open {
+        padding: 1rem;
+    }
+}
+
+.chart-modal-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+/* Width lives here, on the panel itself, and the graph/caption below both
+   just take 100% of it — new_ga4gh's own image-modal gives its caption a
+   narrower 70% than the (aspect-ratio-shrunk) image above it, but our chart
+   always fills the panel's full width, so a narrower caption would look
+   inconsistent rather than intentional. Keeping both at 100% of one shared
+   width is what actually reproduces "looks consistent" here. */
+.chart-modal-content-inner {
+    background: var(--white);
+    width: 90vw;
+    max-width: calc(100vw - 0.5rem);
+    max-height: calc(90vh - 0.5rem);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+    .chart-modal-content-inner {
+        max-width: calc(100vw - 2rem);
+        max-height: calc(90vh - 2rem);
+    }
+}
+
+#chart-modal-graph {
+    width: 100%;
+    height: 70vh;
+}
+
+.chart-modal-caption {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 1rem;
+    margin: 1rem 0;
+    color: var(--dark);
+    font-size: var(--text-sm);
+    text-align: center;
+}
+
+.chart-modal-close-trigger {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--white);
+    border-radius: 50%;
+    background: none;
+    color: var(--white);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
 }

@@ -78,32 +78,24 @@ def get_datatables_layout(
                         type="text",
                         placeholder="Search by Title...",
                         debounce=False,
-                        style={
-                            "width": "350px",
-                            "padding": "8px",
-                            "border-radius": "5px",
-                            "border": "1px solid #ccc",
-                        },
-                    ),
-                    dcc.Dropdown(
-                        id="epmc-year-filter",
-                        options=epmc_year_options,
-                        placeholder="Filter by Year",
-                        clearable=True,
-                        className="custom-dropdown",
-                        style={"width": "160px", "height": "38px"},
+                        className="list-filter",
+                        style={"width": "350px"},
                     ),
                     dcc.Input(
                         id="epmc-affiliation-filter",
                         type="text",
                         placeholder="Search by Affiliation...",
                         debounce=True,
-                        style={
-                            "width": "350px",
-                            "padding": "8px",
-                            "border-radius": "5px",
-                            "border": "1px solid #ccc",
-                        },
+                        className="list-filter",
+                        style={"width": "350px"},
+                    ),
+                    dcc.Dropdown(
+                        id="epmc-year-filter",
+                        options=epmc_year_options,
+                        placeholder="Filter by Year",
+                        clearable=True,
+                        className="list-filter",
+                        style={"width": "160px"},
                     ),
                 ],
                 style={
@@ -168,13 +160,8 @@ def get_datatables_layout(
                 type='text',
                 placeholder='Search repositories...',
                 debounce=False,
-                style={
-                    'margin-bottom': '15px',
-                    'width': '350px',
-                    'padding': '8px',
-                    'border-radius': '5px',
-                    'border': '1px solid #ccc'
-                }
+                className="list-filter",
+                style={'margin-bottom': '15px', 'width': '350px'},
             ),
             dbc.Row([
                 # LEFT: GITHUB TABLE
@@ -216,13 +203,8 @@ def get_datatables_layout(
                 type='text',
                 placeholder='Search projects...',
                 debounce=False,
-                style={
-                    'margin-bottom': '15px',
-                    'width': '350px',
-                    'padding': '8px',
-                    'border-radius': '5px',
-                    'border': '1px solid #ccc'
-                }
+                className="list-filter",
+                style={'margin-bottom': '15px', 'width': '350px'},
             ),
 
             dbc.Row([

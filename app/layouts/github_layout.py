@@ -1,6 +1,8 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 
+from app.utils.ga4gh_theme import chart_expand_button
+
 
 # ---------- LAYOUT ----------
 
@@ -72,6 +74,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("gh-activity-bar-graph"),
                                     html.H5("Most active GA4GH Repositories by Work Stream", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="gh-activity-bar-graph"),
                                     html.Figcaption("Activity score of GA4GH repositories. Includes technical and foundational work streams, as well as TASC / Tech Team repositories. See methods section for definition of activity score.")
@@ -87,6 +90,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("gh-activity-status-pie"),
                                     html.H5("Activity Status of the GA4GH GitHub Repositories", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="gh-activity-status-pie", style={"minHeight": "900px", "flex": "1 1 auto"}),
                                     html.Figcaption("Relative proportion of GA4GH GitHub repositories at each activity status, which is determined from the number of days that have elapsed since the last update. High: last update less than 6 months ago; Moderate: last update 6 months to 2 years ago; Low: last update more than 2 years ago.")
@@ -109,6 +113,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("gh-workstream-pie"),
                                     html.H5("GA4GH GitHub Repositories", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="gh-workstream-pie", style={"minHeight": "900px", "flex": "1 1 auto"}),
                                     html.Figcaption("Relative proportion of GA4GH GitHub repositories by work stream. Includes technical and foundational work streams, as well as TASC / Tech Team repositories.")
@@ -124,6 +129,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("gh-interest-graph"),
                                     html.H5("Interest Metrics for GitHub Repositories", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="gh-interest-graph"),
                                     html.Figcaption("Total number of subscribers, stargazers, and forks for each GA4GH GitHub repository.")

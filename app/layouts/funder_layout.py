@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS
+from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS, chart_expand_button
 
 _REGION_MAP = {
     "US": [
@@ -184,10 +184,11 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
+                                chart_expand_button("annual-publications-bar"),
+                                html.H5("Annual Publications", style={"marginBottom": "8px"}),
                                 dcc.Graph(
                                     id="annual-publications-bar",
                                     figure=annual_fig,
-                                    config={"displayModeBar": False},
                                 ),
                                 html.Figcaption(
                                     "Annual count of GA4GH-related publications indexed in Europe PMC.",
@@ -209,6 +210,7 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
+                                chart_expand_button("epmc-countries-choropleth"),
                                 html.H5("Global Author Affiliation Distribution", style={"marginBottom": "6px"}),
                                 dcc.Graph(
                                     id="epmc-countries-choropleth",
@@ -252,11 +254,11 @@ def get_funder_only_charts_section(agencies_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("funder-top-agencies-bar"),
                                     html.H5("Top 15 Funding Agencies", style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="funder-top-agencies-bar",
                                         figure=agencies_fig,
-                                        config={"displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Top 15 funding bodies by number of associated grants in the GA4GH publication dataset.",
@@ -274,11 +276,11 @@ def get_funder_only_charts_section(agencies_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("funder-region-pie"),
                                     html.H5("Funders by Region", style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="funder-region-pie",
                                         figure=region_fig,
-                                        config={"displayModeBar": False},
                                         style={"minHeight": "900px", "flex": "1 1 auto"},
                                     ),
                                     html.Figcaption(

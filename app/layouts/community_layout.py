@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS
+from app.utils.ga4gh_theme import COLORS, chart_expand_button
 
 
 # ---------------------------------------------------------------------------
@@ -128,12 +128,12 @@ def get_community_charts_section(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("community-workstream-activity"),
                                     html.H5("GitHub Repositories by Work Stream & Activity",
                                             style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="community-workstream-activity",
                                         figure=fig_workstream,
-                                        config={"displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Activity status breakdown per GA4GH work stream — Active (pushed within 1 year), Moderate (1–3 years), Inactive (3+ years), Archived.",
@@ -151,12 +151,12 @@ def get_community_charts_section(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("community-top-repos-interest"),
                                     html.H5("Top 10 Repos by Community Interest",
                                             style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="community-top-repos-interest",
                                         figure=fig_interest,
-                                        config={"displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Ranked by combined stars, forks, and watchers count.",

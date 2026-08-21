@@ -67,7 +67,9 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
                 slice_text.append(pct_fmt)
             hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
 
-    text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
+    # Always "inside", matching every other pie chart in the app (see
+    # funder_layout.py / researcher_layout.py's textposition="inside") —
+    # previously slices >5% (the top 3 countries) went "outside" instead.
 
     # Countries have no inherent "meaning" color (unlike e.g. a status of
     # Active/Inactive) and the slice count varies with the data, so this
@@ -85,9 +87,7 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
                 hovertext=hover_text,
                 hoverinfo="text",
                 sort=False,
-                textposition=text_positions,
-                # Outside labels sit on the white page background, so only the
-                # inside ones (against the colored slice) get white text.
+                textposition="inside",
                 insidetextfont=dict(color="white"),
                 domain=dict(x=[0, 1], y=[0, 1]),
                 marker=dict(colors=slice_colors),
@@ -168,7 +168,13 @@ def fig_epmc_countries_choropleth(countries_df):
     )
     fig.update_layout(
         autosize=True,
-        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        # t=28 reserves space for the floating modebar (camera/zoom/pan icons)
+        # in the top-right corner — at t=0 the colorbar's own default len=1
+        # matched the *full* plot area including that corner, so its title
+        # ("Share (%)") rendered directly behind the modebar icons. With a
+        # top margin, len=1 (still the default — unset here) now matches the
+        # map's own visible container below that reserved strip instead.
+        margin={"l": 0, "r": 0, "t": 28, "b": 0},
         coloraxis_colorbar={
             "title": "Share (%)",
             "thickness": 12,

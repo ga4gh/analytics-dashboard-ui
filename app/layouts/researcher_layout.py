@@ -6,7 +6,7 @@ from dash import dcc, html
 
 # Reuse the shared annual publications figure
 from app.layouts.funder_layout import _annual_publications_figure
-from app.utils.ga4gh_theme import COLORS, PUBLICATIONS_COLORWAY
+from app.utils.ga4gh_theme import COLORS, PUBLICATIONS_COLORWAY, chart_expand_button
 
 
 # ---------------------------------------------------------------------------
@@ -108,11 +108,11 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("researcher-pub-type-donut"),
                                     html.H5("Publication Types", style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="researcher-pub-type-donut",
                                         figure=pub_type_fig,
-                                        config={"displayModeBar": False},
                                         style={"minHeight": "900px", "flex": "1 1 auto"},
                                     ),
                                     html.Figcaption(
@@ -131,11 +131,11 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("researcher-oa-donut"),
                                     html.H5("Open Access Status", style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="researcher-oa-donut",
                                         figure=oa_fig,
-                                        config={"displayModeBar": False},
                                         style={"minHeight": "900px", "flex": "1 1 auto"},
                                     ),
                                     html.Figcaption(

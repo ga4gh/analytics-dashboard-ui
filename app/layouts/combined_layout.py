@@ -3,7 +3,7 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS
+from app.utils.ga4gh_theme import COLORS, chart_expand_button
 
 
 def _build_source_year_df(df, year_col, item_col, source_name):
@@ -143,21 +143,25 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
                 dbc.Row(
                     [
                         dbc.Col([
+                            chart_expand_button("combined-growth-epmc"),
                             html.H5("GA4GH-Related Articles", style={"marginBottom": "8px"}),
                             dcc.Graph(id="combined-growth-epmc", figure=epmc_fig),
-                        ], lg=6, md=6, sm=12),
+                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
                         dbc.Col([
+                            chart_expand_button("combined-citations-over-years"),
                             html.H5("Europe PMC Cumulative Citations Per Year", style={"marginBottom": "8px"}),
                             dcc.Graph(id="combined-citations-over-years", figure=citations_fig),
-                        ], lg=6, md=6, sm=12),
+                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
                         dbc.Col([
+                            chart_expand_button("combined-growth-github"),
                             html.H5("GitHub Repositories", style={"marginBottom": "8px"}),
                             dcc.Graph(id="combined-growth-github", figure=gh_fig),
-                        ], lg=6, md=6, sm=12),
+                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
                         dbc.Col([
+                            chart_expand_button("combined-growth-pypi"),
                             html.H5("PyPI Packages", style={"marginBottom": "8px"}),
                             dcc.Graph(id="combined-growth-pypi", figure=pypi_fig),
-                        ], lg=6, md=6, sm=12),
+                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
                     ],
                     className="g-3",
                 ),

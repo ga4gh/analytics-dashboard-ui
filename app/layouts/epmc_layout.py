@@ -1,7 +1,7 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 
-from app.utils.ga4gh_theme import COLORS
+from app.utils.ga4gh_theme import COLORS, chart_expand_button
 
 # ---------------------------------------------------------------------------
 # Page layout
@@ -52,6 +52,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("epmc-authors-bar"),
                                     html.H5(id="epmc-authors-bar-title", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="epmc-authors-bar"),
                                     html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
@@ -72,6 +73,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("epmc-countries-pie"),
                                     html.H5("Affiliation - Countries Represented", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="epmc-countries-pie", style={"minHeight": "1050px", "flex": "1 1 auto"}),
                                     html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author’s affiliation for all publications.")

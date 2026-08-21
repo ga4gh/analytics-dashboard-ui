@@ -177,12 +177,17 @@ dbc.Row(
             html.Div(
                 [
                     html.A("Overview", href="#overview", className="menu-link"),
-                    html.A("Service Map", href="#servicemap", className="menu-link"),
+                    html.A("Service Map", href="#servicemap", className="menu-link", id="navlink-servicemap"),
                     html.A("Cumulative Metrics", href="#metrics", className="menu-link"),
-                    html.A("EPMC", href="#epmc", className="menu-link"),
-                    html.A("GitHub", href="#github", className="menu-link"),
-                    html.A("PyPI", href="#pypi", className="menu-link"),
-                    html.A("Tables", href="#tables", className="menu-link"),
+                    html.A("EPMC", href="#epmc", className="menu-link", id="navlink-epmc"),
+                    html.A("Publications", href="#publication-charts", className="menu-link", id="navlink-publication-charts"),
+                    html.A("Funding", href="#funder-only-charts", className="menu-link", id="navlink-funder-only-charts"),
+                    html.A("Research", href="#researcher-charts", className="menu-link", id="navlink-researcher-charts"),
+                    html.A("GitHub", href="#github", className="menu-link", id="navlink-github"),
+                    html.A("PyPI", href="#pypi", className="menu-link", id="navlink-pypi"),
+                    html.A("Developer", href="#developer-charts", className="menu-link", id="navlink-developer-charts"),
+                    html.A("Community", href="#community-charts", className="menu-link", id="navlink-community-charts"),
+                    html.A("Tables", href="#tables", className="menu-link", id="navlink-tables"),
                 ],
                 className="menu-container",
             ),
@@ -777,6 +782,34 @@ html.Div(
     ],
     id="tables",
     className="tables-section",
+),
+
+# ---------- CHART EXPAND MODAL ----------
+# Single shared modal for every chart's "expand" button (see
+# chart_expand_button() in ga4gh_theme.py) — assets/chart_modal.js clones
+# the clicked chart's live Plotly data/layout straight from the DOM into
+# #chart-modal-graph, so this never needs a Dash callback or per-chart
+# wiring. Styled in style.css to match new_ga4gh's own _image-modal.scss.
+html.Div(
+    [
+        html.Button(
+            "×",
+            className="chart-modal-close-trigger",
+            **{"aria-label": "Close"},
+        ),
+        html.Div(
+            html.Div(
+                [
+                    html.Div(id="chart-modal-graph"),
+                    html.Div(id="chart-modal-caption", className="chart-modal-caption"),
+                ],
+                className="chart-modal-content-inner",
+            ),
+            className="chart-modal-content",
+        ),
+    ],
+    id="chart-modal",
+    className="chart-modal",
 ),
 
     ],

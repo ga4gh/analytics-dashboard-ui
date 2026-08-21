@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import WORKSTREAM_COLORS, COLORS
+from app.utils.ga4gh_theme import WORKSTREAM_COLORS, COLORS, chart_expand_button
 
 
 # ---------------------------------------------------------------------------
@@ -148,12 +148,12 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("dev-repos-by-workstream"),
                                     html.H5("GitHub Repositories by Work Stream",
                                             style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="dev-repos-by-workstream",
                                         figure=fig_workstream,
-                                        config={"displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Count of GA4GH GitHub repositories grouped by Work Stream.",
@@ -171,12 +171,12 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("dev-pypi-releases-per-year"),
                                     html.H5("PyPI Packages Released Per Year",
                                             style={"marginBottom": "8px"}),
                                     dcc.Graph(
                                         id="dev-pypi-releases-per-year",
                                         figure=fig_pypi,
-                                        config={"displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Number of new GA4GH-related PyPI packages first published each year.",
@@ -200,12 +200,12 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
+                                chart_expand_button("dev-standards-service-count"),
                                 html.H5("GA4GH Standards by Registered Service Count",
                                         style={"marginBottom": "8px"}),
                                 dcc.Graph(
                                     id="dev-standards-service-count",
                                     figure=fig_standards,
-                                    config={"displayModeBar": False},
                                 ),
                                 html.Figcaption(
                                     "Number of services registered in the GA4GH Implementation Registry per standard.",

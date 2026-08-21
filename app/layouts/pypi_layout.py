@@ -2,6 +2,8 @@ from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
 
+from app.utils.ga4gh_theme import chart_expand_button
+
 def get_pypi_layout(pypi_details, total_packages):
     """
     Returns the PyPI page layout.
@@ -102,6 +104,7 @@ def get_pypi_layout(pypi_details, total_packages):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("datatable-bar"),
                                     html.H5(id="datatable-bar-title", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="datatable-bar"),
                                     html.Figcaption("Total number of versions for the top GA4GH-related PyPI packages, sorted in descending order by number of versions.")
@@ -117,6 +120,7 @@ def get_pypi_layout(pypi_details, total_packages):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("category-distribution"),
                                     html.H5("Category Distribution", style={"marginBottom": "8px"}),
                                     dcc.Graph(id="category-distribution", style={"minHeight": "900px", "flex": "1 1 auto"}),
                                     html.Figcaption("Relative proportion of package category for GA4GH-related PyPI packages.")

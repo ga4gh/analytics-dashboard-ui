@@ -2,6 +2,7 @@
 from typing import Optional
 import plotly.graph_objects as go
 import plotly.io as pio
+from dash import html
 
 # ------------------------------------------------------------------
 # COLORS
@@ -85,12 +86,35 @@ WORKSTREAM_COLORS = {
     "Tech/TASC":                        COLORS["darkblue"],
     "Cloud":                            COLORS["lightblue"],
     "Large Scale Genomics":             COLORS["green"],
-    "Clinical and Phenotypic":          COLORS["red"],
+    "Clinical and Phenotypic":          COLORS["secondary_purple"],
     "Data Discovery":                   COLORS["purple"],
-    "Regulatory and Ethics":            COLORS["secondary_purple"],
+    "Regulatory and Ethics":            COLORS["red"],
     "Data Security":                    COLORS["darkgreen"],
     "Data Use and Researcher Identity": COLORS["pink"],
 }
+
+# ------------------------------------------------------------------
+# CHART EXPAND-TO-MODAL BUTTON
+# ------------------------------------------------------------------
+def chart_expand_button(graph_id: str) -> html.Button:
+    """
+    Small "expand to fullscreen" trigger for a chart card, matching
+    new_ga4gh's own image-modal look (see #chart-modal in style.css and
+    assets/chart_modal.js). Place it as a sibling of the chart's dcc.Graph
+    inside the same html.Figure(...) — assets/chart_modal.js reads the
+    caption text from that figure's own <figcaption> at click time, so
+    there's no caption string to duplicate here, only the target graph's id.
+    """
+    return html.Button(
+        "⛶",  # ⛶, matches new_ga4gh's plain-glyph close button (×) convention
+        className="chart-expand-btn",
+        **{
+            "data-graph-id": graph_id,
+            "aria-label": "Expand chart",
+            "title": "Expand chart",
+        },
+    )
+
 
 # ------------------------------------------------------------------
 # SHARED AXIS STYLE
