@@ -385,6 +385,64 @@ input.list-filter[type="text"]::placeholder {
     margin: 0;
 }
 
+/* Row-selector radio buttons (dash_table's row_selectable="single") are
+   plain native <input type="radio"> — no custom className of their own.
+   accent-color was tried first (the simplest option) but Chromium's own
+   accent-color rendering computes a darkened shade for the checked ring
+   for contrast, which reads as a muddy/dark ring rather than a clean
+   single-tone circle for a bright hue like this green — not something
+   accent-color's single-color input can control. appearance:none plus a
+   hand-drawn ring (border) and center dot (background + an inset white
+   box-shadow "gap") gives exact, deterministic control over both instead,
+   with the same color used for both — no browser-computed shade
+   involved. One color per table, matching each section's own theme color
+   (EPMC red, GitHub green, PyPI purple) rather than the browser/OS default
+   blue every table shared.
+   !important on the shared rule: dash_table's own injected <style> resets
+   margin/box-sizing/padding to "initial" for this exact selector, and
+   which of the two <style> tags loads later (and so wins a plain-
+   specificity tie) isn't guaranteed. */
+#epmc-entries-table input[type="radio"],
+#github-projects-table input[type="radio"],
+#projects-table input[type="radio"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 50%;
+    background-color: var(--white);
+    cursor: pointer;
+}
+
+#epmc-entries-table input[type="radio"] {
+    border: 2px solid var(--red);
+}
+
+#epmc-entries-table input[type="radio"]:checked {
+    background-color: var(--red);
+    box-shadow: inset 0 0 0 3px var(--white);
+}
+
+#github-projects-table input[type="radio"] {
+    border: 2px solid var(--green);
+}
+
+#github-projects-table input[type="radio"]:checked {
+    background-color: var(--green);
+    box-shadow: inset 0 0 0 3px var(--white);
+}
+
+#projects-table input[type="radio"] {
+    border: 2px solid var(--purple);
+}
+
+#projects-table input[type="radio"]:checked {
+    background-color: var(--purple);
+    box-shadow: inset 0 0 0 3px var(--white);
+}
+
 /* refcloud-ui's .ga4gh-pagination treatment (globals.css), ported onto the
    DataTable's own "1 / 86" page indicator + prev/next/first/last arrows
    rather than switching to refcloud's clickable page-number-list layout. */
