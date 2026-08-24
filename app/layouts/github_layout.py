@@ -72,7 +72,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 html.Figure([
                                     chart_expand_button("gh-activity-bar-graph"),
                                     html.H5("Most active GA4GH Repositories by Work Stream", style={"marginBottom": "8px"}),
-                                    dcc.Graph(id="gh-activity-bar-graph"),
+                                    dcc.Graph(id="gh-activity-bar-graph", config={"responsive": True}),
                                     html.Figcaption("Activity score of GA4GH repositories. Includes technical and foundational work streams, as well as TASC / Tech Team repositories. See methods section for definition of activity score.")
                                 ])
                             ),
@@ -135,7 +135,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 html.Figure([
                                     chart_expand_button("gh-interest-graph"),
                                     html.H5("Interest Metrics for GitHub Repositories", style={"marginBottom": "8px"}),
-                                    dcc.Graph(id="gh-interest-graph"),
+                                    dcc.Graph(id="gh-interest-graph", config={"responsive": True}),
                                     html.Figcaption("Total number of subscribers, stargazers, and forks for each GA4GH GitHub repository.")
                                 ])
                             ),

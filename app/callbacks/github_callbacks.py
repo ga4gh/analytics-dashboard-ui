@@ -107,7 +107,13 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
         # tick label block's own height doesn't scale with the chart's).
         xaxis=dict(tickangle=-45, automargin=True),
         margin=dict(l=40, r=20, t=20, b=300),
-        height=650,
+        # autosize (not a fixed height) — paired with config={"responsive":
+        # True} on the dcc.Graph, this lets the chart fill and resize with
+        # its card the same way its row sibling gh-activity-status-pie
+        # already does, instead of staying pinned at 650px regardless of
+        # viewport width or how many bars the workstream filter leaves it
+        # to draw.
+        autosize=True,
         xaxis_title="Repo Name",
         yaxis=dict(title="Activity Score", showgrid=True, gridcolor=COLORS["lightgrey"]),
         legend=dict(orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
@@ -177,7 +183,9 @@ def fig_github_interest_metrics(gh_interest_df):
         xaxis_tickangle=-45,
         xaxis_automargin=True,
         margin=dict(l=40, r=20, t=80, b=300),
-        height=650,
+        # autosize (not a fixed height) — see fig_github_activity_bar's own
+        # version of this same change for why.
+        autosize=True,
     )
 
     fig.update_traces(marker_line_width=0)

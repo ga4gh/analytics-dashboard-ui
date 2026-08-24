@@ -102,7 +102,12 @@ def _top_agencies_figure(agencies: list) -> go.Figure:
     )
     fig.update_traces(marker_line_width=0, hovertemplate="%{y}<br>Grants: %{x}<extra></extra>")
     fig.update_layout(
-        height=480,
+        # autosize (not a fixed height) — paired with config={"responsive":
+        # True} on the dcc.Graph, this lets the chart fill and resize with
+        # its card the same way its row sibling funder-region-pie already
+        # does, instead of staying pinned at 480px regardless of viewport
+        # width.
+        autosize=True,
         margin={"l": 10, "r": 20, "t": 30, "b": 90},
         xaxis={"title": "Number of Grants", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
@@ -265,6 +270,7 @@ def get_funder_only_charts_section(agencies_list):
                                     dcc.Graph(
                                         id="funder-top-agencies-bar",
                                         figure=agencies_fig,
+                                        config={"responsive": True},
                                     ),
                                     html.Figcaption(
                                         "Top 15 funding bodies by number of associated grants in the GA4GH publication dataset.",

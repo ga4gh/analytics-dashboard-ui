@@ -83,6 +83,11 @@ def register_pypi_callbacks(app):
             plot_bgcolor=COLORS["white"],
             paper_bgcolor=COLORS["white"],
             margin={"t": 20, "b": 300},
+            # autosize (not a fixed/default height) — paired with
+            # config={"responsive": True} on the dcc.Graph, this lets the
+            # chart fill and resize with its card the same way its row
+            # sibling category-distribution already does.
+            autosize=True,
             legend={
                 # px.bar auto-titles the legend from the color= column name
                 # ("category") — an explicit "" overrides that default,

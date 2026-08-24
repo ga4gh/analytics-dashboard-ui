@@ -106,7 +106,7 @@ def get_pypi_layout(pypi_details, total_packages):
                                 html.Figure([
                                     chart_expand_button("datatable-bar"),
                                     html.H5(id="datatable-bar-title", style={"marginBottom": "8px"}),
-                                    dcc.Graph(id="datatable-bar"),
+                                    dcc.Graph(id="datatable-bar", config={"responsive": True}),
                                     html.Figcaption("Total number of versions for the top GA4GH-related PyPI packages, sorted in descending order by number of versions.")
                                 ])
                             ),
