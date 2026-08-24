@@ -115,7 +115,7 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("researcher-pub-type-donut"),
-                                    html.H5("Publication Types", style={"marginBottom": "8px"}),
+                                    html.H5("Publication Types", style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="researcher-pub-type-donut",
                                         figure=pub_type_fig,
@@ -139,7 +139,7 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("researcher-oa-donut"),
-                                    html.H5("Open Access Status", style={"marginBottom": "8px"}),
+                                    html.H5("Open Access Status", style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="researcher-oa-donut",
                                         figure=oa_fig,

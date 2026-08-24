@@ -1838,6 +1838,28 @@ body.mobile-nav-open .mobile-menu-toggle-col #mob-menu-trigger {
     text-transform: uppercase;
 }
 
+/* new_ga4gh's own external-link glyph (components/_links.scss's .external,
+   Font Awesome's fa-external-link / fa-arrow-up-right-from-square, \f08e)
+   via the same FontAwesomeSolid icon font used elsewhere in this file
+   (.methods-toggle-chevron) — on .btn-text (not .ga4gh-btn-dark itself,
+   which already uses its own ::after for the hover-sweep underline).
+   target="_blank" is what these buttons already set specifically because
+   they open a different domain (View Article, Open Repository, View on
+   PyPI, Latest Release, View on GitHub all do) — using that as the
+   selector means any future off-site detail button gets the icon for
+   free, with nothing to remember to add per button. The footer's social
+   buttons (.ga4gh-btn-light) are deliberately left out: new_ga4gh's own
+   footer uses a distinct brand icon per platform there instead of this
+   arrow, so adding it too would be redundant with an icon already saying
+   "this leaves the site". */
+.ga4gh-btn-dark[target="_blank"] .btn-text::after {
+    font-family: "FontAwesomeSolid";
+    font-style: normal;
+    font-weight: normal;
+    content: "\f08e";
+    margin-left: 0.5em;
+}
+
 /* new_ga4gh's .btn-disabled: dim the whole button and stop the hover
    sweep/color-flip from firing on a link with nothing to open. */
 .ga4gh-btn-dark:disabled,

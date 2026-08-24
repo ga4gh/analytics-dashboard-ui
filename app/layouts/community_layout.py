@@ -133,7 +133,7 @@ def get_community_charts_section(
                                 html.Figure([
                                     chart_expand_button("community-workstream-activity"),
                                     html.H5("GitHub Repositories by Work Stream & Activity",
-                                            style={"marginBottom": "8px"}),
+                                            style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="community-workstream-activity",
                                         figure=fig_workstream,
@@ -156,7 +156,7 @@ def get_community_charts_section(
                                 html.Figure([
                                     chart_expand_button("community-top-repos-interest"),
                                     html.H5("Top 10 Repos by Community Interest",
-                                            style={"marginBottom": "8px"}),
+                                            style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="community-top-repos-interest",
                                         figure=fig_interest,

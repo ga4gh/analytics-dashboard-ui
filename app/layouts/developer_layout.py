@@ -150,7 +150,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                 html.Figure([
                                     chart_expand_button("dev-repos-by-workstream"),
                                     html.H5("GitHub Repositories by Work Stream",
-                                            style={"marginBottom": "8px"}),
+                                            style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="dev-repos-by-workstream",
                                         figure=fig_workstream,
@@ -173,7 +173,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                 html.Figure([
                                     chart_expand_button("dev-pypi-releases-per-year"),
                                     html.H5("PyPI Packages Released Per Year",
-                                            style={"marginBottom": "8px"}),
+                                            style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="dev-pypi-releases-per-year",
                                         figure=fig_pypi,
@@ -202,7 +202,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                             html.Figure([
                                 chart_expand_button("dev-standards-service-count"),
                                 html.H5("GA4GH Standards by Registered Service Count",
-                                        style={"marginBottom": "8px"}),
+                                        style={"marginBottom": "1rem"}),
                                 dcc.Graph(
                                     id="dev-standards-service-count",
                                     figure=fig_standards,

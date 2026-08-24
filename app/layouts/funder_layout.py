@@ -196,7 +196,7 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                         dbc.CardBody(
                             html.Figure([
                                 chart_expand_button("annual-publications-bar"),
-                                html.H5("Annual Publications", style={"marginBottom": "8px"}),
+                                html.H5("Annual Publications", style={"marginBottom": "1rem"}),
                                 dcc.Graph(
                                     id="annual-publications-bar",
                                     figure=annual_fig,
@@ -222,7 +222,7 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                         dbc.CardBody(
                             html.Figure([
                                 chart_expand_button("epmc-countries-choropleth"),
-                                html.H5("Global Author Affiliation Distribution", style={"marginBottom": "6px"}),
+                                html.H5("Global Author Affiliation Distribution", style={"marginBottom": "1rem"}),
                                 dcc.Graph(
                                     id="epmc-countries-choropleth",
                                     figure=choropleth_fig or go.Figure(),
@@ -266,7 +266,7 @@ def get_funder_only_charts_section(agencies_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("funder-top-agencies-bar"),
-                                    html.H5("Top 15 Funding Agencies", style={"marginBottom": "8px"}),
+                                    html.H5("Top 15 Funding Agencies", style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="funder-top-agencies-bar",
                                         figure=agencies_fig,
@@ -289,7 +289,7 @@ def get_funder_only_charts_section(agencies_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("funder-region-pie"),
-                                    html.H5("Funders by Region", style={"marginBottom": "8px"}),
+                                    html.H5("Funders by Region", style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="funder-region-pie",
                                         figure=region_fig,

@@ -48,7 +48,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("epmc-authors-bar"),
-                                    html.H5(id="epmc-authors-bar-title", style={"marginBottom": "8px"}),
+                                    html.H5(id="epmc-authors-bar-title", style={"marginBottom": "1rem"}),
                                     dcc.Graph(id="epmc-authors-bar"),
                                     html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
                                 ]),
@@ -69,7 +69,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("epmc-countries-pie"),
-                                    html.H5("Affiliation - Countries Represented", style={"marginBottom": "8px"}),
+                                    html.H5("Affiliation - Countries Represented", style={"marginBottom": "1rem"}),
                                     dcc.Graph(
                                         id="epmc-countries-pie",
                                         className="chart-aspect-square",
@@ -96,7 +96,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 html.Div(
                                     [
-                                        html.H5("Most Cited GA4GH Publications", style={"marginBottom": "12px"}),
+                                        html.H5("Most Cited GA4GH Publications", style={"marginBottom": "1rem"}),
                                         html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                         html.Div(
                                             dash_table.DataTable(
@@ -131,7 +131,16 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                                 ],
                                                 css=[
                                                     {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.1;"},
-                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:2px 8px; border:1px solid {COLORS['orange']}; background-color:{COLORS['orange']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1;"},
+                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:2px 8px; border:1px solid {COLORS['orange']}; background-color:{COLORS['orange']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: background-color 0.2s ease, border-color 0.2s ease;"},
+                                                    {"selector": "td[data-dash-column='article_link'] a:hover", "rule": f"border-color:{COLORS['red']}; background-color:{COLORS['red']};"},
+                                                    # Same external-link glyph as .ga4gh-btn-dark[target="_blank"]
+                                                    # in style.css (new_ga4gh's fa-external-link, \f08e, via the
+                                                    # FontAwesomeSolid font already loaded there) — this table's
+                                                    # own "View" link isn't a .ga4gh-btn-dark button so that global
+                                                    # rule doesn't reach it, but markdown_options={"link_target":
+                                                    # "_blank"} below means every one of these links opens DOI.org
+                                                    # in a new tab too, for the same reason.
+                                                    {"selector": "td[data-dash-column='article_link'] a::after", "rule": "font-family:'FontAwesomeSolid'; font-style:normal; font-weight:normal; content:'\\f08e'; margin-left:0.4em;"},
                                                 ],
                                                 markdown_options={"link_target": "_blank"},
                                             ),
