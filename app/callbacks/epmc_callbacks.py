@@ -550,7 +550,7 @@ def register_epmc_callbacks(app):
                     html.Span("View Article", className="btn-text"),
                     href=doi_url,
                     target="_blank",
-                    className="me-2 ga4gh-btn-dark",
+                    className="ga4gh-btn-dark",
                     disabled=not doi_url,
                 ),
             ]),
