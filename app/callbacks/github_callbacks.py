@@ -49,10 +49,10 @@ def fig_github_activity_status_pie(gh_activity_counts):
         plot_bgcolor=COLORS["white"],
         paper_bgcolor=COLORS["white"],
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
-        # Tall enough that the legend (however many rows it wraps to) never
-        # becomes the constraining dimension — width stays the limit, so the
-        # pie always fills its card's width the same as every other pie.
-        height=900,
+        # autosize (not a fixed height) + config={"responsive": True} on the
+        # dcc.Graph + .chart-aspect-tall in style.css scale this with the
+        # card's actual width at any viewport instead of a fixed 900px.
+        autosize=True,
         hoverlabel=dict(font_color="white"),
     )
 
@@ -110,7 +110,7 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
         height=650,
         xaxis_title="Repo Name",
         yaxis=dict(title="Activity Score", showgrid=True, gridcolor=COLORS["lightgrey"]),
-        legend=dict(title_text="Work Stream", orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
+        legend=dict(orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
         hoverlabel=dict(font_color="white"),
     )
 
@@ -155,7 +155,10 @@ def fig_github_interest_metrics(gh_interest_df):
     fig.update_layout(
         xaxis_title="Repo Name",
         yaxis=dict(title="Total Interest", showgrid=True, gridcolor=COLORS["lightgrey"]),
-        legend=dict(title_text="Metric", orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
+        # px.bar auto-titles the legend from the melted y=[...] columns'
+        # "variable" label ("Metric") — an explicit "" overrides that
+        # default, merely omitting a title_text kwarg does not.
+        legend=dict(title_text="", orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
         hoverlabel=dict(font_color="white"),
     )
 
@@ -235,6 +238,16 @@ def fig_github_workstream_pie(gh_df):
                 hole=1/3,
                 text=[f"{lab}<br>{pct:.1f}%" for lab, pct in zip(slice_labels, counts["percent"])],
                 textinfo="text",
+                # Without this, Plotly's default "auto" placement pushes
+                # labels for any thin slice (this has 9 categories, so some
+                # are small) outside the pie, which combined with the
+                # template's automargin:true shrinks the pie itself to make
+                # room — exactly what broke the mobile auto-fit's width
+                # assumption in assets/pie_autofit.js (it sizes the pie to
+                # fill the card's width exactly, which only holds if
+                # automargin never kicks in). Matches the other pies, which
+                # all set this explicitly already.
+                textposition="inside",
                 insidetextfont=dict(color="white"),
                 hovertext=hover_labels,
                 hoverinfo="text",
@@ -245,9 +258,9 @@ def fig_github_workstream_pie(gh_df):
 
     fig.update_layout(
         template="simple_white",
-        # Tall enough that this chart's larger (9-category) legend never
-        # becomes the constraining dimension — see fig_github_activity_status_pie.
-        height=900,
+        # autosize (not a fixed height) — see fig_github_activity_status_pie
+        # for why, and .chart-aspect-tall in style.css.
+        autosize=True,
         legend=dict(traceorder="normal", orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
         hoverlabel=dict(font_color="white"),
     )
@@ -305,7 +318,7 @@ def register_github_callbacks(app):
                             f"👀 Watchers: {repo['watchers_count']}",
                             className="ga4gh-pill ga4gh-pill-forest-green",
                         ),
-                    ], style={"display": "flex", "alignItems": "center", "flexWrap": "wrap", "gap": "8px"}),
+                    ], className="github-repo-pills", style={"display": "flex", "alignItems": "center", "flexWrap": "wrap", "gap": "8px"}),
                 ], style={"display": "flex", "alignItems": "center", "justifyContent": "space-between", "flexWrap": "wrap", "gap": "8px"})
             ),
 

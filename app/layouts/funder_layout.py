@@ -106,7 +106,10 @@ def _top_agencies_figure(agencies: list) -> go.Figure:
         margin={"l": 10, "r": 20, "t": 30, "b": 90},
         xaxis={"title": "Number of Grants", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
-        legend=dict(title_text="Region", orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
+        # px.bar auto-titles the legend from the color= column name
+        # ("region") — an explicit "" overrides that default, merely
+        # omitting a title_text kwarg does not.
+        legend=dict(title_text="", orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
         hoverlabel=dict(font_color="white"),
     )
     return fig
@@ -141,7 +144,10 @@ def _region_pie_figure(agencies: list) -> go.Figure:
         hovertemplate="%{label}<br>Grants: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        height=900,
+        # autosize (not a fixed height) — paired with config={"responsive":
+        # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
+        # scales with the card's actual width at any viewport.
+        autosize=True,
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
@@ -281,7 +287,8 @@ def get_funder_only_charts_section(agencies_list):
                                     dcc.Graph(
                                         id="funder-region-pie",
                                         figure=region_fig,
-                                        style={"minHeight": "900px", "flex": "1 1 auto"},
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
                                     ),
                                     html.Figcaption(
                                         "Grant distribution grouped by funder region (US, UK, EU, Other).",
@@ -296,7 +303,7 @@ def get_funder_only_charts_section(agencies_list):
                         md=6,
                     ),
                 ],
-                className="mb-4",
+                className="mb-4 chart-cards-row",
             ),
         ],
         id="funder-only-charts",

@@ -29,10 +29,11 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 options=dropdown_options,
                                 value="all",
                                 clearable=False,
+                                className="list-filter",
                             ),
                         ],
-                        style={"width": "25%"},
-                    ),  
+                        className="chart-filter-quarter",
+                    ),
                     html.Div(
                         [
                             html.Label("Top Repositories"),
@@ -52,15 +53,10 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 tooltip={"placement": "bottom", "always_visible": True},
                             )
                         ],
-                        style={"width": "50%", "marginLeft": "auto"},
+                        className="chart-slider-wrap chart-slider-wrap--push-right",
                     ),
                 ],
-                style={
-                    "display": "flex",
-                    "gap": "30px",
-                    "marginTop": "20px",
-                    "marginBottom": "20px",
-                },
+                className="chart-filter-row chart-filter-row--github",
             ),
 
             # ---------- GRAPHS  ----------
@@ -92,7 +88,11 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 html.Figure([
                                     chart_expand_button("gh-activity-status-pie"),
                                     html.H5("Activity Status of the GA4GH GitHub Repositories", style={"marginBottom": "8px"}),
-                                    dcc.Graph(id="gh-activity-status-pie", style={"minHeight": "900px", "flex": "1 1 auto"}),
+                                    dcc.Graph(
+                                        id="gh-activity-status-pie",
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
+                                    ),
                                     html.Figcaption("Relative proportion of GA4GH GitHub repositories at each activity status, which is determined from the number of days that have elapsed since the last update. High: last update less than 6 months ago; Moderate: last update 6 months to 2 years ago; Low: last update more than 2 years ago.")
                                 ])
                             ),
@@ -103,7 +103,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                         md=6,
                     ),
                 ],
-                className="mb-4",
+                className="mb-4 chart-cards-row",
             ),
 
             # Row 2: workstream pie + interest metrics
@@ -115,7 +115,11 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                 html.Figure([
                                     chart_expand_button("gh-workstream-pie"),
                                     html.H5("GA4GH GitHub Repositories", style={"marginBottom": "8px"}),
-                                    dcc.Graph(id="gh-workstream-pie", style={"minHeight": "900px", "flex": "1 1 auto"}),
+                                    dcc.Graph(
+                                        id="gh-workstream-pie",
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
+                                    ),
                                     html.Figcaption("Relative proportion of GA4GH GitHub repositories by work stream. Includes technical and foundational work streams, as well as TASC / Tech Team repositories.")
                                 ])
                             ),
@@ -141,7 +145,8 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                         className="d-flex",
                         md=6,
                     ),
-                ]
+                ],
+                className="chart-cards-row",
             ),
         ],
         fluid=True,

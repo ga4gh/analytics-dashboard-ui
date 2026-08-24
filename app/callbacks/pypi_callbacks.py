@@ -84,7 +84,10 @@ def register_pypi_callbacks(app):
             paper_bgcolor=COLORS["white"],
             margin={"t": 20, "b": 300},
             legend={
-                "title": "Category",
+                # px.bar auto-titles the legend from the color= column name
+                # ("category") — an explicit "" overrides that default,
+                # merely omitting a "title" key here does not.
+                "title": {"text": ""},
                 "orientation": "h",
                 "yanchor": "top",
                 "y": -0.55,
@@ -130,6 +133,14 @@ def register_pypi_callbacks(app):
                 "type": "pie",
                 "hole": 1/3,
                 "textinfo": "label+percent",
+                # Without this, Plotly's default "auto" placement can push
+                # a thin slice's label outside the pie, which combined with
+                # the template's automargin:true shrinks the pie itself to
+                # make room — exactly what broke the mobile auto-fit's
+                # width assumption in assets/pie_autofit.js (it sizes the
+                # pie to fill the card's width exactly, which only holds if
+                # automargin never kicks in). Matches the other pies.
+                "textposition": "inside",
                 "textfont": {"color": "white"},
                 "hoverinfo": "label+value+percent",
                 "marker": {
@@ -143,7 +154,10 @@ def register_pypi_callbacks(app):
                 "plot_bgcolor": COLORS["white"],
                 "paper_bgcolor": COLORS["white"],
                 "legend": {"orientation": "h", "yanchor": "top", "y": -0.1, "xanchor": "center", "x": 0.5},
-                "height": 900,
+                # autosize (not a fixed height) — paired with config={"responsive":
+                # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
+                # scales with the card's actual width at any viewport.
+                "autosize": True,
                 "hoverlabel": {"font": {"color": "white"}},
             }
         }
@@ -179,29 +193,31 @@ def register_pypi_callbacks(app):
 
                 html.Br(),
 
-                dbc.Button(
-                    html.Span("View on PyPI", className="btn-text"),
-                    href=project.get("package_url"),
-                    target="_blank",
-                    className="me-2 ga4gh-btn-dark",
-                    disabled=not project.get("package_url"),
-                ),
+                html.Div([
+                    dbc.Button(
+                        html.Span("View on PyPI", className="btn-text"),
+                        href=project.get("package_url"),
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not project.get("package_url"),
+                    ),
 
-                dbc.Button(
-                    html.Span("Latest Release", className="btn-text"),
-                    href=project.get("release_url"),
-                    target="_blank",
-                    className="me-2 ga4gh-btn-dark",
-                    disabled=not project.get("release_url"),
-                ),
+                    dbc.Button(
+                        html.Span("Latest Release", className="btn-text"),
+                        href=project.get("release_url"),
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not project.get("release_url"),
+                    ),
 
-                dbc.Button(
-                    html.Span("View on GitHub", className="btn-text"),
-                    href=github_url,
-                    target="_blank",
-                    className="me-2 ga4gh-btn-dark",
-                    disabled=not github_url,
-                )
+                    dbc.Button(
+                        html.Span("View on GitHub", className="btn-text"),
+                        href=github_url,
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not github_url,
+                    ),
+                ], className="pypi-details-buttons")
 
             ])
 

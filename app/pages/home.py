@@ -193,6 +193,29 @@ dbc.Row(
             ),
             className="menu-col d-flex justify-content-end",
         ),
+
+        # ---------- MOBILE HAMBURGER TOGGLE ----------
+        # dash.html has no native <input>/<label> (those need dcc, which
+        # doesn't support type="checkbox"), so this is a plain button whose
+        # click toggles a "mobile-nav-open" class on <body> instead of
+        # new_ga4gh's own checkbox-trick — same visual result (see
+        # assets/mobile_nav.js), just class-driven rather than :checked-
+        # driven. Only shown at the responsive breakpoint (see style.css);
+        # .menu-container itself becomes the dropdown panel there instead
+        # of a separate duplicated nav.
+        dbc.Col(
+            html.Button(
+                html.Span(
+                    html.Span(id="mob-menu-trigger"),
+                    className="mob-menu-trigger-wrapper",
+                ),
+                id="mobile-menu-toggle-btn",
+                className="mobile-menu-toggle-col",
+                **{"aria-label": "Toggle menu"},
+            ),
+            width="auto",
+            className="mobile-menu-toggle-wrap",
+        ),
     ],
     className="top-bar top-bar-row",  # 👈 add this
 ),
@@ -221,29 +244,49 @@ html.Div(
                 ),
 
                 # ---------- INFO BADGES ----------
+                # Three distinct groups (Created by / Data Sources / Data
+                # Updated), each its own row: label + value(s) sit side by
+                # side on desktop (.hero-badge-group's default flex row),
+                # and stack label-above/badges-below on a narrow screen (see
+                # the responsive override in style.css).
                 html.Div(
                     [
-                        dbc.Badge("Created by: GA4GH Technical Team", className="hero-badge"),
-                        dbc.Badge("Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry", className="hero-badge"),
-                    ],
-                    className="hero-badges-row",
-                ),
-
-                # ---------- DATA UPDATED BADGES (own row) ----------
-                html.Div(
-                    [
-                        dbc.Badge("Data Updated:", className="hero-badge"),
-                        dbc.Badge(
-                            f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
-                            className="hero-badge",
+                        html.Div(
+                            [
+                                dbc.Badge("Created by:", className="hero-cta"),
+                                dbc.Badge("GA4GH Technical Team", className="hero-badge"),
+                            ],
+                            className="hero-badge-group",
                         ),
-                        dbc.Badge(
-                            f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
-                            className="hero-badge",
+                        html.Div(
+                            [
+                                dbc.Badge("Data Sources:", className="hero-cta"),
+                                dbc.Badge("Implementation Registry, Europe PMC, GitHub, PyPI", className="hero-badge"),
+                            ],
+                            className="hero-badge-group",
                         ),
-                         dbc.Badge(
-                            f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
-                            className="hero-badge",
+                        html.Div(
+                            [
+                                dbc.Badge("Data Updated:", className="hero-cta"),
+                                html.Div(
+                                    [
+                                        dbc.Badge(
+                                            f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
+                                            className="hero-badge",
+                                        ),
+                                        dbc.Badge(
+                                            f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
+                                            className="hero-badge",
+                                        ),
+                                        dbc.Badge(
+                                            f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
+                                            className="hero-badge",
+                                        ),
+                                    ],
+                                    className="hero-badge-values",
+                                ),
+                            ],
+                            className="hero-badge-group",
                         ),
                     ],
                     className="hero-badges-row",

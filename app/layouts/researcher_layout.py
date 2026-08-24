@@ -44,7 +44,10 @@ def _pub_type_figure(pub_types: list) -> go.Figure:
         hovertemplate="%{label}<br>Articles: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        height=900,
+        # autosize (not a fixed height) — paired with config={"responsive":
+        # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
+        # scales with the card's actual width at any viewport.
+        autosize=True,
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
@@ -77,7 +80,10 @@ def _open_access_figure(entries_df) -> go.Figure:
         hovertemplate="%{label}<br>Articles: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        height=900,
+        # autosize (not a fixed height) — paired with config={"responsive":
+        # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
+        # scales with the card's actual width at any viewport.
+        autosize=True,
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
@@ -113,7 +119,8 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                                     dcc.Graph(
                                         id="researcher-pub-type-donut",
                                         figure=pub_type_fig,
-                                        style={"minHeight": "900px", "flex": "1 1 auto"},
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
                                     ),
                                     html.Figcaption(
                                         "Each article is assigned one primary type — counts sum to the total unique article count.",
@@ -136,7 +143,8 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                                     dcc.Graph(
                                         id="researcher-oa-donut",
                                         figure=oa_fig,
-                                        style={"minHeight": "900px", "flex": "1 1 auto"},
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
                                     ),
                                     html.Figcaption(
                                         "Proportion of GA4GH-related publications available as open access.",
@@ -151,7 +159,7 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                         md=6,
                     ),
                 ],
-                className="mb-4",
+                className="mb-4 chart-cards-row",
             ),
         ],
         id="researcher-charts",

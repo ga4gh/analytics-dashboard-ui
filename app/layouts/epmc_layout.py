@@ -13,7 +13,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
     """
     return dbc.Container(
         [
-
+            dcc.Store(id="epmc-countries-hidden-store", data=[]),
 
             # ---------- FILTERS ----------
             html.Div(
@@ -34,15 +34,10 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                 },
                             ),
                         ],
-                        style={"width": "50%"},
+                        className="chart-slider-wrap",
                     ),
                 ],
-                style={
-                    "display": "flex",
-                    "gap": "20px",
-                    "marginTop": "20px",
-                    "marginBottom": "20px",
-                },
+                className="chart-filter-row chart-filter-row--epmc",
             ),
 
             # ---------- GRAPHS  ----------
@@ -75,7 +70,18 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                 html.Figure([
                                     chart_expand_button("epmc-countries-pie"),
                                     html.H5("Affiliation - Countries Represented", style={"marginBottom": "8px"}),
-                                    dcc.Graph(id="epmc-countries-pie", style={"minHeight": "1050px", "flex": "1 1 auto"}),
+                                    dcc.Graph(
+                                        id="epmc-countries-pie",
+                                        className="chart-aspect-square",
+                                        config={"responsive": True},
+                                    ),
+                                    # Plotly's own legend forces a scrollbar once a single
+                                    # legend passes ~35 entries, no matter how much space
+                                    # it's given (confirmed by testing at absurd margins/
+                                    # widths/orientations) — this custom list replaces it
+                                    # so every country always shows, with clicks wired to
+                                    # the same hidden-countries Store the figure reads.
+                                    html.Div(id="epmc-countries-legend", className="country-legend"),
                                     html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author’s affiliation for all publications.")
                                 ])
                             ),
@@ -141,7 +147,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         className="d-flex",
                         md=6,
                     ),
-                ]
+                ],
+                className="chart-cards-row",
             ),
 
 

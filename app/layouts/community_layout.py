@@ -55,7 +55,10 @@ def _workstream_activity_figure(gh_df: pd.DataFrame) -> go.Figure:
         margin={"l": 10, "r": 20, "t": 30, "b": 90},
         xaxis={"title": "Number of Repositories", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
-        legend={"title": "Activity Status", "orientation": "h", "yanchor": "top", "y": -0.15, "xanchor": "center", "x": 0.5},
+        # px.bar auto-titles the legend from the color= column name
+        # ("activity_status") — an explicit "" overrides that default,
+        # merely omitting a "title" key does not.
+        legend={"title": {"text": ""}, "orientation": "h", "yanchor": "top", "y": -0.15, "xanchor": "center", "x": 0.5},
         barmode="stack",
         hoverlabel=dict(font_color="white"),
     )
@@ -171,7 +174,7 @@ def get_community_charts_section(
                         md=6,
                     ),
                 ],
-                className="mb-4",
+                className="mb-4 chart-cards-row",
             ),
         ],
         id="community-charts",

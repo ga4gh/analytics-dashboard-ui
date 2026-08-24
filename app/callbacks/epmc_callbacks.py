@@ -1,7 +1,8 @@
-from dash import Input, Output, State, ctx, no_update
+from dash import Input, Output, State, ALL, ctx, no_update
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
+import json
 import re
 import plotly.express as px
 import plotly.graph_objects as go
@@ -11,15 +12,12 @@ from app.constants.constants import COUNTRIES_WHITELIST
 from app.utils.ga4gh_theme import COLORWAY, COLORS, PUBLICATIONS_COLORWAY
 
 
-def fig_epmc_countries_pie(countries_df, hidden_labels=None):
-    """Pie chart – article count by affiliation country.
-
-    hidden_labels: collection of country names currently toggled off in the
-    legend.  Percentages are recalculated against the visible-only total so
-    the displayed values stay correct after toggling.
-    """
+def _prepare_countries_df(countries_df):
+    """Shared column-normalize + whitelist-filter + sort for the countries
+    pie and its legend — both must land on the exact same row order/set so
+    legend swatches line up with pie slices and hidden_labels toggles agree."""
     if countries_df is None or countries_df.empty:
-        return go.Figure().update_layout(title="No country data available")
+        return None
 
     cols = list(countries_df.columns)
     if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
@@ -35,14 +33,23 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
     df["country_normalized"] = df["country"].astype(str).str.strip()
     df["country_lower"] = df["country_normalized"].str.lower()
     df = df[df["country_lower"].isin(whitelist)].copy()
-
     if df.empty:
-        return go.Figure().update_layout(title="No country data available (after filtering)")
+        return None
 
-    counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
-    df = df.copy()
-    df["count"] = counts
-    df = df.sort_values("count", ascending=False).reset_index(drop=True)
+    df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
+    return df.sort_values("count", ascending=False).reset_index(drop=True)
+
+
+def fig_epmc_countries_pie(countries_df, hidden_labels=None):
+    """Pie chart – article count by affiliation country.
+
+    hidden_labels: collection of country names currently toggled off in the
+    legend.  Percentages are recalculated against the visible-only total so
+    the displayed values stay correct after toggling.
+    """
+    df = _prepare_countries_df(countries_df)
+    if df is None:
+        return go.Figure().update_layout(title="No country data available")
 
     hidden = set(hidden_labels) if hidden_labels else set()
     visible_mask = ~df["country_normalized"].isin(hidden)
@@ -96,24 +103,56 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
     )
     fig.update_layout(
         template="simple_white",
-        # ~24 countries' worth of legend entries (horizontal, wrapped) eat a
-        # large vertical share of the figure regardless of total height, so
-        # the pie itself needs a taller figure to reach a diameter close to
-        # the card's actual width rather than being squeezed by the legend.
-        height=1050,
-        margin=dict(l=20, r=20, t=20, b=80),
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.1,
-            xanchor="center",
-            x=0.5,
-        ),
+        # autosize (not a fixed height) + config={"responsive": True} on the
+        # dcc.Graph + the .chart-aspect-square CSS class on that same graph
+        # let the pie scale with the card's actual width at any viewport.
+        autosize=True,
+        margin=dict(l=0, r=0, t=0, b=0),
+        # Plotly's own legend forces a scrollbar once a single legend passes
+        # ~35 entries (this pie's country count), regardless of how much
+        # space it's given — confirmed by testing at absurd margins/widths/
+        # orientations, none of which disengage it. showlegend=False here;
+        # build_countries_legend below renders a plain HTML replacement
+        # instead, with clicks wired to the same hidden_labels mechanism.
+        showlegend=False,
         hoverlabel=dict(font_color="white"),
     )
     if hidden:
         fig.update_layout(hiddenlabels=list(hidden))
     return fig
+
+
+def build_countries_legend(countries_df, hidden_labels=None):
+    """Custom HTML replacement for fig_epmc_countries_pie's legend.
+
+    Mirrors the pie's own country order/colors exactly (same whitelist
+    filter, same sort, same PUBLICATIONS_COLORWAY cycling) so swatches line
+    up with their slices. Each item is independently clickable — toggling it
+    in/out of epmc-countries-hidden-store, which both this function and
+    fig_epmc_countries_pie read to stay in sync.
+    """
+    df = _prepare_countries_df(countries_df)
+    if df is None:
+        return []
+
+    hidden = set(hidden_labels) if hidden_labels else set()
+
+    items = []
+    for i, cn in enumerate(df["country_normalized"]):
+        color = PUBLICATIONS_COLORWAY[i % len(PUBLICATIONS_COLORWAY)]
+        is_hidden = cn in hidden
+        items.append(
+            html.Button(
+                [
+                    html.Span(className="country-legend-swatch", style={"backgroundColor": color}),
+                    html.Span(cn, className="country-legend-label"),
+                ],
+                id={"type": "country-legend-item", "country": cn},
+                n_clicks=0,
+                className="country-legend-item" + (" country-legend-item--hidden" if is_hidden else ""),
+            )
+        )
+    return items
 
 
 def fig_epmc_countries_choropleth(countries_df):
@@ -524,22 +563,25 @@ def register_epmc_callbacks(app):
     # -----------------------
     @app.callback(
         Output("epmc-countries-pie", "figure"),
+        Output("epmc-countries-legend", "children"),
         Output("epmc-authors-bar", "figure"),
         Output("epmc-authors-bar", "style"),
         Output("epmc-authors-card-body", "style"),
         Output("epmc-authors-bar-title", "children"),
         Input("epmc-top-n-slider", "value"),
-        Input("epmc-countries-pie", "relayoutData"),
+        Input("epmc-countries-hidden-store", "data"),
     )
-    def update_epmc_graphs(top_n, relayout_data):
-        # Legend toggle on the pie — only rebuild the pie with updated percentages
-        if ctx.triggered_id == "epmc-countries-pie":
-            hidden = (relayout_data or {}).get("hiddenlabels") or []
-            if "hiddenlabels" not in (relayout_data or {}):
-                return no_update, no_update, no_update, no_update, no_update
-            return fig_epmc_countries_pie(countries_df, hidden_labels=hidden), no_update, no_update, no_update, no_update
+    def update_epmc_graphs(top_n, hidden_countries):
+        # Legend-item click — only rebuild the pie + legend with updated percentages
+        if ctx.triggered_id == "epmc-countries-hidden-store":
+            return (
+                fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries),
+                build_countries_legend(countries_df, hidden_labels=hidden_countries),
+                no_update, no_update, no_update, no_update,
+            )
 
-        fig_pie = fig_epmc_countries_pie(countries_df)
+        fig_pie = fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries)
+        legend_children = build_countries_legend(countries_df, hidden_labels=hidden_countries)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
         # An explicit height directly on the Graph is required: dcc.Graph
         # renders in responsive mode (height:100%) with no CSS height of its
@@ -550,11 +592,45 @@ def register_epmc_callbacks(app):
         graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
         return (
             fig_pie,
+            legend_children,
             fig_bar,
             {"height": f"{graph_height}px"},
             {"minHeight": f"{graph_height + 96}px"},
             f"Top {top_n} Europe PMC Authors",
         )
+
+    @app.callback(
+        Output("epmc-countries-hidden-store", "data"),
+        Input({"type": "country-legend-item", "country": ALL}, "n_clicks"),
+        State("epmc-countries-hidden-store", "data"),
+        prevent_initial_call=True,
+    )
+    def toggle_country_legend_item(_n_clicks_list, hidden_data):
+        # Despite prevent_initial_call=True, this pattern-matching ALL
+        # callback still fires once (reproduced: twice, in fact) the moment
+        # update_epmc_graphs first populates the 35 legend buttons — every
+        # n_clicks is still 0 then, but ctx.triggered lists all of them as
+        # "triggered" and ctx.triggered_id arbitrarily resolves to the first
+        # one, which would otherwise mark it hidden before any real click.
+        # A genuine click's triggered entry always has value >= 1, so this
+        # guard (not just "is there a triggered entry") is what actually
+        # distinguishes a real click from that spurious mount-time firing.
+        if not ctx.triggered or not ctx.triggered[0].get("value"):
+            return no_update
+        prop_id = ctx.triggered[0]["prop_id"].rsplit(".", 1)[0]
+        try:
+            triggered = json.loads(prop_id)
+        except (ValueError, TypeError):
+            return no_update
+        if not isinstance(triggered, dict):
+            return no_update
+        country = triggered.get("country")
+        hidden = set(hidden_data or [])
+        if country in hidden:
+            hidden.discard(country)
+        else:
+            hidden.add(country)
+        return sorted(hidden)
     
     @app.callback(
         Output("author-collapse", "is_open"),

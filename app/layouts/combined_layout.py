@@ -163,7 +163,7 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
                             dcc.Graph(id="combined-growth-pypi", figure=pypi_fig),
                         ], lg=6, md=6, sm=12, style={"position": "relative"}),
                     ],
-                    className="g-3",
+                    className="g-3 chart-cards-row",
                 ),
                 html.Figcaption("Cumulative number of GA4GH-Related Articles and their Citations from Europe PMC, as well as GitHub Repositories, and PyPI Packages per year.")
             ])

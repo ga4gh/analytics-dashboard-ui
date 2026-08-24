@@ -191,7 +191,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                         md=6,
                     ),
                 ],
-                className="mb-4",
+                className="mb-4 chart-cards-row",
             ),
 
             # Row 2: GA4GH standards by registered service count (full width)

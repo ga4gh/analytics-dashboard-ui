@@ -98,11 +98,12 @@ def get_datatables_layout(
                         style={"width": "160px"},
                     ),
                 ],
+                className="epmc-table-filters",
                 style={
                     "display": "flex",
                     "gap": "12px",
                     "alignItems": "center",
-                    "marginBottom": "15px",
+                    "marginBottom": "1rem",
                 },
             ),
             
@@ -161,7 +162,7 @@ def get_datatables_layout(
                 placeholder='Search repositories...',
                 debounce=False,
                 className="list-filter",
-                style={'margin-bottom': '15px', 'width': '350px'},
+                style={'margin-bottom': '1rem', 'width': '350px'},
             ),
             dbc.Row([
                 # LEFT: GITHUB TABLE
@@ -204,7 +205,7 @@ def get_datatables_layout(
                 placeholder='Search projects...',
                 debounce=False,
                 className="list-filter",
-                style={'margin-bottom': '15px', 'width': '350px'},
+                style={'margin-bottom': '1rem', 'width': '350px'},
             ),
 
             dbc.Row([

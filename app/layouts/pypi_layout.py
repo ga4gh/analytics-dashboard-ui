@@ -39,9 +39,10 @@ def get_pypi_layout(pypi_details, total_packages):
                                 id="filter-author",
                                 options=author_options,
                                 multi=True,
-                                placeholder="Select authors"
+                                placeholder="Select authors",
+                                className="list-filter",
                             )
-                        ], style={"width": "48%"}),
+                        ], className="chart-filter-half"),
 
                         html.Div([
                             html.Label("Email"),
@@ -49,12 +50,13 @@ def get_pypi_layout(pypi_details, total_packages):
                                 id="filter-email",
                                 options=email_options,
                                 multi=True,
-                                placeholder="Select emails"
+                                placeholder="Select emails",
+                                className="list-filter",
                             )
-                        ], style={"width": "48%"})
+                        ], className="chart-filter-half")
                     ],
+                    className="chart-filter-row",
                     style={
-                        "display": "flex",
                         "justifyContent": "space-between",
                         "margin-bottom": "15px"
                     }
@@ -69,9 +71,10 @@ def get_pypi_layout(pypi_details, total_packages):
                                 id="filter-category",
                                 options=category_options,
                                 multi=True,
-                                placeholder="Select categories"
+                                placeholder="Select categories",
+                                className="list-filter",
                             )
-                        ], style={"width": "48%"}),
+                        ], className="chart-filter-half"),
 
                         html.Div([
                             html.Label("Top Packages"),
@@ -84,12 +87,9 @@ def get_pypi_layout(pypi_details, total_packages):
                                 marks={i: str(i) for i in range(5, 55, 5)},
                                 tooltip={"placement": "bottom", "always_visible": True}
                             )
-                        ], style={"width": "48%"})
+                        ], className="chart-slider-wrap chart-filter-half")
                     ],
-                    style={
-                        "display": "flex",
-                        "justifyContent": "space-between"
-                    }
+                    className="chart-filter-row chart-filter-row--pypi",
                 ),
             ],
             style={
@@ -122,7 +122,11 @@ def get_pypi_layout(pypi_details, total_packages):
                                 html.Figure([
                                     chart_expand_button("category-distribution"),
                                     html.H5("Category Distribution", style={"marginBottom": "8px"}),
-                                    dcc.Graph(id="category-distribution", style={"minHeight": "900px", "flex": "1 1 auto"}),
+                                    dcc.Graph(
+                                        id="category-distribution",
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
+                                    ),
                                     html.Figcaption("Relative proportion of package category for GA4GH-related PyPI packages.")
                                 ])
                             ),
@@ -133,7 +137,7 @@ def get_pypi_layout(pypi_details, total_packages):
                         md=6,
                     ),
                 ],
-                className="mb-4",
+                className="mb-4 chart-cards-row",
             ),
 
 
