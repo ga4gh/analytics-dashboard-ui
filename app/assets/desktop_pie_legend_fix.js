@@ -24,6 +24,13 @@
 // charts' sizing AND legend position there (plus a lot more — exact pixel
 // height, legend orientation) — running this too would just race that
 // script over the same relayout calls.
+//
+// The actual margin.b/legend.y nudge math is identical to
+// desktop_bar_legend_fix.js's own version of this same problem — shared via
+// window.__hbarBadgeHelpers.nudgeLegendGap (defined in hbar_mobile_labels.js)
+// rather than a second copy of it here. Only the gap *measurement* differs
+// (pie-to-legend vs that file's x-axis-to-legend) and stays local to each
+// file, since the two chart types have nothing in common to measure against.
 (function () {
     var BREAKPOINT = "(pointer: coarse), (max-width: 768px)";
     var CHART_IDS = [
@@ -34,13 +41,6 @@
         "researcher-oa-donut",
         "funder-region-pie",
     ];
-    var GAP = 16; // 1rem
-
-    function getPlotlyDiv(id) {
-        var wrapper = document.getElementById(id);
-        if (!wrapper) return null;
-        return wrapper.querySelector(".js-plotly-plot");
-    }
 
     function measurePieToLegendGap(gd) {
         var svgs = gd.querySelectorAll("svg.main-svg");
@@ -51,27 +51,15 @@
     }
 
     function tick() {
+        var helpers = window.__hbarBadgeHelpers;
+        if (!helpers) return; // hbar_mobile_labels.js hasn't run its top-level code yet
         if (window.matchMedia(BREAKPOINT).matches) return; // pie_autofit.js fully owns mobile
 
         CHART_IDS.forEach(function (id) {
-            var gd = getPlotlyDiv(id);
+            var gd = helpers.getPlotlyDiv(id);
             if (!gd || !gd._fullLayout || !gd._fullLayout.legend) return;
 
-            var actualGap = measurePieToLegendGap(gd);
-            if (actualGap === null) return;
-            var delta = GAP - actualGap;
-            if (Math.abs(delta) < 1) return;
-
-            var marginT = gd._fullLayout.margin.t;
-            var marginB = gd._fullLayout.margin.b;
-            var plotAreaHeight = gd._fullLayout.height - marginT - marginB;
-            if (plotAreaHeight <= 0) return;
-
-            Plotly.relayout(gd, {
-                "margin.b": marginB + delta,
-                "legend.yanchor": "top",
-                "legend.y": gd._fullLayout.legend.y - delta / plotAreaHeight,
-            });
+            helpers.nudgeLegendGap(gd, measurePieToLegendGap(gd));
         });
     }
 

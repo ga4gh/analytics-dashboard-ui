@@ -81,13 +81,17 @@ figcaption {
    so mobile gets a short card instead of a fixed-tall one, with no
    viewport-specific breakpoint tuning needed. Ratio = 746px (this card's
    measured desktop width) : the original fixed height. */
-.chart-aspect-tall {
+.chart-aspect-tall,
+.chart-aspect-taller,
+.chart-aspect-square {
     flex: 1 1 auto;
+}
+
+.chart-aspect-tall {
     aspect-ratio: 746 / 900;
 }
 
 .chart-aspect-taller {
-    flex: 1 1 auto;
     aspect-ratio: 746 / 1050;
 }
 
@@ -96,7 +100,6 @@ figcaption {
    aspect-ratio is enough to fill the card's width at any viewport, no
    JS-measured margin math needed the way the other pies still require. */
 .chart-aspect-square {
-    flex: 1 1 auto;
     aspect-ratio: 1 / 1;
 }
 
@@ -1724,6 +1727,25 @@ body.mobile-nav-open .mobile-menu-toggle-col #mob-menu-trigger {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+}
+
+/* Desktop's .f-logo block (logo, name, copyright) is left-aligned, sitting
+   opposite the already-centered .f-social block — on mobile, once
+   .ga4gh-footer-container's own flex-wrap stacks both blocks to full
+   width, a left-aligned block reads as randomly indented rather than
+   deliberately placed. Centering everything (block position via
+   align-items, text via text-align — align-items alone only centers the
+   <img>/<p> boxes themselves, not multi-line text inside them) matches
+   .f-social's own treatment and reads as one consistent, centered footer. */
+@media (pointer: coarse), (max-width: 768px) {
+    .ga4gh-footer-container {
+        justify-content: center;
+    }
+
+    .f-logo {
+        align-items: center;
+        text-align: center;
+    }
 }
 
 .ga4gh-btn-light {

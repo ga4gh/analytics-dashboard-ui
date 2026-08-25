@@ -214,6 +214,29 @@
         });
     }
 
+    // Shared by desktop_bar_legend_fix.js and desktop_pie_legend_fix.js —
+    // both poll on an interval, measure their own chart-type-specific gap
+    // (x-axis-to-legend for bars, pie-to-legend for pies), and then need
+    // this exact same "how far off GAP is that, and how do I nudge
+    // margin.b/legend.y to close it" math. The measurement itself can't be
+    // shared (different DOM targets per chart type), only this part can.
+    function nudgeLegendGap(gd, actualGap) {
+        if (actualGap === null) return;
+        var delta = GAP - actualGap;
+        if (Math.abs(delta) < 1) return;
+
+        var marginT = gd._fullLayout.margin.t;
+        var marginB = gd._fullLayout.margin.b;
+        var plotAreaHeight = gd._fullLayout.height - marginT - marginB;
+        if (plotAreaHeight <= 0) return;
+
+        Plotly.relayout(gd, {
+            "margin.b": marginB + delta,
+            "legend.yanchor": "top",
+            "legend.y": gd._fullLayout.legend.y - delta / plotAreaHeight,
+        });
+    }
+
     // Exposed for vbar_to_hbar_mobile.js — that file transposes originally-
     // vertical bar charts to horizontal on mobile, then needs this exact
     // same category-extraction + right-aligned-badge-annotation styling and
@@ -224,6 +247,7 @@
         measureBarHeight: measureBarHeight,
         computeLegendCorrection: computeLegendCorrection,
         measureAxisToLegendGap: measureAxisToLegendGap,
+        nudgeLegendGap: nudgeLegendGap,
         GAP: GAP,
         buildAnnotations: buildAnnotations,
         ROW_HEIGHT_PX: ROW_HEIGHT_PX,

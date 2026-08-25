@@ -34,6 +34,12 @@
 // already fully manage these same 4 charts' legend position there (plus a
 // lot more — badges, transposition, exact pixel heights) — running this
 // too would just race those scripts over the same relayout calls.
+//
+// The actual margin.b/legend.y nudge math below is shared with
+// desktop_pie_legend_fix.js's own version of this same problem, via
+// window.__hbarBadgeHelpers.nudgeLegendGap — only the gap *measurement*
+// (x-axis-to-legend here, pie-to-legend there) differs and stays local to
+// each file.
 (function () {
     var BREAKPOINT = "(pointer: coarse), (max-width: 768px)";
     var CHART_IDS = [
@@ -53,21 +59,7 @@
             var gd = helpers.getPlotlyDiv(id);
             if (!gd || !gd._fullLayout || !gd._fullLayout.legend) return;
 
-            var actualGap = helpers.measureAxisToLegendGap(gd);
-            if (actualGap === null) return;
-            var delta = helpers.GAP - actualGap;
-            if (Math.abs(delta) < 1) return;
-
-            var marginT = gd._fullLayout.margin.t;
-            var marginB = gd._fullLayout.margin.b;
-            var plotAreaHeight = gd._fullLayout.height - marginT - marginB;
-            if (plotAreaHeight <= 0) return;
-
-            Plotly.relayout(gd, {
-                "margin.b": marginB + delta,
-                "legend.yanchor": "top",
-                "legend.y": gd._fullLayout.legend.y - delta / plotAreaHeight,
-            });
+            helpers.nudgeLegendGap(gd, helpers.measureAxisToLegendGap(gd));
         });
     }
 
