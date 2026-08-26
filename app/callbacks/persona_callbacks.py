@@ -64,6 +64,23 @@ ALL_COL_IDS = [
 
 ALL_CONTROLLED_IDS = ALL_SECTION_IDS + ALL_COL_IDS
 
+# Fixed nav bar links — each mirrors the visibility of the section it points to.
+# "Overview" and "Cumulative Metrics" are not persona-controlled and stay out
+# of this map, so they remain visible in every persona.
+NAV_LINK_TO_SECTION = {
+    "navlink-servicemap":         "servicemap",
+    "navlink-epmc":               "epmc",
+    "navlink-publication-charts": "publication-charts",
+    "navlink-funder-only-charts": "funder-only-charts",
+    "navlink-researcher-charts":  "researcher-charts",
+    "navlink-github":             "github",
+    "navlink-pypi":               "pypi",
+    "navlink-developer-charts":   "developer-charts",
+    "navlink-community-charts":  "community-charts",
+    "navlink-tables":             "tables",
+}
+ALL_NAV_LINK_IDS = list(NAV_LINK_TO_SECTION.keys())
+
 # ---------------------------------------------------------------------------
 # Per-persona whitelist — only list what IS shown.
 # Anything omitted is hidden automatically.
@@ -148,4 +165,21 @@ def register_persona_callbacks(app):
             else {}              if eid in shown_cols
             else {"display": "none"}
             for eid in ALL_CONTROLLED_IDS
+        ]
+
+    # ------------------------------------------------------------------
+    # 4. Show / hide the matching nav bar links based on active persona
+    # ------------------------------------------------------------------
+    @app.callback(
+        [Output(nid, "style") for nid in ALL_NAV_LINK_IDS],
+        Input("active-persona", "data"),
+    )
+    def toggle_persona_nav_links(active_persona):
+        persona = active_persona or "default"
+        config = PERSONA_SHOW.get(persona, PERSONA_SHOW["default"])
+        shown_sections = set(config["sections"])
+        return [
+            {} if NAV_LINK_TO_SECTION[nid] in shown_sections
+            else {"display": "none"}
+            for nid in ALL_NAV_LINK_IDS
         ]

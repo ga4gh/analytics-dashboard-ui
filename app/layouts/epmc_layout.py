@@ -1,6 +1,8 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 
+from app.utils.ga4gh_theme import COLORS, chart_expand_button
+
 # ---------------------------------------------------------------------------
 # Page layout
 # ---------------------------------------------------------------------------
@@ -11,7 +13,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
     """
     return dbc.Container(
         [
-
+            dcc.Store(id="epmc-countries-hidden-store", data=[]),
 
             # ---------- FILTERS ----------
             html.Div(
@@ -32,15 +34,10 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                 },
                             ),
                         ],
-                        style={"width": "50%"},
+                        className="chart-slider-wrap",
                     ),
                 ],
-                style={
-                    "display": "flex",
-                    "gap": "20px",
-                    "marginTop": "20px",
-                    "marginBottom": "20px",
-                },
+                className="chart-filter-row chart-filter-row--epmc",
             ),
 
             # ---------- GRAPHS  ----------
@@ -50,6 +47,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
+                                    chart_expand_button("epmc-authors-bar"),
+                                    html.H5(id="epmc-authors-bar-title", style={"marginBottom": "1rem"}),
                                     dcc.Graph(id="epmc-authors-bar"),
                                     html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
                                 ]),
@@ -69,7 +68,20 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    dcc.Graph(id="epmc-countries-pie"),
+                                    chart_expand_button("epmc-countries-pie"),
+                                    html.H5("Affiliation - Countries Represented", style={"marginBottom": "1rem"}),
+                                    dcc.Graph(
+                                        id="epmc-countries-pie",
+                                        className="chart-aspect-square",
+                                        config={"responsive": True},
+                                    ),
+                                    # Plotly's own legend forces a scrollbar once a single
+                                    # legend passes ~35 entries, no matter how much space
+                                    # it's given (confirmed by testing at absurd margins/
+                                    # widths/orientations) — this custom list replaces it
+                                    # so every country always shows, with clicks wired to
+                                    # the same hidden-countries Store the figure reads.
+                                    html.Div(id="epmc-countries-legend", className="country-legend"),
                                     html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author’s affiliation for all publications.")
                                 ])
                             ),
@@ -84,7 +96,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 html.Div(
                                     [
-                                        html.H5("Most Cited GA4GH Publications", style={"marginBottom": "12px"}),
+                                        html.H5("Most Cited GA4GH Publications", style={"marginBottom": "1rem"}),
                                         html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                         html.Div(
                                             dash_table.DataTable(
@@ -102,15 +114,15 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                                     "padding": "4px 6px",
                                                     "fontSize": "13px",
                                                     "lineHeight": "1.15",
-                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                    "fontFamily": "'Figtree-Regular', 'Figtree', sans-serif",
                                                     "whiteSpace": "normal",
                                                 },
                                                 style_header={
-                                                    "backgroundColor": "#2c3e50",
+                                                    "backgroundColor": COLORS["dark"],
                                                     "color": "white",
                                                     "fontWeight": "bold",
                                                     "padding": "5px 6px",
-                                                    "fontFamily": "'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif",
+                                                    "fontFamily": "'Figtree-SemiBold', 'Figtree', sans-serif",
                                                 },
                                                 style_data_conditional=[
                                                     {"if": {"column_id": "article_link"}, "width": "8%", "textAlign": "center"},
@@ -119,7 +131,16 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                                 ],
                                                 css=[
                                                     {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.1;"},
-                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": "display:inline-block; padding:2px 8px; border:1px solid #0d6efd; background-color:#0d6efd; color:#fff; border-radius:0.375rem; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1;"},
+                                                    {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:2px 8px; border:1px solid {COLORS['orange']}; background-color:{COLORS['orange']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: background-color 0.2s ease, border-color 0.2s ease;"},
+                                                    {"selector": "td[data-dash-column='article_link'] a:hover", "rule": f"border-color:{COLORS['red']}; background-color:{COLORS['red']};"},
+                                                    # Same external-link glyph as .ga4gh-btn-dark[target="_blank"]
+                                                    # in style.css (new_ga4gh's fa-external-link, \f08e, via the
+                                                    # FontAwesomeSolid font already loaded there) — this table's
+                                                    # own "View" link isn't a .ga4gh-btn-dark button so that global
+                                                    # rule doesn't reach it, but markdown_options={"link_target":
+                                                    # "_blank"} below means every one of these links opens DOI.org
+                                                    # in a new tab too, for the same reason.
+                                                    {"selector": "td[data-dash-column='article_link'] a::after", "rule": "font-family:'FontAwesomeSolid'; font-style:normal; font-weight:normal; content:'\\f08e'; margin-left:0.4em;"},
                                                 ],
                                                 markdown_options={"link_target": "_blank"},
                                             ),
@@ -135,7 +156,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         className="d-flex",
                         md=6,
                     ),
-                ]
+                ],
+                className="chart-cards-row",
             ),
 
 

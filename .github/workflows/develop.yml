@@ -8,7 +8,7 @@ on:
     branches:
       - develop
       - main # temporary until we get a "develop" branch set up
-      - dc-deployment-pipeline # temporary branch for testing, to be removed once workflow is verified
+      - jt-iss-28-design-changes # temporary branch for testing, to be removed once workflow is verified
 permissions:
   id-token: write
 jobs:

@@ -2,6 +2,8 @@ from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
 
+from app.utils.ga4gh_theme import chart_expand_button
+
 def get_pypi_layout(pypi_details, total_packages):
     """
     Returns the PyPI page layout.
@@ -37,9 +39,10 @@ def get_pypi_layout(pypi_details, total_packages):
                                 id="filter-author",
                                 options=author_options,
                                 multi=True,
-                                placeholder="Select authors"
+                                placeholder="Select authors",
+                                className="list-filter",
                             )
-                        ], style={"width": "48%"}),
+                        ], className="chart-filter-half"),
 
                         html.Div([
                             html.Label("Email"),
@@ -47,12 +50,13 @@ def get_pypi_layout(pypi_details, total_packages):
                                 id="filter-email",
                                 options=email_options,
                                 multi=True,
-                                placeholder="Select emails"
+                                placeholder="Select emails",
+                                className="list-filter",
                             )
-                        ], style={"width": "48%"})
+                        ], className="chart-filter-half")
                     ],
+                    className="chart-filter-row",
                     style={
-                        "display": "flex",
                         "justifyContent": "space-between",
                         "margin-bottom": "15px"
                     }
@@ -67,9 +71,10 @@ def get_pypi_layout(pypi_details, total_packages):
                                 id="filter-category",
                                 options=category_options,
                                 multi=True,
-                                placeholder="Select categories"
+                                placeholder="Select categories",
+                                className="list-filter",
                             )
-                        ], style={"width": "48%"}),
+                        ], className="chart-filter-half"),
 
                         html.Div([
                             html.Label("Top Packages"),
@@ -82,12 +87,9 @@ def get_pypi_layout(pypi_details, total_packages):
                                 marks={i: str(i) for i in range(5, 55, 5)},
                                 tooltip={"placement": "bottom", "always_visible": True}
                             )
-                        ], style={"width": "48%"})
+                        ], className="chart-slider-wrap chart-filter-half")
                     ],
-                    style={
-                        "display": "flex",
-                        "justifyContent": "space-between"
-                    }
+                    className="chart-filter-row chart-filter-row--pypi",
                 ),
             ],
             style={
@@ -102,29 +104,40 @@ def get_pypi_layout(pypi_details, total_packages):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    dcc.Graph(id="datatable-bar"),
+                                    chart_expand_button("datatable-bar"),
+                                    html.H5(id="datatable-bar-title", style={"marginBottom": "1rem"}),
+                                    dcc.Graph(id="datatable-bar", config={"responsive": True}),
                                     html.Figcaption("Total number of versions for the top GA4GH-related PyPI packages, sorted in descending order by number of versions.")
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    dcc.Graph(id="category-distribution"),
+                                    chart_expand_button("category-distribution"),
+                                    html.H5("Category Distribution", style={"marginBottom": "1rem"}),
+                                    dcc.Graph(
+                                        id="category-distribution",
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
+                                    ),
                                     html.Figcaption("Relative proportion of package category for GA4GH-related PyPI packages.")
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
-                ]
+                ],
+                className="mb-4 chart-cards-row",
             ),
 
 

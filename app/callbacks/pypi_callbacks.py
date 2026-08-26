@@ -6,11 +6,13 @@ from app.services.pypi_client import get_pypi_details
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
+from app.utils.ga4gh_theme import PYPI_COLORWAY, COLORS
+
 
 PYPI_CATEGORY_COLORS = {
-    "Implementation": "#1f77b4",
-    "GA4GH Standard": "#ff7f0e",
-    "GA4GH mentions": "#2ca02c",
+    "Implementation": PYPI_COLORWAY[0],
+    "GA4GH Standard": PYPI_COLORWAY[1],
+    "GA4GH mentions": PYPI_COLORWAY[2],
 }
 
 def register_pypi_callbacks(app):
@@ -40,6 +42,7 @@ def register_pypi_callbacks(app):
     # -----------------------
     @app.callback(
         Output("datatable-bar", "figure"),
+        Output("datatable-bar-title", "children"),
         Input("filter-author", "value"),
         Input("filter-email", "value"),
         Input("filter-category", "value"),
@@ -75,30 +78,31 @@ def register_pypi_callbacks(app):
 
         # Customize layout
         fig.update_layout(
-            title={
-                "text": f"Top {top_n} Package Versions Count",
-                "x": 0.5,
-                "xanchor": "center",
-                "font": {"size": 20, "color": "#2C3E50"}
-            },
-            xaxis={"title": "Project Name", "tickangle": -45},
-            yaxis={"title": "Versions Count"},
-            plot_bgcolor="#f9f9f9",
-            paper_bgcolor="#ffffff",
-            margin={"b": 120},
+            xaxis={"title": "Project Name", "tickangle": -45, "automargin": True},
+            yaxis={"title": "Versions Count", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
+            plot_bgcolor=COLORS["white"],
+            paper_bgcolor=COLORS["white"],
+            margin={"t": 20, "b": 300},
+            # autosize (not a fixed/default height) — paired with
+            # config={"responsive": True} on the dcc.Graph, this lets the
+            # chart fill and resize with its card the same way its row
+            # sibling category-distribution already does.
+            autosize=True,
             legend={
-                "title": "Category",
-                "orientation": "v",  # vertical
+                # px.bar auto-titles the legend from the color= column name
+                # ("category") — an explicit "" overrides that default,
+                # merely omitting a "title" key here does not.
+                "title": {"text": ""},
+                "orientation": "h",
                 "yanchor": "top",
-                "y": 1,
-                "xanchor": "right",
-                "x": 1.02,
-                "bordercolor": "#ccc",
-                "borderwidth": 1
-            }
+                "y": -0.55,
+                "xanchor": "center",
+                "x": 0.5,
+            },
+            hoverlabel={"font": {"color": "white"}},
         )
 
-        return fig
+        return fig, f"Top {top_n} Package Versions Count"
 
     # -----------------------
     # Update pie chart based on filters
@@ -132,20 +136,34 @@ def register_pypi_callbacks(app):
                 "labels": cat_counts["category"],
                 "values": cat_counts["count"],
                 "type": "pie",
-                "hole": 0.4,
+                "hole": 1/3,
                 "textinfo": "label+percent",
+                # Without this, Plotly's default "auto" placement can push
+                # a thin slice's label outside the pie, which combined with
+                # the template's automargin:true shrinks the pie itself to
+                # make room — exactly what broke the mobile auto-fit's
+                # width assumption in assets/pie_autofit.js (it sizes the
+                # pie to fill the card's width exactly, which only holds if
+                # automargin never kicks in). Matches the other pies.
+                "textposition": "inside",
+                "textfont": {"color": "white"},
                 "hoverinfo": "label+value+percent",
                 "marker": {
                     "colors": [
-                        PYPI_CATEGORY_COLORS.get(cat, "#9aa0a6")
+                        PYPI_CATEGORY_COLORS.get(cat, COLORS["grey"])
                         for cat in cat_counts["category"]
                     ]
                 },
             }],
             "layout": {
-                "title": {"text": "Category Distribution", "x": 0.5, "xanchor": "center", "font": {"size": 20, "color": "#2C3E50"}},
-                "plot_bgcolor": "#f9f9f9",
-                "paper_bgcolor": "#ffffff"
+                "plot_bgcolor": COLORS["white"],
+                "paper_bgcolor": COLORS["white"],
+                "legend": {"orientation": "h", "yanchor": "top", "y": -0.1, "xanchor": "center", "x": 0.5},
+                # autosize (not a fixed height) — paired with config={"responsive":
+                # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
+                # scales with the card's actual width at any viewport.
+                "autosize": True,
+                "hoverlabel": {"font": {"color": "white"}},
             }
         }
         return fig
@@ -180,30 +198,31 @@ def register_pypi_callbacks(app):
 
                 html.Br(),
 
-                dbc.Button(
-                    "View on PyPI",
-                    href=project.get("package_url"),
-                    target="_blank",
-                    color="primary",
-                    className="me-2"
-                ),
+                html.Div([
+                    dbc.Button(
+                        html.Span("View on PyPI", className="btn-text"),
+                        href=project.get("package_url"),
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not project.get("package_url"),
+                    ),
 
-                dbc.Button(
-                    "Latest Release",
-                    href=project.get("release_url"),
-                    target="_blank",
-                    color="secondary",
-                    className="me-2"
-                ),
+                    dbc.Button(
+                        html.Span("Latest Release", className="btn-text"),
+                        href=project.get("release_url"),
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not project.get("release_url"),
+                    ),
 
-                dbc.Button(
-                    "View on GitHub",
-                    href=github_url,
-                    target="_blank",
-                    color="dark",
-                    className="me-2",
-                    disabled=not github_url
-                )
+                    dbc.Button(
+                        html.Span("View on GitHub", className="btn-text"),
+                        href=github_url,
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not github_url,
+                    ),
+                ], className="pypi-details-buttons")
 
             ])
 

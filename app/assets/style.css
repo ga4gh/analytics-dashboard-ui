@@ -1,23 +1,246 @@
 body {
-    font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-fi-regular);
+    font-size: var(--text-base);
     background-color: #ffffff;
 }
 
+/* Remove Bootstrap's default 1.5rem container-fluid x-gutter so page
+   sections can run edge-to-edge. */
+.container-fluid {
+    --bs-gutter-x: 0;
+}
+
+.gy-3 {
+    margin-top: 1rem;
+}
+
+/* Plotly renders chart text (axis labels, legends, hover) as SVG <text>
+   nodes — this is the only way to brand that text, since it isn't reachable
+   through the app's own component tree. */
 text {
-    font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
+    font-family: var(--font-fi-regular);
+}
+
+figcaption {
+    text-align: center;
+}
+
+/* Tables section captions read as left-aligned intro text for each table,
+   not a chart caption — charts keep the centered default above. */
+.tables-section figcaption {
+    text-align: left;
+}
+
+/* Every chart card wraps [title?, dcc.Graph, figcaption] in a <figure> inside
+   .card-body. Bootstrap's .card-body already stretches to fill the card's
+   full height (h-100 cards, equal-height rows) — turning the figure itself
+   into a flex column lets the graph (.dash-graph, Dash's own wrapper class)
+   flex-grow to fill whatever space is left after the title and caption,
+   instead of sitting at a fixed pixel height with leftover space stranded
+   below it. The caption then gets a fixed 2rem gap above it (not the chart's
+   own fixed height), so it lands 2rem under the graph in every card
+   regardless of that card's actual height, and cards in the same row still
+   line up since the graph itself absorbs whatever height differs between
+   them. Note: a pie/bar chart's legend renders as part of the Plotly SVG
+   itself, not a separate DOM node, so this can size the *graph* against the
+   caption precisely, but can't independently pin the legend a fixed 2rem
+   above the caption — that inner spacing is set per-chart via each figure's
+   own margin/legend-position in Python instead. */
+.card-body > figure {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-body > figure > .dash-graph {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.card-body > figure > .dash-graph .js-plotly-plot,
+.card-body > figure > .dash-graph .plot-container {
+    height: 100% !important;
+}
+
+.card-body > figure figcaption {
+    margin-top: 2rem;
+    flex: 0 0 auto;
+}
+
+/* These pies/donuts have a lot of horizontally-wrapped legend entries
+   (up to ~24 for the countries pie), so on desktop they were given a fixed
+   height (900px/1050px) tall enough that the legend never became the
+   constraining dimension at their card's ~746px width — the pie always
+   filled the card's width instead of being squeezed by the legend. That
+   fixed pixel height didn't know about the card's actual width though, so
+   on a narrow mobile card (~343px) the exact same 900-1050px height turned
+   into a lot of empty space above/below the now much-smaller pie.
+   aspect-ratio (paired with the figure's own autosize=True + the graph's
+   config={"responsive": True} in Python) keeps the SAME proportions this
+   card had on desktop, but recomputes as a real height at ANY card width —
+   so mobile gets a short card instead of a fixed-tall one, with no
+   viewport-specific breakpoint tuning needed. Ratio = 746px (this card's
+   measured desktop width) : the original fixed height. */
+.chart-aspect-tall,
+.chart-aspect-taller,
+.chart-aspect-square {
+    flex: 1 1 auto;
+}
+
+.chart-aspect-tall {
+    aspect-ratio: 746 / 900;
+}
+
+.chart-aspect-taller {
+    aspect-ratio: 746 / 1050;
+}
+
+/* The countries pie has no Plotly-rendered legend inside its SVG anymore
+   (see .country-legend below) — just a plain circle, so a simple 1:1
+   aspect-ratio is enough to fill the card's width at any viewport, no
+   JS-measured margin math needed the way the other pies still require. */
+.chart-aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+/* Custom HTML replacement for the countries pie's Plotly legend — Plotly's
+   own legend forces a scrollbar once a single legend passes ~35 entries
+   (this pie's country count), regardless of how much space it's given
+   (confirmed by testing at absurd margins/widths/orientations, none of
+   which disengage it). Plain flex-wrap here has no such limit: every
+   country always shows. */
+/* Grid, not flex-wrap: a ragged flex-wrap row sizes each item to its own
+   country name's width, so swatches land at a different x on every row.
+   Equal-width grid columns (auto-fit picks however many columns of the
+   widest entry's own width fit) keep every swatch and label aligned down
+   each column no matter how country name lengths vary between rows. */
+.country-legend {
+    display: grid;
+    /* Placeholder only, for the brief moment before country_legend_grid.js
+       measures the real widest entry and overwrites this inline — CSS alone
+       can't express "every column exactly as wide as the widest entry,
+       nothing more": auto-fit needs a definite minimum to even compute a
+       column count, and a value like minmax(0, max-content) sounds like "no
+       floor" but actually makes auto-fit treat almost every item as its own
+       column (0-width tracks technically "fit" indefinitely), squeezing
+       everything into one row. See that file for why this has to be
+       measured in JS instead. */
+    grid-template-columns: repeat(auto-fit, minmax(120px, max-content));
+    justify-content: space-evenly;
+    gap: 0.35rem 0.75rem;
+    width: 100%;
+    /* Desktop's figure has no general child-to-child gap (only figcaption
+       gets its own fixed margin-top) — this is a newly-added flex child
+       replacing what used to be Plotly's in-SVG legend, so without this it
+       would sit flush against the pie. Matches the same 2rem the figure's
+       own figcaption already uses for its gap above. Cancelled out on
+       mobile, where .card-body > figure's own gap:1rem already spaces every
+       child. */
+    margin-top: 2rem;
+}
+
+.country-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-size: 12px;
+    color: var(--dark);
+    cursor: pointer;
+    width: 100%;
+    /* min-width:0 lets the label's own ellipsis (below) actually kick in —
+       a flex item's default min-width:auto would otherwise let it overflow
+       its column instead of truncating. */
+    min-width: 0;
+}
+
+.country-legend-swatch {
+    width: 13px;
+    height: 13px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+}
+
+.country-legend-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Matches Plotly's own convention for a toggled-off legend entry. */
+.country-legend-item--hidden {
+    opacity: 0.35;
+    text-decoration: line-through;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+    /* gap replaces the fixed margin-top:2rem on figcaption (desktop still
+       uses that — see .card-body > figure figcaption above) with an even
+       1rem between EVERY direct child of the column: title, chart, and
+       figcaption all get the same spacing instead of just the last one. */
+    .card-body > figure {
+        gap: 1rem;
+        /* The base (desktop) rule sets height:100% so the figure fills
+           whatever taller height a h-100 equal-height row stretches its
+           card to — cards no longer share a row height once stacked to one
+           column here, so that stretch just leaves dead space below the
+           figcaption instead. auto lets the figure (and the card wrapping
+           it, and h-100's own auto override above) shrink to fit its own
+           title+chart+legend+figcaption content. */
+        height: auto;
+        /* Browsers give <figure> a default margin (1em/16px bottom here) —
+           with .card-body's own 1rem padding, that silently doubles the gap
+           below the figcaption to 2rem instead of the intended 1rem. */
+        margin: 0;
+    }
+
+    /* Desktop's .country-legend margin-top spaces it below the pie since
+       desktop's figure has no general gap — redundant here (figure's own
+       gap:1rem above already spaces every child), so cancelled out rather
+       than stacking into a 1.5rem+1rem gap. */
+    .country-legend {
+        margin-top: 0;
+    }
+
+    /* Chart titles carry their own inline marginBottom:8px (authored for
+       the pre-gap desktop layout) — that stacks with the gap above to give
+       24px instead of the intended 1rem/16px. !important since inline
+       style otherwise wins. */
+    .card-body > figure > h5 {
+        margin-bottom: 0 !important;
+    }
+
+    /* Several figcaptions carry their own inline marginTop:6px too (same
+       issue as h5's marginBottom above) — !important since inline wins
+       otherwise. */
+    .card-body > figure figcaption {
+        margin-top: 0 !important;
+    }
 }
 
 .my-button {
     background-color: #007BFF;
     color: white;
-    padding: 10px;
-    border-radius: 5px;
-    font-family: 'Proxima Nova', 'ProximaNova', 'Helvetica Neue', Arial, sans-serif;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-family: var(--font-ws-bold);
 }
+
+/* new_ga4gh base/_typography.scss's heading scale: h1-h5 are Work Sans Bold
+   at the --text-4xl..--text-lg steps; h6 is deliberately left unstyled
+   there too, inheriting the body's Figtree Regular / --text-base. */
+h1 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-4xl); }
+h2 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-3xl); }
+h3 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-2xl); }
+h4 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-xl); }
+h5 { font-family: var(--font-ws-bold); font-weight: 700; font-size: var(--text-lg); }
 
 /* EPMC affiliation dropdown: wider menu and wrapped text for long institution names. */
 #epmc-affiliation-filter .Select-menu-outer {
-    width: min(900px, 92vw);
+    width: min(56.5rem, 92vw);
 }
 
 #epmc-affiliation-filter .Select-option,
@@ -25,8 +248,8 @@ text {
     white-space: normal;
     overflow: visible;
     line-height: 1.3;
-    min-height: 96px;
-    padding: 8px;
+    min-height: 6rem;
+    padding: 0.5rem;
 }
 
 .epmc-affiliation-option {
@@ -35,12 +258,104 @@ text {
     line-height: 1.3;
 }
 
-.custom-dropdown .Select-control {
-    border-radius: 5px !important;
-    border: 1px solid #ccc !important;
+/* new_ga4gh components/_list-filters.scss .list-filter (extends .label):
+   the underline-only search box / dropdown used by every filterable list
+   on the reference site — ported here for the Tables section's search
+   boxes and year dropdown. */
+/* Scoped to the actual form element (input/select), not the bare class —
+   dcc.Dropdown puts this className on react-select's OUTER wrapper div,
+   which itself contains a nested .Select-control. Styling both as boxes
+   renders two stacked underlines, so the wrapper only carries the class
+   as a hook for the .Select-control rules below. */
+input.list-filter,
+select.list-filter {
+    font-family: var(--font-sg-bold);
+    font-size: var(--text-sm);
+    line-height: 1.41;
+    text-transform: uppercase;
+    border: none;
+    border-bottom: 2px solid var(--lightgrey);
+    border-radius: 0;
+    height: clamp(40px, 10vw, 50px);
+    padding: 0.5rem 1rem;
+    background: var(--white);
+    color: var(--dark);
+    box-shadow: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+input.list-filter:hover,
+input.list-filter:focus,
+select.list-filter:hover,
+select.list-filter:focus {
+    cursor: pointer;
+    color: var(--dark);
+    background-color: var(--lightgrey);
+    border-bottom-color: var(--dark);
+    outline: none;
+}
+
+input.list-filter[type="text"]::placeholder {
+    color: var(--grey);
+    opacity: 1;
+}
+
+/* dcc.Dropdown renders react-select's own markup (.Select-control etc.)
+   inside the element carrying our className, so the underline treatment
+   has to target that inner control rather than the wrapper itself. */
+.list-filter .Select-control {
+    display: flex !important;   /* react-select defaults to display:table, whose
+                                    row height grows with content — flex respects
+                                    the explicit height below instead. */
+    align-items: center;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: none !important;
+    border-bottom: 2px solid var(--lightgrey) !important;
+    border-radius: 0 !important;
+    background: var(--white) !important;
     box-shadow: none !important;
-    height: 38px !important;
-    line-height: 38px !important;
+    height: clamp(40px, 10vw, 50px) !important;
+    padding: 0.5rem 1rem;
+    min-width: 11rem;
+    /* The wrapper carrying our className (.list-filter, styled above) is
+       the one whose width actually gets set (100% on mobile, an explicit
+       px value on desktop for some dropdowns like epmc-year-filter) — this
+       inner control had no width rule of its own at all, just min-width,
+       so it was left to default block auto-sizing to inherit that instead
+       of reliably matching it. */
+    width: 100% !important;
+}
+
+.list-filter .Select-multi-value-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    height: 100%;
+    position: relative;
+}
+
+.list-filter .Select-placeholder,
+.list-filter .Select-value {
+    position: static;
+    padding: 0 !important;
+    line-height: normal !important;
+}
+
+.list-filter:hover .Select-control,
+.list-filter.is-focused .Select-control,
+.list-filter.is-open .Select-control {
+    background-color: var(--lightgrey) !important;
+    border-bottom-color: var(--dark) !important;
+}
+
+.list-filter .Select-placeholder,
+.list-filter .Select-value-label,
+.list-filter .Select-input > input {
+    font-family: var(--font-sg-bold);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    color: var(--dark);
 }
 
 .epmc-most-cited-item,
@@ -51,10 +366,12 @@ text {
     line-height: 1.35;
 }
 
-/* Keep DataTable export and pagination controls on one bottom row. */
+/* Keep DataTable export and pagination controls on one bottom row, with a
+   1rem gap above them so they don't sit flush against the table's last row.
+   48px accounts for the Export button's own clamp(2.5rem,10vw,3rem) height. */
 .datatable-controls-inline .dash-table-container {
     position: relative;
-    padding-bottom: 40px;
+    padding-bottom: calc(48px + 1rem);
 }
 
 .datatable-controls-inline .dash-spreadsheet-menu {
@@ -71,9 +388,278 @@ text {
     margin: 0;
 }
 
+/* Row-selector radio buttons (dash_table's row_selectable="single") are
+   plain native <input type="radio"> — no custom className of their own.
+   accent-color was tried first (the simplest option) but Chromium's own
+   accent-color rendering computes a darkened shade for the checked ring
+   for contrast, which reads as a muddy/dark ring rather than a clean
+   single-tone circle for a bright hue like this green — not something
+   accent-color's single-color input can control. appearance:none plus a
+   hand-drawn ring (border) and center dot (background + an inset white
+   box-shadow "gap") gives exact, deterministic control over both instead,
+   with the same color used for both — no browser-computed shade
+   involved. One color per table, matching each section's own theme color
+   (EPMC red, GitHub green, PyPI purple) rather than the browser/OS default
+   blue every table shared.
+   !important on the shared rule: dash_table's own injected <style> resets
+   margin/box-sizing/padding to "initial" for this exact selector, and
+   which of the two <style> tags loads later (and so wins a plain-
+   specificity tie) isn't guaranteed. */
+#epmc-entries-table input[type="radio"],
+#github-projects-table input[type="radio"],
+#projects-table input[type="radio"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 50%;
+    background-color: var(--white);
+    cursor: pointer;
+}
+
+#epmc-entries-table input[type="radio"] {
+    border: 2px solid var(--red);
+}
+
+#epmc-entries-table input[type="radio"]:checked {
+    background-color: var(--red);
+    box-shadow: inset 0 0 0 3px var(--white);
+}
+
+#github-projects-table input[type="radio"] {
+    border: 2px solid var(--green);
+}
+
+#github-projects-table input[type="radio"]:checked {
+    background-color: var(--green);
+    box-shadow: inset 0 0 0 3px var(--white);
+}
+
+#projects-table input[type="radio"] {
+    border: 2px solid var(--purple);
+}
+
+#projects-table input[type="radio"]:checked {
+    background-color: var(--purple);
+    box-shadow: inset 0 0 0 3px var(--white);
+}
+
+/* refcloud-ui's .ga4gh-pagination treatment (globals.css), ported onto the
+   DataTable's own "1 / 86" page indicator + prev/next/first/last arrows
+   rather than switching to refcloud's clickable page-number-list layout. */
+.previous-next-container {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* !important throughout: dash_table's own bundle.js injects a hardcoded
+   hotpink :hover rule for these buttons at runtime, after our stylesheet —
+   same-specificity tie that its later load order would otherwise win. */
+.previous-next-container button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem;
+    color: var(--lightblue) !important;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.previous-next-container button::after {
+    content: "";
+    position: absolute;
+    left: 0.35rem;
+    right: 0.35rem;
+    bottom: 0;
+    height: 2px;
+    background-color: var(--darkblue);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.previous-next-container button:hover:not(:disabled) {
+    color: var(--darkblue) !important;
+    opacity: 1;
+}
+
+.previous-next-container button:hover:not(:disabled)::after {
+    opacity: 1;
+}
+
+.previous-next-container button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Match new_ga4gh's .btn-dark treatment (see .ga4gh-btn-dark, used by this
+   same tables section's row-detail links) on the DataTable's own
+   auto-generated Export button, so it reads as the same button language
+   instead of the browser default. !important throughout for the same
+   reason as .previous-next-container button above: dash_table's bundle.js
+   injects its own hotpink :hover rule at runtime, after our stylesheet. */
+.dash-spreadsheet-menu .export {
+    position: relative;
+    /* z-index:0 (not just position:relative) is required here: a positioned
+       box with z-index:auto does NOT establish its own stacking context per
+       CSS2.1, so the ::after's z-index:-1 below would otherwise escape to
+       the nearest ancestor that does establish one and paint behind that
+       instead — behind the whole table/card, not just behind this button's
+       text. */
+    z-index: 0;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: clamp(2.5rem, 10vw, 3rem);
+    aspect-ratio: 270 / 60;   /* same proportions as .ga4gh-btn-light/-dark */
+    padding-inline: clamp(1rem, 2cqw, 2rem);
+    padding-block: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    /* Inverse of .ga4gh-btn-dark/-light: dark at rest so it reads as its own
+       thing against the tables section's lightgrey page background, with a
+       rising WHITE bar on hover (text flips dark once the bar covers it) —
+       same mechanic as .ga4gh-btn-light, just starting from a solid dark
+       resting state instead of a translucent light one. */
+    background-color: var(--dark) !important;
+    color: var(--white) !important;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+/* The rising white-bar sweep — see .dash-spreadsheet-menu .export above for
+   why z-index:-1 (not a wrapped .btn-text span like .ga4gh-btn-dark uses)
+   is what keeps this button's plain "Export" text on top of the fill. */
+.dash-spreadsheet-menu .export::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    top: calc(100% - 2px);
+    width: 100%;
+    height: 2px;
+    background-color: var(--white);
+    transition: all 0.3s ease;
+}
+
+.dash-spreadsheet-menu .export:hover::after,
+.dash-spreadsheet-menu .export:focus-visible::after {
+    top: 0;
+    height: 100%;
+}
+
+.dash-spreadsheet-menu .export:hover,
+.dash-spreadsheet-menu .export:focus-visible {
+    color: var(--dark) !important;
+}
+
+.previous-next-container .page-number {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--dark);
+}
+
+/* dash_table's runtime CSS also targets .page-number directly — a 3-class
+   selector (.dash-table-container .previous-next-container .page-number)
+   that beats our 2-class rule above on specificity alone, silencing our
+   display:flex/align-items:center. That's what let current-page-container's
+   3px padding-bottom (for the active-page underline) throw off baseline
+   alignment against the "/" and .last-page — flex+align-items:center makes
+   all three sit on the same visual center regardless of that padding.
+   Same fix pattern as the current-page border-bottom above: match/beat
+   their selector specificity, plus !important since font-family:monospace
+   would otherwise cascade down into the bare "/" text node too. */
+.datatable-controls-inline .dash-table-container .previous-next-container .page-number {
+    display: flex !important;
+    align-items: center !important;
+    font-family: var(--font-ws-bold) !important;
+}
+
+/* The editable "current page" box — strip Dash's default bordered input
+   look and replace with refcloud's active-page underline instead. */
+.previous-next-container .current-page-container {
+    position: relative;
+    padding-bottom: 3px;
+}
+
+.previous-next-container .current-page-container::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 3px;
+    background-color: var(--darkblue);
+}
+
+/* !important throughout: dash_table's bundle.js injects its own runtime
+   CSS for these two elements (monospace font, a light grey border-bottom
+   on the input) after our stylesheet loads — same reason .previous-next-
+   container button and .export need it above. Without it, the page number
+   renders in the browser-default monospace font with a stray grey
+   underline from the input showing through beneath our intentional
+   darkblue accent bar (.current-page-container::after). */
+.previous-next-container .current-page {
+    border: none !important;
+    border-bottom: none !important;
+    background: none !important;
+    color: var(--dark) !important;
+    font-family: var(--font-ws-bold) !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    text-align: center;
+    padding: 0;
+}
+
+/* .current-page-shadow is a real DOM twin of the input that dash_table
+   uses purely to measure the rendered text width (inputs can't auto-size
+   to their own content) — the actual <input> is absolutely positioned
+   exactly on top of it. It was never actually hidden, so it painted its
+   own "1" directly under the input's, reading as a duplicated/overlapping
+   page number even after their fonts matched. visibility:hidden (not
+   display:none) keeps it in the layout so dash_table can still measure
+   its width, while making sure only the real input's text ever paints. */
+.previous-next-container .current-page-shadow {
+    visibility: hidden;
+    font-family: var(--font-ws-bold) !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+}
+
+/* The border-bottom above still loses to dash_table's runtime rule — its
+   selector (.dash-table-container .previous-next-container .page-number
+   .current-page-container input.current-page) has 5 classes to our 2, so
+   equal !important falls back to specificity and theirs wins. Matching
+   their exact selector chain plus one more ancestor class guarantees a
+   strictly higher specificity, regardless of which stylesheet loads last. */
+.datatable-controls-inline .dash-table-container .previous-next-container
+    .page-number .current-page-container input.current-page {
+    border-bottom: none !important;
+}
+
+.previous-next-container .last-page {
+    color: var(--dark);
+    opacity: 0.6;
+}
+
 :root {
     /* ---------- Colors ---------- */
-    --heroblue: #02266a;          /* Green Vogue */
+    --heroblue: #01266a;          /* Green Vogue — corrected from #02266a to match new_ga4gh's actual $heroblue */
     --darkblue: #1b75bb;          /* Denim */
     --faint-darkblue: #1b75bb50;
 
@@ -94,17 +680,26 @@ text {
 
 /* Secondary Colours */
 
-    --secondary-blue:#6492BE;     /* Blue Jeans */
-    --secondary-orange: #F15B27;    /* Flame */
-    --pink: #ED2079;       /* Razzmatazz */
-    --secondary-purple: #A72176;       /* Red Violet */
+    --secondary-blue:#6492BE;     /* Blue Jeans / new_ga4gh $cerulean-frost */
+    --secondary-orange: #F15B27;    /* Flame / new_ga4gh $flamingo */
+    --pink: #ED2079;       /* Razzmatazz / new_ga4gh $razzmatazz */
+    --secondary-purple: #A72176;       /* Red Violet / new_ga4gh $violet-purple */
+    --midnight-blue: #01225f;      /* new_ga4gh $midnight-blue */
+    --mamba: #9c879b;              /* new_ga4gh $mamba */
 
     --darkgreen: #00a99d;
+    --faint-darkgreen: #00a99d50;
+
+    /* Not in new_ga4gh's palette — added as a 4th distinct green for the
+       GitHub colorway (app/utils/ga4gh_theme.py's COLORS["forest_green"]). */
+    --forest-green: #4a7c2e;
+    --faint-forest-green: #4a7c2e50;
 
     --headergrey: #f8f8f8;        /* Alabaster */
-    --border-grey: #77787b;       /* Jumbo */
-    --lightgrey: #f4f4f4;
-    --grey: #e8e8e8;             /* Platinum */
+
+    /* new_ga4gh base/_colours.scss's three greys: $lightgrey/$grey/$dark */
+    --lightgrey: #efefef;
+    --grey: #767676;
 
     --white: #ffffff;             /* White */
     --dark: #363636;              /* Dark */
@@ -123,6 +718,32 @@ text {
     --gradient-lightblue-darkblue: linear-gradient(270deg, var(--lightblue), var(--darkblue));
     --gradient-lightblue-green: linear-gradient(270deg, var(--green), var(--lightblue));
     --gradient-green-darkgreen: linear-gradient(270deg, var(--darkgreen), var(--green));
+
+    /* new_ga4gh base/_colours.scss $lightgrey-grey: standard-page hero background */
+    --gradient-lightgrey-grey: linear-gradient(270deg, var(--grey) 0%, var(--lightgrey) 100%);
+
+    /* new_ga4gh base/_typography.scss's fluid type scale, so text shrinks with
+       the viewport instead of overflowing fixed-size containers (e.g. the KPI
+       indicator cards). --text-sm's max corrects an apparent typo in the
+       source (0.11rem, smaller than its own min) — every other step scales
+       up monotonically, so this should read 1.1rem. */
+    --text-xs: clamp(0.65rem, 0.75vw, 0.9rem);
+    --text-sm: clamp(0.85rem, 0.9vw, 1.1rem);
+    --text-base: clamp(0.95rem, 1.15vw, 1.25rem);
+    --text-md: clamp(1.05rem, 1.2vw, 1.3rem);
+    --text-lg: clamp(1.1rem, 1.3vw, 1.4rem);
+    --text-xl: clamp(1.25rem, 1.5vw, 1.6rem);
+    --text-2xl: clamp(1.5rem, 1.9vw, 2rem);
+    --text-3xl: clamp(1.75rem, 2.4vw, 2.5rem);
+    --text-4xl: clamp(2rem, 3vw, 3.5rem);
+
+    /* new_ga4gh base/_typography.scss's $font-* maps (family stacks only —
+       plain CSS has no @include font($font) mixin, so font-weight is still
+       set alongside each var() reference). Named to match new_ga4gh exactly. */
+    --font-ws-bold: "WorkSans-Bold", "Work Sans", sans-serif;
+    --font-fi-regular: "Figtree-Regular", "Figtree", sans-serif;
+    --font-fi-semibold: "Figtree-SemiBold", "Figtree", sans-serif;
+    --font-sg-bold: "SpaceGrotesk-Bold", "Space Grotesk", sans-serif;
 }
 
 .border-heroblue   { border-right: 12px solid var(--heroblue); }
@@ -133,6 +754,8 @@ text {
 .border-red        { border-right: 12px solid var(--red); }
 .border-green      { border-right: 12px solid var(--green); }
 .border-darkgreen  { border-right: 12px solid var(--darkgreen); }
+.border-pink       { border-right: 12px solid var(--pink); }
+.border-secondary-orange { border-right: 12px solid var(--secondary-orange); }
 
 .bg-faint-darkblue  { background-color: var(--faint-darkblue); }
 .bg-faint-lightblue { background-color: var(--faint-lightblue); }
@@ -141,45 +764,112 @@ text {
 .bg-faint-red       { background-color: var(--faint-red); }
 .bg-faint-green     { background-color: var(--faint-green); }
 
+/* new_ga4gh components/_status-badges.scss's .status pill (also ported as
+   refcloud-ui's .ga4gh-status) — colored border + faint (31%-alpha) fill of
+   the same color, rather than Bootstrap's solid-fill dbc.Badge default. */
+/* !important: dbc.Badge with no explicit `color` prop defaults to
+   "secondary", adding Bootstrap's .badge.bg-secondary alongside this one. */
+.ga4gh-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 100px !important;
+    padding: 0.5rem 1rem !important;
+    border: 2px solid transparent;
+    font-family: var(--font-fi-regular);
+    font-weight: 800;
+    font-size: var(--text-xs) !important;
+    white-space: nowrap;
+    color: var(--dark) !important;
+}
+
+.ga4gh-pill-green        { border-color: var(--green) !important; background-color: var(--faint-green) !important; }
+.ga4gh-pill-darkgreen    { border-color: var(--darkgreen) !important; background-color: var(--faint-darkgreen) !important; }
+.ga4gh-pill-forest-green { border-color: var(--forest-green) !important; background-color: var(--faint-forest-green) !important; }
+
 /* Font Imports */
 
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700&family=Space+Grotesk:wght@400;700&family=Roboto:wght@100;400;700&family=Open+Sans:wght@300;400;600&family=Figtree:wght@300;400;600;700&display=swap');
 
 .dashboard-title {
-    margin-bottom: 25px;
-    margin-top: 30px;
+    margin-bottom: 1.5rem;
+    margin-top: 2rem;
     font-size: clamp(2rem, 4vw, 3.5rem);
     font-weight: 700;
     line-height: 146%;
-    font-family: "WorkSans-Bold", "Work Sans", sans-serif;
+    font-family: var(--font-ws-bold);
     color: var(--darkblue);
 }
 
-.logo-img {
-    width: 100%;
-    max-height: 120px;
-    object-fit: contain;
+/* Navbar brand lockup, matching refcloud-ui's components/layout/Navbar.tsx */
+.brand-link {
+    text-decoration: none;
+    cursor: pointer;
 }
 
+.brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.brand-logo-img {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.brand-text-primary,
+.brand-text-base {
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+}
+
+.brand-text-primary { color: var(--darkblue); }
+.brand-text-base { color: var(--dark); }
+
 .indicator-card {
-    border-radius: 10px;
-    height: 72px;
+    border-radius: 0.5rem;
+    height: 4.5rem;
 }
 
 .indicator-card-body {
-    padding: 12px 16px;
+    padding: 0.5rem;
+}
+
+/* Spacing between KPI cards comes from the row's own gap now, not each
+   card's left/right padding — zero out Bootstrap's column gutters (both
+   axes, since .gy-3 sets --bs-gutter-y too) so they don't stack on top of
+   the gap when cards wrap to multiple lines on narrow viewports. */
+.kpi-row {
+    --bs-gutter-x: 0;
+    --bs-gutter-y: 0;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Always 3 cards per row on desktop, overriding each column's own Bootstrap
+   md=2 (which fits up to 6 per row) — accounts for the row's 1rem gap so
+   3 columns plus 2 gaps exactly fill the row width, regardless of how many
+   cards are currently visible for the active persona. */
+@media (min-width: 768px) {
+    .kpi-row > div {
+        flex: 0 0 calc((100% - 2rem) / 3);
+        width: calc((100% - 2rem) / 3);
+    }
 }
 
 .indicator-value {
     margin: 0;
-    font-size: 26px;
+    font-size: var(--text-xl);
     font-weight: 600;
     color: var(--dark);
 }
 
 .indicator-label {
-    font-size: 14px;
-    color: var(--border-grey);
+    font-size: var(--text-md);
+    color: var(--grey);
 }
 
 
@@ -193,7 +883,7 @@ text {
     font-size: clamp(1rem, 1.2vw, 1.25rem);
     line-height: 1.5;
     color: var(--dark);
-    font-family: "Figtree-Regular", "Figtree", sans-serif;
+    font-family: var(--font-fi-regular);
 }
 
 .section-spacer {
@@ -204,9 +894,10 @@ text {
 .section-title {
     font-size: clamp(1.5rem, 2.5vw, 2.25rem); /* responsive scaling */
     line-height: 1.22;
-    font-family: "WorkSans-Bold","Work Sans",sans-serif;
+    font-family: var(--font-ws-bold);
     font-weight: 700;
-    margin-left: 40px;   /* 👈 indent from left */
+    margin-left: 2.5rem;   /* 👈 indent from left */
+    margin-bottom: 2rem;
 }
 
 @media (max-width: 768px) {
@@ -218,99 +909,303 @@ text {
 
 .servicemap-section, .metrics-section, .epmc-section, .github-section, .pypi-section, .tables-section {
     background: var(--lightgrey);
-    padding: 40px;
-    border-radius: 20px;
-    border: solid 1px var(--grey);
+    padding: 2.5rem;
     margin-top: clamp(1em, 4vw, 4em);
     margin-bottom: clamp(1em, 4vw, 4em);
 }
-
+@media (max-width: 768px) {
+.servicemap-section, .metrics-section, .epmc-section, .github-section, .pypi-section, .tables-section {
+    padding: 2rem 1rem 1rem;
+    margin-top: clamp(1em, 4vw, 4em);
+    margin-bottom: 0;
+}
+}
+/* Standard-page hero, matching new_ga4gh's layout/_page-heroes.scss
+   `.page-hero-standard-wrapper.none` (the neutral grey/logo fallback used by
+   pages with no work-stream section) + `.page-hero-standard` + `.summary-standard` */
 .hero-section {
     position: relative;
-    height: 700px;
-    background: var(--gradient-green-darkgreen);
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    padding-top: 120px;
+    background: var(--gradient-lightgrey-grey);
+    padding-top: 7rem; /* clear the fixed .top-bar (now ~4rem tall) */
     overflow: hidden;
 }
 
 .hero-section::before {
     content: "";
     position: absolute;
-    inset: 0;             /* shorthand for top/left/right/bottom */
+    inset: 0;
 
-    opacity: 0.15;
-    background-image: url("/assets/logo-tower-white.svg");
-    background-repeat: repeat-y;
-    background-size: calc(120% + 40vh);
-    background-position: 40% 60%;
+    opacity: 0.25;
+    background-image: url("/assets/logo-mark-white.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: clamp(30rem, 65vw, 70rem);
     z-index: 0;           /* 👈 sit behind content */
 }
 
+.hero-standard {
+    position: relative;
+    z-index: 1;
+    min-height: 20rem;
+    display: flex;
+    align-items: center;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Shared horizontal box model matching the hero's actual content offset:
+   hero-standard's 2rem inset + hero-summary's own 2rem inset stack to 4rem,
+   so sections below the hero (methods/terms expander, KPI row, etc.) line
+   up with the hero title/paragraph edges, not just hero-standard's outer box. */
+.section-standard-width {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 4rem;
+    padding-right: 4rem;
+}
 
 /* WHITE BOX */
-.hero-content-box {
-    width: 45vw;
-    max-width: 1280px;
-    margin-left: 40px;
-    background: white;
-    padding: 40px;
-    z-index: 1;
+.hero-summary {
+    width: 100%;
+    background: var(--white);
+    padding: 0 2rem;
 }
 
-.hero-right-panel {
+.hr-hero {
+    background-color: var(--grey);
+    height: 1px;
+    margin-bottom: 1rem;
+    border: none;
+}
+
+/* Each of the three groups (Created by / Data Sources / Data Updated) is
+   its own row, stacked vertically here — always, on both desktop and
+   mobile, since there are genuinely three distinct entities rather than
+   one flowing line of badges. */
+.hero-badges-row {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 0 40px 40px 20px;
-    z-index: 1;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
 }
 
+/* One group = a .hero-cta label plus the .hero-badge value(s) that belong
+   to it. align-items:center lines the label up with its badge(s) — their
+   different padding/font-size (.hero-cta has none, .hero-badge has 0.5rem
+   + a border) would otherwise leave them at different vertical positions
+   when sitting in the same row. Desktop keeps label and badge(s) on one
+   row (flex-direction defaults to row); the responsive block below stacks
+   them instead, label above / badge(s) below. */
+.hero-badge-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+}
+
+/* Wraps multiple badges under one label (only "Data Updated:" has more
+   than one) so they move/wrap together as their own block, rather than
+   each being a direct flex child of .hero-badge-group alongside the label
+   itself. */
+.hero-badge-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Matches new_ga4gh's layout/_article-page.scss .category-tags + base/_typography.scss .label,
+   ported by refcloud-ui as .ga4gh-tag */
+/* !important: dbc.Badge renders with a "badge bg-secondary" class by default
+   (dash-bootstrap-components' own defaultProps), and Bootstrap's .bg-secondary
+   utility sets background-color with !important, which otherwise wins over
+   this same-specificity single-class selector regardless of stylesheet order. */
 .hero-badge {
-    display: inline-block;
-    padding: 8px 14px;
-    background-color: rgba(255, 255, 255, 0.15);
-    color: var(--white);
-    font-size: 13px;
-    font-weight: 500;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    text-align: left;
-    white-space: nowrap;
+    display: inline-block !important;
+    padding: 0.5rem !important;
+    background-color: var(--lightgrey) !important;
+    color: var(--dark) !important;
+    border: solid 1px var(--grey) !important;
+    border-radius: 0 !important;
+    font-family: var(--font-sg-bold) !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    line-height: 1.41 !important;
+    text-transform: uppercase !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+
+/* Matches new_ga4gh's base/_typography.scss .cta — the plain-text label
+   that precedes each .hero-badge pill ("Created by:", "Data Sources:",
+   "Data Updated:"): same uppercase Work Sans Bold weight/case as the pills
+   next to it, but no border/background/pill padding, since it's a label
+   for the badge rather than a badge itself. !important for the same reason
+   as .hero-badge: dbc.Badge's own "badge bg-secondary" default classes
+   would otherwise win on background/padding/display. */
+.hero-cta {
+    display: inline-block !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    color: var(--dark) !important;
+    font-family: var(--font-ws-bold) !important;
+    font-weight: 700 !important;
+    font-size: clamp(1rem, 1.1vw, 1.1rem) !important;
+    line-height: 1.33 !important;
+    text-transform: uppercase !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+}
+
+/* Chart filter rows (EPMC/PyPI/GitHub "Top N" slider + its neighbouring
+   dropdown) — was inline styling repeated per page; centralized here so the
+   mobile override below can target real classes instead of fighting inline
+   style specificity with !important. flex-wrap:wrap is harmless on desktop
+   (nothing overflows there) and lets the mobile override work by itself. */
+.chart-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.chart-filter-row--epmc {
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.chart-filter-row--pypi {
+    justify-content: space-between;
+}
+
+.chart-filter-row--github {
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.chart-slider-wrap {
+    width: 50%;
+}
+
+/* pypi's dropdown+slider pair are both 48% (not the 50% default above);
+   github's workstream dropdown is 25%. */
+.chart-filter-half {
+    width: 48%;
+}
+
+.chart-filter-quarter {
+    width: 25%;
+}
+
+.chart-slider-wrap--push-right {
+    margin-left: auto;
 }
 
 @media (max-width: 768px) {
 
+    /* Bootstrap's .h-100 (height:100% !important) is used throughout the
+       app so a card matches its row's tallest sibling for equal-height
+       side-by-side desktop rows — cards no longer sit side by side once
+       Bootstrap's own grid stacks them to full width below, so h-100 was
+       instead pinning each card to whatever height the row's OWN flex
+       cross-size worked out to (which could be inflated well past any one
+       card's actual content), fighting the .chart-aspect-tall/--taller
+       ratios below rather than letting them size the card. */
+    .h-100 {
+        height: auto !important;
+    }
+
+    /* .card-body's own base rule floors every card at 47rem/752px tall (see
+       below) — a desktop-era rule for cards with big fixed-height charts,
+       already special-cased off for a couple of specific cards
+       (#epmc-authors-card-body, .methods-card-body). On mobile, where cards
+       stack instead of sharing a row height, every card should just hug its
+       own content the same way those two already do. */
+    .card-body {
+        /* !important: needed since the unconditional .card-body{min-height:
+           47rem} rule sits later in this file — at equal specificity a
+           later rule always wins regardless of which one's media query
+           actually matches, so a plain (non-important) override here would
+           silently lose even though this block IS the one in effect. */
+        min-height: auto !important;
+    }
+
+    /* assets/pie_autofit.js measures each chart's actual rendered pie and
+       legend, then sets an exact pixel height directly on this element
+       (wrapper.style.height) and relayouts the figure's own margins/legend
+       position to match — the pie fills the card's width, and the gap to
+       the legend below it is a real, measured 1rem, not a guessed ratio.
+       This CSS just has to get out of the way of that inline height: no
+       height:auto!important override (that would out-rank the JS-set
+       inline height, since a stylesheet !important always beats a plain
+       inline style even when the inline one is set after it) — flex-grow:0
+       still needs the same specificity-matching selector as the base
+       .dash-graph rule, though, so the column doesn't stretch the graph
+       past whatever exact height JS just gave it. */
+    .card-body > figure > .dash-graph.chart-aspect-tall,
+    .card-body > figure > .dash-graph.chart-aspect-taller {
+        flex-grow: 0 !important;
+        /* No padding added here — Bootstrap's .card-body already has its
+           own native 1rem padding on every side, which is exactly the
+           inset the pie should have from the card's edge. Adding another
+           1rem here would double it to 2rem; pie_autofit.js just reads
+           this element's clientWidth directly (no padding of its own to
+           subtract) to size the pie against that already-1rem-inset
+           content area. */
+    }
+
     .hero-section {
-        height: auto;
+        padding-top: 4rem;
+    }
+
+    .hero-standard {
+        padding: 1rem 1rem 0;
+    }
+
+    .hero-summary {
+        padding: 0 1rem 1rem;
+        text-align: center;
+    }
+
+    .hero-badges-row {
+        align-items: center;
+    }
+
+    /* Each group stacks its own label above its own badge(s) below, instead
+       of sitting in one row together (there isn't room for both side by
+       side once badge text is allowed to wrap, just below). */
+    .hero-badge-group {
         flex-direction: column;
         align-items: center;
-        padding-bottom: 40px;
-        padding-top: 350px;
-    }
-
-    .hero-right-panel {
-        align-items: center;
-        padding: 20px 20px 0 20px;
-        width: 90%;
-    }
-
-    .hero-badge {
-        text-align: center;
         max-width: 100%;
     }
 
-    .hero-content-box {
-        width: 90%;
-        margin: 0 auto;
-        margin-bottom: -60px;
-        padding: 30px 20px;
+    /* align-items:center above only centers the label as a whole flex item
+       — its own text still defaults left-aligned, which only reads as
+       "centered" by coincidence while it's short enough to stay on one
+       line. text-align:center keeps it centered if it ever wraps too. */
+    .hero-cta {
         text-align: center;
-        margin-top: 2em;
+    }
+
+    .hero-badge-values {
+        justify-content: center;
+        max-width: 100%;
+    }
+
+    /* Base .hero-badge sets white-space:nowrap !important (fine on desktop,
+       where badges have room) — on a narrow screen the longer ones (e.g.
+       "Implementation Registry, Europe PMC, GitHub, PyPI") would rather
+       overflow past the viewport edge than wrap, so this un-forces it. */
+    .hero-badge {
+        /* !important: the base rule above sets text-align:left !important —
+           a plain declaration here can never win against that regardless of
+           media-query source order, since !important is compared before
+           specificity/order. This was silently losing that fight, leaving
+           wrapped badge text ragged-left instead of centered. */
+        text-align: center !important;
+        max-width: 100%;
+        white-space: normal !important;
     }
 
     .dashboard-title {
@@ -321,67 +1216,465 @@ text {
     .dashboard-text {
         text-align: center;
     }
+
+    /* Method cards (Europe PMC / GitHub / PyPI) have no explicit responsive
+       Bootstrap col widths, so Bootstrap's default equal-width flex columns
+       would otherwise just split them into 3 cramped narrow columns at any
+       viewport rather than stacking. Single 1fr column, one per row. */
+    .methods-cards-row {
+        --bs-gutter-x: 0;   /* Bootstrap's own row gutter would double up with grid's own gap below */
+        display: grid;
+        grid-template-columns: minmax(0, 1fr); /* see .chart-cards-row for why not bare 1fr */
+        gap: 1rem;
+    }
+
+    .methods-cards-row > * {
+        min-width: 0;
+    }
+
+    /* Chart filter sliders (EPMC/PyPI/GitHub "Top N" controls) sit at a
+       fixed 48-50% width beside a dropdown on desktop — full width here
+       instead, and the row wraps so the dropdown and slider each get their
+       own line rather than being squeezed onto one. */
+    .chart-slider-wrap {
+        width: 100%;
+    }
+
+    .chart-slider-wrap--push-right {
+        margin-left: 0;
+    }
+
+    /* Every search/dropdown filter row (GitHub's workstream dropdown, PyPI's
+       author/email/category dropdowns, EPMC's top-authors slider) — one
+       column, each control full width, a real 1rem between them instead of
+       flex-wrap's row-then-row layout with whatever gap that class happens
+       to have set for its desktop side-by-side arrangement. */
+    .chart-filter-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .chart-filter-half,
+    .chart-filter-quarter {
+        width: 100%;
+    }
+
+    /* The Tables section's own EPMC search+search+year-dropdown row isn't a
+       .chart-filter-row (it's the datatables page, not a chart filter) and
+       sets its three controls' widths inline (350px/350px/160px) — !important
+       is needed to beat that inline specificity, the same reasoning as
+       .card-body's own mobile override above. */
+    .epmc-table-filters {
+        flex-direction: column;
+        align-items: stretch !important;
+        /* !important: the row's own inline style sets gap:12px for its
+           desktop side-by-side layout — inline styles beat a class
+           selector's rule regardless of source order or specificity. */
+        gap: 1rem !important;
+    }
+
+    /* Every search input / dropdown in the app (not just this row) fills
+       its container's full width on mobile — most already did, since their
+       containers (.chart-filter-half/-quarter) are themselves already
+       100%, but a few (this row's own 350px/160px inline widths, plus the
+       GitHub/PyPI table pages' standalone 350px search boxes below) had a
+       fixed pixel width baked in that left them narrower than their card on
+       a phone screen. !important beats those inline widths. */
+    .list-filter {
+        width: 100% !important;
+    }
+
+    /* dcc.Dropdown's OWN outer wrapper (the element our width/className
+       props are actually given on) renders as a plain <div class="dash-
+       dropdown">, not the "list-filter" class at all — that class, and the
+       react-select markup .list-filter's own rules above target, land one
+       level further in, on a div nested INSIDE this one. epmc-year-filter's
+       explicit style={"width":"160px"} therefore lands here, constraining
+       everything nested inside it (including that already-100%-wide inner
+       div) to 160px regardless of what .list-filter itself was told to be.
+       This is the fixed-160px wrapper the .list-filter fix never reached. */
+    .dash-dropdown {
+        width: 100% !important;
+    }
+
+    /* Desktop puts the Export button and pagination side by side in a
+       shared reserved strip below the table (see the base
+       .datatable-controls-inline rules above) — too cramped once that strip
+       is the full width of a narrow mobile card. Export moves above the
+       table instead (a real 1rem below the filter row above it, via that
+       row's own margin-bottom, and 1rem above the table via this reserved
+       padding), and pagination becomes its own centered row below the
+       table with a real 1rem margin on both sides — one clearing the
+       table's last row, the other clearing whatever comes next (the
+       details/data panel this table's own dbc.Row stacks above on mobile,
+       which otherwise sits flush against it: Bootstrap's grid adds no
+       vertical gap between columns once they wrap to full width). */
+    .datatable-controls-inline .dash-table-container {
+        padding-top: calc(48px + 1rem);
+        padding-bottom: 0;
+    }
+
+    .datatable-controls-inline .dash-spreadsheet-menu {
+        top: 0;
+        bottom: auto;
+        /* left:0 (desktop's own value) put the button flush against the
+           card's left edge — spanning the full width and centering its
+           (single) child button is what actually centers it under a
+           narrow mobile card. */
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    .datatable-controls-inline .previous-next-container {
+        position: static;
+        display: flex;
+        justify-content: center;
+        margin: 1rem 0;
+    }
 }
 
 /* ---------- TOP BAR ---------- */
+/* Matches new_ga4gh's layout/_page.scss `header` + layout/_header.scss #menu-primary */
 .top-bar {
+    /* This is the OUTER bar chrome (background/border/shadow/fixed
+       positioning) — full width always, unlike .top-bar-row below (the
+       INNER content: logo, title, nav links), which caps at the site's own
+       1440px content width and centers on a wide monitor. They used to be
+       the same element/className pair; split into an outer wrapper +
+       inner row specifically so the bar's background/border can stay
+       edge-to-edge while only the nav content itself gets constrained —
+       see home.py's own comment where the wrapping div was added. */
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;        /* full width */
+    width: 100%;
     z-index: 1000;
-    background-color: white;
-    padding: 20px 40px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    background-color: var(--white);
+    /* refcloud-ui's navbar (DaisyUI .navbar) is 4rem/64px tall — matched here
+       via vertical padding, since content height (logo) + border stay fixed. */
+    padding: 0.5rem 2.5rem;
+    box-shadow: 0 12px 10px -12px #262626;
     border-bottom: 2px solid #000;
+}
+
+.top-bar-row {
+    /* Bootstrap's .row sets --bs-gutter-x: 1.5rem on itself, unconditionally —
+       it does NOT inherit the 0 set on .container-fluid, since .row's own
+       declaration wins over inheritance. Without this, the row's negative
+       left/right margins (-0.75rem each) shift the whole bar left, leaving
+       its right edge ~12px short of the true viewport edge. */
+    --bs-gutter-x: 0;
+    align-items: center;   /* vertically align nav links with the logo/title */
+    /* Matches the site's own content width (see .ga4gh-footer-container,
+       .dashboard-summary, etc., all max-width:1440px) — below that, width:
+       100% keeps spanning the full .top-bar same as before; above it, this
+       caps the row and margin-inline:auto centers it, instead of the logo
+       and nav links spreading out to the far edges of a very wide monitor
+       while the rest of the page's content stays centered at 1440px. The
+       bar's own background/border/shadow (.top-bar, its parent) stays full
+       width regardless — only this inner content row is constrained. */
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
 }
 
 .menu-container {
     display: flex;
-    gap: 30px;
+    align-items: center;
+    column-gap: 1.25rem; 
     flex-wrap: wrap;       /* ✅ allows items to wrap */
-    justify-content: flex-end; /* keep them aligned right in the row */
+    justify-content: center;
     transition: all 0.3s ease;
 }
 
-@media (max-width: 768px) {
+/* Hamburger toggle — visually matches new_ga4gh's own mobile-menu trigger
+   (three lines that animate into an X), but driven by assets/mobile_nav.js
+   toggling .mobile-nav-open on <body> on click, rather than their
+   checkbox/:checked trick (dash.html has no native <input>/<label>).
+   Hidden on desktop; the (pointer: coarse), (max-width: 768px) block below
+   switches it on — defined here, BEFORE that media query, so the media
+   query's display:flex actually wins the cascade (same specificity + a
+   later rule wins on source order; media query must come second). */
+.mobile-menu-toggle-col {
+    display: none;
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+}
 
-    .top-bar-row {
-        flex-direction: column;      /* 👈 stack logo + menu */
-        align-items: center;         /* center everything */
-        text-align: center;
-    }
+/* .mob-menu-trigger-wrapper is a plain positioning container — only its
+   ::before/::after pseudo-elements (top/bottom lines) and its nested
+   #mob-menu-trigger span (middle line) should actually draw a bar. The
+   wrapper itself was accidentally included in this shared selector too,
+   so it rendered as a 4th, always-static horizontal line that never got
+   transformed away on open — reading as an asterisk under the X instead
+   of a clean X. */
+.mob-menu-trigger-wrapper {
+    display: block;
+    position: relative;
+    width: 2rem;
+    height: 2px;
+}
 
-    .logo-col {
-        width: 100%;
+.mob-menu-trigger-wrapper::before,
+.mob-menu-trigger-wrapper::after,
+#mob-menu-trigger {
+    display: block;
+    position: absolute;
+    left: 0;
+    width: 2rem;
+    height: 2px;
+    background-color: var(--dark);
+    border-radius: 1rem;
+    transition: all 300ms ease;
+}
+
+.mob-menu-trigger-wrapper::before {
+    content: "";
+    top: -0.5rem;
+}
+
+.mob-menu-trigger-wrapper::after {
+    content: "";
+    top: 0.5rem;
+}
+
+#mob-menu-trigger {
+    top: 0;
+}
+
+.mobile-menu-toggle-col:hover .mob-menu-trigger-wrapper::before,
+.mobile-menu-toggle-col:hover .mob-menu-trigger-wrapper::after,
+.mobile-menu-toggle-col:hover #mob-menu-trigger {
+    background-color: var(--darkblue);
+}
+
+body.mobile-nav-open .mobile-menu-toggle-col .mob-menu-trigger-wrapper::before {
+    top: 0;
+    transform: rotate(135deg);
+}
+
+body.mobile-nav-open .mobile-menu-toggle-col .mob-menu-trigger-wrapper::after {
+    top: 0;
+    transform: rotate(-135deg);
+}
+
+body.mobile-nav-open .mobile-menu-toggle-col #mob-menu-trigger {
+    transform: scaleX(0);
+}
+
+/* new_ga4gh's own responsive-breakpoint mixin (abstracts/_breakpoints.scss):
+   triggers on touch devices too, not just narrow viewports, since a coarse
+   pointer means the hover-driven desktop nav doesn't really apply either. */
+@media (pointer: coarse), (max-width: 768px) {
+
+    .section-standard-width {
+    max-width: 1440px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+    .mobile-menu-toggle-col {
         display: flex;
-        justify-content: center;
-        margin-bottom: 10px;
     }
 
-    .menu-col {
-        width: 100%;
-        justify-content: center !important;
+    /* .h-100 and .card-body's min-height floor are already reset to auto
+       for mobile in the (max-width: 768px)-only block further down — but a
+       coarse-pointer tablet wider than 768px matches THIS query instead, so
+       .chart-cards-row's single-column stacking just above would otherwise
+       land inside a card still floored at h-100/47rem tall from the old
+       side-by-side desktop sizing. Same fix, same reasoning, repeated here
+       for the query this file actually uses for touch devices. */
+    .h-100 {
+        height: auto !important;
     }
 
-    .menu-container {
-        flex-direction: column;  /* already added, keep it */
+    .card-body {
+        min-height: auto !important;
+    }
+
+    /* Chart card pairs (EPMC/GitHub/PyPI/funder/researcher/developer/
+       community/combined sections) sit two-per-row on desktop via
+       dbc.Col(md=6) — Bootstrap's own md breakpoint already stacks those
+       under 768px width, but a coarse-pointer device (e.g. a tablet in
+       touch mode) can be wider than that, where md=6 would still render two
+       columns side by side while the rest of the page (nav, hero, tabs) is
+       already in its mobile layout. This lives in the same (pointer:
+       coarse) query as pie_autofit.js's own breakpoint so a stacked card
+       always hands that script the post-stack width, not a stale
+       still-two-column one. Cards inside already carry h-100 for desktop's
+       equal-height row, which the auto-height override further up already
+       un-does once stacked to one column. */
+    .chart-cards-row {
+        --bs-gutter-x: 0;
+        display: grid;
+        /* minmax(0, 1fr), not bare 1fr — a bare fr track's automatic minimum
+           is its content's min-content size, so a wide child (e.g. the
+           DataTable card, or a chart pie_autofit.js has already given an
+           explicit fixed pixel width) would stop the track — and this whole
+           row, and every sibling sharing it — from ever shrinking below
+           that width, no matter how narrow the actual viewport is. */
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    /* Same min-content-floor issue as above applies to the grid ITEMS too:
+       Bootstrap's .col classes (and flexbox children generally) default to
+       min-width:auto, which can independently stop a card from shrinking to
+       fit its 1fr track even once the track itself is unconstrained. */
+    .chart-cards-row > * {
+        min-width: 0;
+    }
+
+    /* Bootstrap's .row wraps by default — with the logo lockup's text
+       wrapping to 2 lines at narrow widths and the hamburger column keeping
+       its own fixed (col-auto) width, the row was otherwise pushing the
+       hamburger onto a second line below the logo instead of sitting next
+       to the title.
+       justify-content is flex-start (not space-between): .menu-col
+       collapses to 0 width at this breakpoint (see below), so space-between
+       would put its entire leftover space as one gap right after the title.
+       margin-left:auto on .mobile-menu-toggle-wrap (the actual flex-item
+       Col wrapping the hamburger button — margin on the button itself
+       wouldn't do anything, since its Col already sizes exactly to fit it)
+       does the "float right" instead: it pins the hamburger to the row's
+       far edge by consuming whatever space is left, while .logo-col's own
+       margin-right still guarantees at least 0.5rem between the title and
+       the hamburger if the title ever grows wide enough to meet it. */
+    .top-bar-row {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+    }
+
+    .mobile-menu-toggle-wrap {
+        margin-left: auto;
+    }
+
+    .top-bar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* .brand-link (an <a>, display:inline by default) was following inline/
+       baseline layout inside .logo-col instead of being centered within it —
+       align-items:center on .top-bar-row only centers .logo-col itself as a
+       flex item, not the inline content nested inside it. Making .logo-col
+       flex blockifies .brand-link (inline -> block) but doesn't fix the
+       real cause one level deeper: .brand-lockup (inline-flex) was still
+       laying out via normal inline/baseline rules *inside* .brand-link's
+       own block box, whose line box includes an invisible "strut" sized by
+       the inherited line-height — taller than the 40px logo icon, so the
+       icon sat near the strut's top rather than centered in it. Making
+       .brand-link itself a flex container (not just a blockified flex
+       item) centers .brand-lockup by flex alignment instead, sidestepping
+       that inline strut entirely.
+       min-width:0 overrides Bootstrap's flex-item default of min-width:auto,
+       which otherwise blocks the shrink the clamp() below relies on. */
+    .logo-col {
+        display: flex;
         align-items: center;
-        gap: 12px;
+        min-width: 0;
+        margin-right: 0.5rem;
+    }
+
+    .brand-link {
+        display: flex;
+        align-items: center;
+    }
+
+    /* Shrinks fluidly with viewport width instead of the desktop-fixed
+       1.5rem, and stays on one line (nowrap) so it reads as a title sitting
+       between the icon and hamburger rather than wrapping across them —
+       tuned so it still fits with a 0.5rem gap to the hamburger at 320px,
+       the narrowest width this app supports. */
+    .brand-lockup {
+        gap: 0.5rem;
+        font-size: clamp(0.65rem, 4.4vw, 1.5rem);
+        min-width: 0;
+    }
+
+    .brand-text-primary,
+    .brand-text-base {
+        white-space: nowrap;
+    }
+
+    /* The row's middle column collapses to nothing — .menu-container (its
+       child) becomes a position:fixed dropdown panel below, so it no longer
+       needs to occupy space in the logo/hamburger row itself. display can't
+       go to `none` here though, since that would hide .menu-container too
+       (a display:none ancestor hides fixed-position descendants just the
+       same as static ones). */
+    .menu-col {
+        flex: 0 0 0;
+        width: 0;
+        padding: 0;
+        overflow: visible;
+    }
+
+    /* Reuses the SAME <a> links/ids as the desktop row (rather than a
+       duplicated mobile-only nav) so persona-driven show/hide keeps working
+       unchanged — only this element's own layout changes at the breakpoint.
+       Matches new_ga4gh's mobile-nav panel: fixed dropdown below the header,
+       collapsed via max-height — driven here by assets/mobile_nav.js
+       toggling .mobile-nav-open on <body> rather than a :checked checkbox. */
+    .menu-container {
+        position: fixed;
+        top: 3rem;
+        left: 0;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        max-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: var(--white);
+        transition: max-height 0.3s ease;
+    }
+
+    /* border-bottom was unconditional on .menu-container above — max-height:0
+       only clips the content box, not the border, so the collapsed panel
+       still rendered its own 2px black line, sitting right below (and
+       reading as a duplicate of) .top-bar's own border-bottom even while
+       the menu was fully closed. Only draw it once the panel is actually
+       open and has content to close off. */
+    body.mobile-nav-open .menu-container {
+        max-height: 80vh;
+        padding: 1rem;
+        border-bottom: 2px solid var(--black);
+    }
+
+    .menu-link {
+        display: block;
+        width: 100%;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--lightgrey);
     }
 }
 
 .menu-link {
-    color: var(--darkblue);
-    line-height: 129%;
-    font-family: "WorkSans-Bold", "Work Sans", sans-serif;
+    color: var(--dark);
+    font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: 1.1rem;
-    text-decoration: none; /* remove default */
+    font-size: clamp(0.7rem, 0.75vw, 0.95rem);
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
-.menu-link:hover {
-    text-decoration: underline;
+.menu-link:hover,
+.menu-link:focus-visible {
+    color: var(--darkblue);
 }
 
 
@@ -389,24 +1682,346 @@ text {
 #servicemap,
 #metrics,
 #epmc,
+#publication-charts,
+#funder-only-charts,
+#researcher-charts,
 #github,
-#pypi, #tables {
-    scroll-margin-top: 100px;  /* adjust to your sticky top-bar height */
+#pypi,
+#developer-charts,
+#community-charts,
+#tables {
+    /* Navbar's actual rendered height is ~65.6px (4.1rem) — 4.25rem leaves a
+       small safety buffer instead of the previous 4.5rem's larger gap, which
+       was tuned before the navbar was shortened and left the anchor target
+       sitting noticeably lower than the navbar than it needed to. */
+    scroll-margin-top: 4.25rem;
 }
 
-.footer{
+/* Footer, matching refcloud-ui's components/layout/Footer.tsx + styles/globals.css */
+.footer {
     background-color: var(--dark);
     color: var(--white);
+    padding: 2.5rem;
+}
+
+.ga4gh-footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+}
+
+.f-logo {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    text-align: left;
+}
+
+.f-logo-img {
+    width: 4rem;
+    height: auto;
+}
+
+.f-logo-text {
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
     font-size: 1.125rem;
     line-height: 133%;
-    font-family: WorkSans-Bold,"Work Sans",sans-serif;
+}
+
+.f-logo p {
+    max-width: 32rem;
+    margin: 0;
+}
+
+.f-social {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Desktop's .f-logo block (logo, name, copyright) is left-aligned, sitting
+   opposite the already-centered .f-social block — on mobile, once
+   .ga4gh-footer-container's own flex-wrap stacks both blocks to full
+   width, a left-aligned block reads as randomly indented rather than
+   deliberately placed. Centering everything (block position via
+   align-items, text via text-align — align-items alone only centers the
+   <img>/<p> boxes themselves, not multi-line text inside them) matches
+   .f-social's own treatment and reads as one consistent, centered footer. */
+@media (pointer: coarse), (max-width: 768px) {
+    .ga4gh-footer-container {
+        /* flex-direction:column (not just relying on flex-wrap) forces the
+           two blocks to always stack single-column at every width in this
+           breakpoint — flex-wrap alone only wraps once content stops
+           fitting on one row, so at the wider end of this range (e.g.
+           tablet-ish widths) .f-logo and .f-social had enough room to sit
+           side by side as two columns instead. */
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .f-logo {
+        align-items: center;
+        text-align: center;
+    }
+}
+
+.ga4gh-btn-light {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: clamp(2.5rem, 10vw, 3rem);
+    aspect-ratio: 270 / 60;
+    padding-inline: clamp(1rem, 2cqw, 2rem);
+    padding-block: 0;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.46);
+    color: var(--white);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.ga4gh-btn-light::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc(100% - 2px);
+    width: 100%;
+    height: 2px;
+    background-color: var(--white);
+    transition: all 0.3s ease;
+}
+
+.ga4gh-btn-light:hover::after,
+.ga4gh-btn-light:focus-visible::after {
+    top: 0;
+    height: 100%;
+}
+
+.ga4gh-btn-light:hover,
+.ga4gh-btn-light:focus-visible {
+    color: var(--dark);
+}
+
+.ga4gh-btn-light .btn-text {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-ws-bold);
     font-weight: 700;
-    padding: 40px;
-    text-align: center;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+}
+
+/* PyPI details panel's "View on PyPI" / "Latest Release" / "View on GitHub"
+   button group — a real 1rem gap between them via flex, replacing the old
+   me-2 (right-margin-only) spacing that left no gap once they wrapped onto
+   separate lines on a narrow card. */
+.pypi-details-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+    .pypi-details-buttons {
+        flex-direction: column;
+        /* center (not stretch): each button's own aspect-ratio: 270/60
+           ties its height to whatever width it's given — stretching to the
+           full card width would inflate them well past their intended
+           clamp(2.5rem,10vw,3rem) height instead of keeping their normal
+           content-sized width. Centered to match every other card button
+           on mobile (see .ga4gh-btn-dark below). */
+        align-items: center;
+    }
+
+    /* Every card's own detail button — "View Article" (EPMC), "Open
+       Repository" (GitHub), and the PyPI trio above — horizontally centered
+       under a narrow mobile card instead of left-aligned. display:flex (not
+       the default inline-flex) makes each button a block-level box so
+       margin-inline:auto can center it — inline-flex boxes ignore auto
+       margins entirely. Inside .pypi-details-buttons this is redundant with
+       align-items:center above (flex items blockify anyway) but harmless.
+       width: fit-content is required alongside this: a bare display:flex
+       block box defaults to stretching to its container's full width (this
+       is what actually broke it — the button filled the whole card edge to
+       edge, leaving margin-inline:auto nothing to center within) rather
+       than shrink-wrapping its own content the way inline-flex used to.
+       !important on display: the base .ga4gh-btn-dark rule (further down
+       this file, unconditional) also sets display:inline-flex — same
+       specificity, no !important on either side, so the LATER rule in the
+       file wins the tie regardless of this media query matching, silently
+       reverting display back to inline-flex and making margin-inline:auto
+       inert (auto margins do nothing on inline-level boxes). This is why
+       centering never visibly took effect despite this rule "applying". */
+    .ga4gh-btn-dark {
+        display: flex !important;
+        width: fit-content;
+        margin-inline: auto;
+    }
+
+    /* GitHub repo-details header's Stars/Forks/Watchers pill group — its
+       own inline style has no justify-content (defaults to flex-start) and
+       sits alongside the repo name title in an outer flex row with
+       flexWrap:wrap; once that wraps the pills onto their own line below
+       the title on a narrow card, they were left-aligned on that line with
+       nothing to center them. width:100% gives the group the full line to
+       itself and justify-content:center centers the three pills within it. */
+    .github-repo-pills {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* new_ga4gh components/_buttons.scss's .btn-dark (btn-theme($lightgrey,
+   $dark, $dark, $white)) — used for the tables section's row-detail links
+   (View Article, View on PyPI, Latest Release, View on GitHub, Open
+   Repository) instead of Bootstrap's default button colors. */
+.ga4gh-btn-dark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: clamp(2.5rem, 10vw, 3rem);
+    aspect-ratio: 270 / 60;
+    padding-inline: clamp(1rem, 2cqw, 2rem);
+    padding-block: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+    overflow: hidden;
+    /* !important: dbc.Button with no explicit `color` prop defaults to
+       "primary", adding Bootstrap's .btn-primary classes alongside this one —
+       same-specificity single-class rules, so without !important Bootstrap's
+       blue wins by load order. */
+    background-color: var(--lightgrey) !important;
+    color: var(--dark) !important;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.ga4gh-btn-dark::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc(100% - 2px);
+    width: 100%;
+    height: 2px;
+    background-color: var(--dark);
+    transition: all 0.3s ease;
+}
+
+.ga4gh-btn-dark:hover::after,
+.ga4gh-btn-dark:focus-visible::after {
+    top: 0;
+    height: 100%;
+}
+
+.ga4gh-btn-dark:hover,
+.ga4gh-btn-dark:focus-visible {
+    color: var(--white) !important;
+}
+
+.ga4gh-btn-dark .btn-text {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+}
+
+/* new_ga4gh's own external-link glyph (components/_links.scss's .external,
+   Font Awesome's fa-external-link / fa-arrow-up-right-from-square, \f08e)
+   via the same FontAwesomeSolid icon font used elsewhere in this file
+   (.methods-toggle-chevron) — on .btn-text (not .ga4gh-btn-dark itself,
+   which already uses its own ::after for the hover-sweep underline).
+   target="_blank" is what these buttons already set specifically because
+   they open a different domain (View Article, Open Repository, View on
+   PyPI, Latest Release, View on GitHub all do) — using that as the
+   selector means any future off-site detail button gets the icon for
+   free, with nothing to remember to add per button. The footer's social
+   buttons (.ga4gh-btn-light) are deliberately left out: new_ga4gh's own
+   footer uses a distinct brand icon per platform there instead of this
+   arrow, so adding it too would be redundant with an icon already saying
+   "this leaves the site". */
+.ga4gh-btn-dark[target="_blank"] .btn-text::after {
+    font-family: "FontAwesomeSolid";
+    font-style: normal;
+    font-weight: normal;
+    content: "\f08e";
+    margin-left: 0.5em;
+}
+
+/* new_ga4gh's .btn-disabled: dim the whole button and stop the hover
+   sweep/color-flip from firing on a link with nothing to open. */
+.ga4gh-btn-dark:disabled,
+.ga4gh-btn-dark.disabled {
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+}
+
+.ga4gh-btn-dark:disabled:hover::after,
+.ga4gh-btn-dark.disabled:hover::after {
+    top: calc(100% - 2px);
+    height: 2px;
+}
+
+.ga4gh-btn-dark:disabled:hover,
+.ga4gh-btn-dark.disabled:hover {
+    color: var(--dark);
+}
+
+/* new_ga4gh's own icon font, base/_fonts.scss's FontAwesomeBrands @font-face
+   (Font Awesome Free 7.2.0's fa-brands-400.woff2) — bundled locally rather
+   than pulled from a CDN. */
+@font-face {
+    font-family: "FontAwesomeBrands";
+    src: url("/assets/fonts/fa-brands-400.woff2") format("woff2");
+}
+
+/* Matches new_ga4gh's components/_buttons.scss `btn-icon($font, $glyph)`
+   mixin exactly: the glyph sits on .btn-text::before, not a separate icon
+   element. Same codepoints new_ga4gh uses for .btn-icon-youtube/-linkedin;
+   .btn-icon-facebook isn't part of new_ga4gh's own footer (it uses Bluesky
+   there instead), so this uses Font Awesome's standard fa-facebook glyph. */
+.btn-icon-youtube.btn-text::before,
+.btn-icon-linkedin.btn-text::before,
+.btn-icon-facebook.btn-text::before {
+    font-family: "FontAwesomeBrands";
+    font-style: normal;
+    font-weight: normal;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.btn-icon-youtube.btn-text::before {
+    content: "\f167";
+}
+
+.btn-icon-linkedin.btn-text::before {
+    content: "\f08c";
+}
+
+.btn-icon-facebook.btn-text::before {
+    content: "\f09a";
 }
 
 .card-body{
-    min-height: 750px;
+    min-height: 47rem;
 }
 
 .rc-slider-track{
@@ -421,58 +2036,336 @@ text {
     height:700px !important
 }
 
-#epmc-authors-card-body {
+#epmc-authors-card-body,
+.methods-card-body {
     min-height: auto;
+}
+
+/* new_ga4gh's own icon font, base/_fonts.scss's FontAwesomeSolid @font-face
+   (Font Awesome Free 7.2.0's fa-solid-900.woff2) — bundled locally rather
+   than pulled from a CDN. */
+@font-face {
+    font-family: "FontAwesomeSolid";
+    src: url("/assets/fonts/fa-solid-900.woff2") format("woff2");
+}
+
+/* Matches new_ga4gh's header nav toggle exactly (layout/_header.scss
+   #menu-primary's b > .icon-chevron-up-down): the Font Awesome chevron-down
+   glyph (\f078) via the same icon font, flipping via rotateX(180deg) on
+   expand rather than swapping triangle characters. */
+.methods-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    color: var(--darkblue);
+    cursor: pointer;
+    font-family: var(--font-ws-bold);
+    font-weight: 700;
+    font-size: clamp(0.95rem, 1.15vw, 1.25rem);
+    margin-bottom: 1rem;
+    transition: color 0.3s ease;
+}
+
+.methods-toggle:hover {
+    color: var(--lightblue);
+}
+
+.methods-toggle-chevron {
+    display: inline-flex;
+    color: inherit;
+    transition: transform 300ms ease;
+}
+
+.methods-toggle-chevron.is-open {
+    transform: rotateX(180deg);
+}
+
+.methods-toggle-chevron::before {
+    font-family: "FontAwesomeSolid";
+    font-style: normal;
+    font-weight: normal;
+    content: "\f078";
+}
+
+.methods-intro-row,
+.methods-cards-row {
+    margin-bottom: 1.5rem;
+}
+
+.circle-sublist {
+    list-style-type: circle;
+    padding-left: 1.5rem;
+}
+
+/* Equal-height cards: Bootstrap's .row is already flex with stretch by
+   default, so each .col already matches the row's tallest column — the
+   card itself just needs to fill that column instead of sizing to its
+   own content. */
+.methods-cards-row > div {
+    display: flex;
+}
+
+.methods-cards-row .card {
+    height: 100%;
+    width: 100%;
+}
+
+/* YoY Publication Growth KPI card (funder persona) */
+.yoy-value-heading {
+    margin: 0;
+    flex: 1;
+}
+
+.yoy-header-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: space-between;
+}
+
+.yoy-card-body {
+    padding: 0.5rem;
+    min-height: unset;
+}
+
+.yoy-year-dropdown {
+    font-size: 1rem;
+    width: 4.5rem;
+    min-height: unset;
 }
 
 /* ---------- Persona Selector ---------- */
 
+/* Left/right padding is 4rem (not 2rem) because this single element combines
+   both layers of the hero's box model — hero-standard's own 2rem inset AND
+   hero-summary's own 2rem inset stack to a 4rem total content offset. */
 .persona-selector-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding: 20px 0 16px 0;
-    margin-bottom: 4px;
-    border-bottom: 2px solid var(--grey);
+    justify-content: flex-start;
+    gap: 1.5rem;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 4rem;
 }
 
 .persona-selector-label {
-    font-size: 15px;
+    font-size: 1rem;
     font-weight: 700;
-    color: var(--border-grey);
+    color: var(--grey);
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
 
+/* Matches new_ga4gh's layout/_object-tabs.scss .object-tabs-nav + .object-tab-btn
+   (the tab bar used on object template pages: product.php, work_stream.php, etc.) */
 .persona-btn-group {
     display: flex;
-    flex: 1;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    border-bottom: 2px solid var(--lightgrey);
 }
 
 .persona-btn {
-    flex: 1 !important;
-    font-size: 15px !important;
+    flex: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    border: 1px solid var(--lightgrey) !important;
+    border-bottom: none !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+    margin-bottom: -2px !important;
+    padding: 0.75rem 1.5rem !important;
+    background: var(--lightgrey) !important;
+    color: var(--grey) !important;
+    font-family: var(--font-fi-semibold) !important;
     font-weight: 600 !important;
-    padding: 10px 20px !important;
-    border-radius: 8px !important;
-    border: 2px solid var(--darkblue) !important;
-    color: var(--darkblue) !important;
-    background-color: transparent !important;
-    transition: background-color 0.18s, color 0.18s, box-shadow 0.18s;
-    letter-spacing: 0.02em;
+    font-size: var(--text-sm) !important;
+    letter-spacing: normal;
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .persona-btn:hover {
-    background-color: var(--darkblue) !important;
-    color: var(--white) !important;
-    box-shadow: 0 4px 12px rgba(2, 38, 106, 0.18) !important;
+    background: var(--white) !important;
+    color: var(--dark) !important;
+    box-shadow: none !important;
 }
 
 .active-persona {
-    background-color: var(--darkblue) !important;
-    color: var(--white) !important;
-    box-shadow: 0 4px 12px rgba(2, 38, 106, 0.22) !important;
+    background: var(--white) !important;
+    color: var(--darkblue) !important;
+    border-color: var(--lightgrey) !important;
+    border-bottom: 2px solid var(--white) !important;
+    box-shadow: none !important;
+}
+
+/* new_ga4gh's own responsive treatment for this exact component
+   (layout/_object-tabs.scss's responsive-breakpoint block): the desktop
+   "browser tab" shape (rounded top corners, merged bottom border) doesn't
+   hold up full-width on a narrow screen, so it becomes a stacked full-width
+   list instead — each row gets a left accent border (transparent, filled
+   in on the active tab) and a plain bottom divider in place of the
+   rounded/bordered tab shape. */
+@media (pointer: coarse), (max-width: 768px) {
+    /* "View as:" sits beside the tab group on desktop (a single flex row) —
+       stacked above it here instead, since there's no room for both side by
+       side once the tabs go full-width/vertical below. */
+    .persona-selector-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0 1rem;
+    }
+
+    .persona-btn-group {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 0;
+        border-bottom: none;
+        width: 100%;
+    }
+
+    .persona-btn {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        border: none !important;
+        border-left: 3px solid transparent !important;
+        border-bottom: 1px solid var(--lightgrey) !important;
+        border-radius: 0 !important;
+        margin-bottom: 0 !important;
+        background: var(--white) !important;
+        color: var(--dark) !important;
+    }
+
+    .active-persona {
+        border-left-color: var(--darkblue) !important;
+        border-bottom-color: var(--lightgrey) !important;
+        background: var(--lightgrey) !important;
+        color: var(--darkblue) !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   CHART EXPAND-TO-MODAL
+   Ported from new_ga4gh's components/_image-modal.scss (image lightbox):
+   same rgba(dark, .8) backdrop, flush white panel with no radius/shadow,
+   circular white-ring "×" close button, instant display toggle with no
+   open/close animation — their original has none either. See
+   chart_expand_button() in ga4gh_theme.py and assets/chart_modal.js.
+   ------------------------------------------------------------------ */
+
+/* Bootstrap's .card already has position:relative, so this sits pinned to
+   each chart card's own top-right corner without any extra wrapper. */
+.chart-expand-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 2;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--dark);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.card:hover .chart-expand-btn,
+.chart-expand-btn:focus-visible {
+    opacity: 1;
+}
+
+.chart-expand-btn:hover {
+    background: var(--white);
+}
+
+.chart-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+}
+
+.chart-modal.chart-modal-open {
+    display: block;
+    background: rgba(54, 54, 54, 0.8);   /* var(--dark) at new_ga4gh's own .8 */
+    padding: 0.25rem;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+    .chart-modal.chart-modal-open {
+        padding: 1rem;
+    }
+}
+
+.chart-modal-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+/* Width lives here, on the panel itself, and the graph/caption below both
+   just take 100% of it — new_ga4gh's own image-modal gives its caption a
+   narrower 70% than the (aspect-ratio-shrunk) image above it, but our chart
+   always fills the panel's full width, so a narrower caption would look
+   inconsistent rather than intentional. Keeping both at 100% of one shared
+   width is what actually reproduces "looks consistent" here. */
+.chart-modal-content-inner {
+    background: var(--white);
+    width: 90vw;
+    max-width: calc(100vw - 0.5rem);
+    max-height: calc(90vh - 0.5rem);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+    .chart-modal-content-inner {
+        max-width: calc(100vw - 2rem);
+        max-height: calc(90vh - 2rem);
+    }
+}
+
+#chart-modal-graph {
+    width: 100%;
+    height: 70vh;
+}
+
+.chart-modal-caption {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 1rem;
+    margin: 1rem 0;
+    color: var(--dark);
+    font-size: var(--text-sm);
+    text-align: center;
+}
+
+.chart-modal-close-trigger {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--white);
+    border-radius: 50%;
+    background: none;
+    color: var(--white);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
 }

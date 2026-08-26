@@ -150,12 +150,33 @@ layout = dbc.Container(
        html.Div(
     [
         # ---------- TOP BAR ----------
+        # .top-bar (outer): the bar's own full-width chrome (background,
+        # border, shadow, fixed positioning) — split from .top-bar-row
+        # (inner): the actual nav content (logo, title, links), which caps
+        # at the site's own 1440px content width and centers on a wide
+        # monitor instead of spreading out with the bar's own full-width
+        # background. These two used to be one Row carrying both
+        # classNames; wrapping it in this outer Div is what lets the bar
+        # stay edge-to-edge while only its content gets constrained.
+        html.Div(
 dbc.Row(
     [
         dbc.Col(
-            html.Img(
-                src="/assets/logo-full-color.svg",
-                className="logo-img",
+            html.A(
+                html.Span(
+                    [
+                        html.Img(
+                            src="/assets/logo-mark-color.svg",
+                            alt="The Global Alliance for Genomics and Health",
+                            className="brand-logo-img",
+                        ),
+                        html.Span("GA4GH", className="brand-text-primary"),
+                        html.Span("Analytics Dashboard", className="brand-text-base"),
+                    ],
+                    className="brand-lockup",
+                ),
+                href="/",
+                className="brand-link",
             ),
             width="auto",
             className="logo-col",
@@ -165,26 +186,59 @@ dbc.Row(
             html.Div(
                 [
                     html.A("Overview", href="#overview", className="menu-link"),
-                    html.A("Service Map", href="#servicemap", className="menu-link"),
+                    html.A("Service Map", href="#servicemap", className="menu-link", id="navlink-servicemap"),
                     html.A("Cumulative Metrics", href="#metrics", className="menu-link"),
-                    html.A("EPMC", href="#epmc", className="menu-link"),
-                    html.A("GitHub", href="#github", className="menu-link"),
-                    html.A("PyPI", href="#pypi", className="menu-link"),
-                    html.A("Tables", href="#tables", className="menu-link"),
+                    html.A("EPMC", href="#epmc", className="menu-link", id="navlink-epmc"),
+                    html.A("Publications", href="#publication-charts", className="menu-link", id="navlink-publication-charts"),
+                    html.A("Funding", href="#funder-only-charts", className="menu-link", id="navlink-funder-only-charts"),
+                    html.A("Research", href="#researcher-charts", className="menu-link", id="navlink-researcher-charts"),
+                    html.A("GitHub", href="#github", className="menu-link", id="navlink-github"),
+                    html.A("PyPI", href="#pypi", className="menu-link", id="navlink-pypi"),
+                    html.A("Developer", href="#developer-charts", className="menu-link", id="navlink-developer-charts"),
+                    html.A("Community", href="#community-charts", className="menu-link", id="navlink-community-charts"),
+                    html.A("Tables", href="#tables", className="menu-link", id="navlink-tables"),
                 ],
                 className="menu-container",
             ),
             className="menu-col d-flex justify-content-end",
         ),
+
+        # ---------- MOBILE HAMBURGER TOGGLE ----------
+        # dash.html has no native <input>/<label> (those need dcc, which
+        # doesn't support type="checkbox"), so this is a plain button whose
+        # click toggles a "mobile-nav-open" class on <body> instead of
+        # new_ga4gh's own checkbox-trick — same visual result (see
+        # assets/mobile_nav.js), just class-driven rather than :checked-
+        # driven. Only shown at the responsive breakpoint (see style.css);
+        # .menu-container itself becomes the dropdown panel there instead
+        # of a separate duplicated nav.
+        dbc.Col(
+            html.Button(
+                html.Span(
+                    html.Span(id="mob-menu-trigger"),
+                    className="mob-menu-trigger-wrapper",
+                ),
+                id="mobile-menu-toggle-btn",
+                className="mobile-menu-toggle-col",
+                **{"aria-label": "Toggle menu"},
+            ),
+            width="auto",
+            className="mobile-menu-toggle-wrap",
+        ),
     ],
-    className="top-bar top-bar-row",  # 👈 add this
+    className="top-bar-row",
 ),
+            className="top-bar",
+        ),
 
       # ---------- HERO ----------
+      # Matches new_ga4gh's layout/_page-heroes.scss `.page-hero-standard-wrapper.none`
+      # (the neutral grey/logo treatment used by standard pages with no work-stream section)
 html.Div(
-    [
+    html.Div(
         html.Div(
             [
+
                 html.H1(
                     "GA4GH Analytics Dashboard",
                     className="dashboard-title",
@@ -200,38 +254,59 @@ html.Div(
                     className="dashboard-summary",
                 ),
 
-            ],
-            className="hero-content-box",
-        ),
-
-        # ---------- INFO BADGES (hero right panel / logo section) ----------
-        html.Div(
-            [
-                dbc.Badge("Created by: GA4GH Technical Team", className="hero-badge"),
-                dbc.Badge("Data Sources: GitHub, PyPI, Europe PMC, Implementation Registry", className="hero-badge"),
+                # ---------- INFO BADGES ----------
+                # Three distinct groups (Created by / Data Sources / Data
+                # Updated), each its own row: label + value(s) sit side by
+                # side on desktop (.hero-badge-group's default flex row),
+                # and stack label-above/badges-below on a narrow screen (see
+                # the responsive override in style.css).
                 html.Div(
                     [
-                        dbc.Badge("Data Updated:", className="hero-badge"),
-                        dbc.Badge(
-                            f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
-                            className="hero-badge",
+                        html.Div(
+                            [
+                                dbc.Badge("Created by:", className="hero-cta"),
+                                dbc.Badge("GA4GH Technical Team", className="hero-badge"),
+                            ],
+                            className="hero-badge-group",
                         ),
-                        dbc.Badge(
-                            f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
-                            className="hero-badge",
+                        html.Div(
+                            [
+                                dbc.Badge("Data Sources:", className="hero-cta"),
+                                dbc.Badge("Implementation Registry, Europe PMC, GitHub, PyPI", className="hero-badge"),
+                            ],
+                            className="hero-badge-group",
                         ),
-                        dbc.Badge(
-                            f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
-                            className="hero-badge",
+                        html.Div(
+                            [
+                                dbc.Badge("Data Updated:", className="hero-cta"),
+                                html.Div(
+                                    [
+                                        dbc.Badge(
+                                            f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
+                                            className="hero-badge",
+                                        ),
+                                        dbc.Badge(
+                                            f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
+                                            className="hero-badge",
+                                        ),
+                                        dbc.Badge(
+                                            f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
+                                            className="hero-badge",
+                                        ),
+                                    ],
+                                    className="hero-badge-values",
+                                ),
+                            ],
+                            className="hero-badge-group",
                         ),
                     ],
-                    style={"display": "flex", "flexWrap": "wrap", "gap": "6px"},
+                    className="hero-badges-row",
                 ),
             ],
-            className="hero-right-panel",
-            style={"alignItems": "flex-start"},
+            className="hero-summary",
         ),
-    ],
+        className="hero-standard",
+    ),
     className="hero-section",
     id="overview",
 ),
@@ -240,48 +315,20 @@ html.Div(
 
         html.Div(className="section-spacer"),
 
-        # ---------- PERSONA SELECTOR ----------
         dcc.Store(id="active-persona", storage_type="session", data="default"),
         dcc.Store(id="yearly-pub-counts", data=_yearly_pub_counts),
-
-        html.Div(
-            [
-                html.Span("View as:", className="persona-selector-label"),
-                html.Div(
-                    [
-                        dbc.Button("Default",        id="persona-btn-default",    n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
-                        dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                    ],
-                    className="persona-btn-group",
-                ),
-            ],
-            className="persona-selector-row",
-        ),
 
         # ---------- METHODS CARDS -----------
         html.Div(
                 [
                     html.Div(
                             [
-                                html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
                                 html.Span("Show methods and terms "),
-                                html.Span("▼", style={"fontSize": "12px"}),
+                                html.Span(className="methods-toggle-chevron"),
                         ],
                         id="collapse-button",
                         n_clicks=0,
-                        style={
-                            "color": "#0d9cf0",
-                            "cursor": "pointer",
-                            "fontWeight": "600",
-                            "fontSize": "16px",
-                            "display": "inline-flex",
-                            "alignItems": "center",
-                            "gap": "4px",
-                            "marginBottom": "1rem",
-                        }
+                        className="methods-toggle",
                     ),
                 dbc.Collapse(
                     html.Div(
@@ -323,14 +370,12 @@ html.Div(
                                                         "Rather than focusing on one platform in isolation, the following metrics, figures, and tables act as an executive snapshot of the full GA4GH value chain—from standards implementation, to community adoption, to scientific and clinical impact."
                                                     ]),
                                                 ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
+                                                className="methods-card-body"
                                             )
                                         ),
                                     )
                                 ],
-                                style={"marginBottom": "20px"}
+                                className="methods-intro-row",
                             ),
                             dbc.Row(
                                 [
@@ -378,7 +423,7 @@ html.Div(
                                                                         ])
                                                                     ),
                                                                 ],
-                                                                style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                                className="circle-sublist",
                                                             ),
                                                             html.Li("Data tables and downstream figures are rebuilt on a regular cadence.")
                                                         ]
@@ -407,11 +452,11 @@ html.Div(
                                                         ]
                                                     )
                                                 ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
-                                            )
+                                                className="methods-card-body"
+                                            ),
+                                            className="h-100 w-100",
                                         ),
+                                        className="d-flex",
                                     ),
                                     dbc.Col(
                                         dbc.Card(
@@ -453,7 +498,7 @@ html.Div(
                                                                 ])
                                                             ),
                                                         ],
-                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                        className="circle-sublist",
                                                     ),
                                                     html.Li("Data tables and downstream figures are rebuilt on a regular cadence."),
                                                 ]),
@@ -485,11 +530,11 @@ html.Div(
                                                     ),
                                                 ])
                                             ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
-                                            )
+                                                className="methods-card-body"
+                                            ),
+                                            className="h-100 w-100",
                                         ),
+                                        className="d-flex",
                                     ),
                                     dbc.Col(
                                         dbc.Card(
@@ -514,7 +559,7 @@ html.Div(
                                                             html.Li("Package metadata (name, description, authors, emails)"),
                                                             html.Li("Number of published versions"),
                                                         ],
-                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                        className="circle-sublist",
                                                     ),
                                                     html.Li("Data tables and downstream figures are rebuilt on a regular cadence."),
                                                 ]),
@@ -542,25 +587,44 @@ html.Div(
                                                                 ])
                                                             ),
                                                         ],
-                                                        style={"listStyleType": "circle", "paddingLeft": "20px"},
+                                                        className="circle-sublist",
                                                     ),
                                                 ]),
                                             ],
-                                                style={
-                                                    "min-height": "auto",
-                                                }
+                                                className="methods-card-body"
                                             ),
+                                            className="h-100 w-100",
                                         ),
+                                        className="d-flex",
                                     ),
                                 ],
-                                style={"marginBottom": "20px"}
+                                className="methods-cards-row mb-4",
                             ),
                         ],
                     ),
                     id="collapse",
                     is_open=False,
                 ),
-            ]
+            ],
+            className="section-standard-width",
+        ),
+
+        # ---------- PERSONA SELECTOR ----------
+        html.Div(
+            [
+                html.Span("View as:", className="persona-selector-label"),
+                html.Div(
+                    [
+                        dbc.Button("Default",        id="persona-btn-default",    n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
+                        dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
+                    ],
+                    className="persona-btn-group",
+                ),
+            ],
+            className="persona-selector-row",
         ),
 
         # ---------- KPI INDICATORS ----------
@@ -582,18 +646,18 @@ html.Div(
                     dbc.Card(
                         dbc.CardBody([
                             html.Div([
-                                html.H3(id="yoy-growth-value", className="indicator-value", style={"margin": 0, "flex": "1"}),
+                                html.H3(id="yoy-growth-value", className="indicator-value yoy-value-heading"),
                                 dcc.Dropdown(
                                     id="yoy-year-selector",
                                     options=_yoy_year_options,
                                     value=_yoy_default_year,
                                     clearable=False,
-                                    style={"fontSize": "11px", "width": "72px", "minHeight": "unset"},
+                                    className="yoy-year-dropdown",
                                 ),
-                            ], style={"display": "flex", "alignItems": "center", "gap": "8px", "justifyContent": "space-between"}),
+                            ], className="yoy-header-row"),
                             html.Div("YoY Publication Growth", className="indicator-label"),
-                        ], style={"padding": "12px 16px", "minHeight": "unset"}),
-                        className="indicator-card shadow-sm border-orange",
+                        ], className="yoy-card-body"),
+                        className="indicator-card shadow-sm border-pink",
                     ),
                     md=2,
                     id="funder-kpi-yoy",
@@ -604,7 +668,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_total_citations:,}",
                         "Total Citations",
-                        "border-green",
+                        "border-orange",
                     ),
                     md=2,
                     id="kpi-citations",
@@ -613,7 +677,7 @@ html.Div(
                     indicator_card(
                         str(_epmc_avg_citations),
                         "Avg Citations / Paper",
-                        "border-purple",
+                        "border-secondary-orange",
                     ),
                     md=2,
                     id="funder-kpi-avg-citations",
@@ -624,7 +688,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_unique_authors:,}",
                         "Total Authors",
-                        "border-orange",
+                        "border-lightblue",
                     ),
                     md=2,
                     id="kpi-authors",
@@ -633,7 +697,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_unique_countries:,}",
                         "Total Countries",
-                        "border-lightblue",
+                        "border-darkblue",
                     ),
                     md=2,
                     id="kpi-countries",
@@ -643,7 +707,7 @@ html.Div(
                     indicator_card(
                         f"{_gh_total:,}",
                         "GitHub Repositories",
-                        "border-darkblue",
+                        "border-green",
                     ),
                     md=2,
                     id="kpi-github",
@@ -662,14 +726,14 @@ html.Div(
                     indicator_card(
                         f"{_oa_rate}%",
                         "Open Access Rate",
-                        "border-green",
+                        "border-darkgreen",
                     ),
                     md=2,
                     id="researcher-kpi-open-access",
                     style={"display": "none"},
                 ),
             ],
-            className="mb-4 gy-3",
+            className="mb-4 gy-3 section-standard-width kpi-row",
         ),
 
         # ---------- MODULE CONTENT (Summary Charts & Graphs) ----------
@@ -682,7 +746,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_service_map_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="servicemap",
@@ -697,7 +760,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_combined_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="metrics",
@@ -712,7 +774,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_epmc_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="epmc",
@@ -731,7 +792,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_github_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="github",
@@ -747,7 +807,6 @@ html.Div(
         ),
         dbc.Row(
             [dbc.Col(_pypi_layout, md=12)],
-            className="mt-4",
         ),
     ],
     id="pypi",
@@ -779,11 +838,34 @@ html.Div(
     className="tables-section",
 ),
 
-        # ---------- FOOTER ----------
-        html.Div(
-            "© 2026 Global Alliance for Genomics and Health",
-            className="footer",
+# ---------- CHART EXPAND MODAL ----------
+# Single shared modal for every chart's "expand" button (see
+# chart_expand_button() in ga4gh_theme.py) — assets/chart_modal.js clones
+# the clicked chart's live Plotly data/layout straight from the DOM into
+# #chart-modal-graph, so this never needs a Dash callback or per-chart
+# wiring. Styled in style.css to match new_ga4gh's own _image-modal.scss.
+html.Div(
+    [
+        html.Button(
+            "×",
+            className="chart-modal-close-trigger",
+            **{"aria-label": "Close"},
         ),
+        html.Div(
+            html.Div(
+                [
+                    html.Div(id="chart-modal-graph"),
+                    html.Div(id="chart-modal-caption", className="chart-modal-caption"),
+                ],
+                className="chart-modal-content-inner",
+            ),
+            className="chart-modal-content",
+        ),
+    ],
+    id="chart-modal",
+    className="chart-modal",
+),
+
     ],
     fluid=True,
 )

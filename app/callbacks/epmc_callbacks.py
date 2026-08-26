@@ -1,24 +1,23 @@
-from dash import Input, Output, State, ctx, no_update
+from dash import Input, Output, State, ALL, ctx, no_update
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
+import json
 import re
 import plotly.express as px
 import plotly.graph_objects as go
 
 from app.services.epmc_client import prepare_epmc_data, get_affiliations_by_article
 from app.constants.constants import COUNTRIES_WHITELIST
+from app.utils.ga4gh_theme import COLORWAY, COLORS, PUBLICATIONS_COLORWAY
 
 
-def fig_epmc_countries_pie(countries_df, hidden_labels=None):
-    """Pie chart – article count by affiliation country.
-
-    hidden_labels: collection of country names currently toggled off in the
-    legend.  Percentages are recalculated against the visible-only total so
-    the displayed values stay correct after toggling.
-    """
+def _prepare_countries_df(countries_df):
+    """Shared column-normalize + whitelist-filter + sort for the countries
+    pie and its legend — both must land on the exact same row order/set so
+    legend swatches line up with pie slices and hidden_labels toggles agree."""
     if countries_df is None or countries_df.empty:
-        return go.Figure().update_layout(title="No country data available")
+        return None
 
     cols = list(countries_df.columns)
     if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
@@ -34,14 +33,23 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
     df["country_normalized"] = df["country"].astype(str).str.strip()
     df["country_lower"] = df["country_normalized"].str.lower()
     df = df[df["country_lower"].isin(whitelist)].copy()
-
     if df.empty:
-        return go.Figure().update_layout(title="No country data available (after filtering)")
+        return None
 
-    counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
-    df = df.copy()
-    df["count"] = counts
-    df = df.sort_values("count", ascending=False).reset_index(drop=True)
+    df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
+    return df.sort_values("count", ascending=False).reset_index(drop=True)
+
+
+def fig_epmc_countries_pie(countries_df, hidden_labels=None):
+    """Pie chart – article count by affiliation country.
+
+    hidden_labels: collection of country names currently toggled off in the
+    legend.  Percentages are recalculated against the visible-only total so
+    the displayed values stay correct after toggling.
+    """
+    df = _prepare_countries_df(countries_df)
+    if df is None:
+        return go.Figure().update_layout(title="No country data available")
 
     hidden = set(hidden_labels) if hidden_labels else set()
     visible_mask = ~df["country_normalized"].isin(hidden)
@@ -66,40 +74,85 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
                 slice_text.append(pct_fmt)
             hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
 
-    text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
+    # Always "inside", matching every other pie chart in the app (see
+    # funder_layout.py / researcher_layout.py's textposition="inside") —
+    # previously slices >5% (the top 3 countries) went "outside" instead.
+
+    # Countries have no inherent "meaning" color (unlike e.g. a status of
+    # Active/Inactive) and the slice count varies with the data, so this
+    # cycles through the shared brand COLORWAY rather than a fixed mapping.
+    slice_colors = [PUBLICATIONS_COLORWAY[i % len(PUBLICATIONS_COLORWAY)] for i in range(len(df))]
 
     fig = go.Figure(
         data=[
             go.Pie(
                 labels=df["country_normalized"],
                 values=df["count"],
-                hole=0.2,
+                hole=1/3,
                 text=slice_text,
                 textinfo="text",
                 hovertext=hover_text,
                 hoverinfo="text",
                 sort=False,
-                textposition=text_positions,
-                domain=dict(x=[0, 1], y=[0, 0.9]),
+                textposition="inside",
+                insidetextfont=dict(color="white"),
+                domain=dict(x=[0, 1], y=[0, 1]),
+                marker=dict(colors=slice_colors),
             )
         ]
     )
     fig.update_layout(
-        title={"text": "Affiliation - Countries Represented", "x": 0.5},
         template="simple_white",
-        height=700,
-        margin=dict(l=20, r=20, t=80, b=80),
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.1,
-            xanchor="center",
-            x=0.5,
-        ),
+        # autosize (not a fixed height) + config={"responsive": True} on the
+        # dcc.Graph + the .chart-aspect-square CSS class on that same graph
+        # let the pie scale with the card's actual width at any viewport.
+        autosize=True,
+        margin=dict(l=0, r=0, t=0, b=0),
+        # Plotly's own legend forces a scrollbar once a single legend passes
+        # ~35 entries (this pie's country count), regardless of how much
+        # space it's given — confirmed by testing at absurd margins/widths/
+        # orientations, none of which disengage it. showlegend=False here;
+        # build_countries_legend below renders a plain HTML replacement
+        # instead, with clicks wired to the same hidden_labels mechanism.
+        showlegend=False,
+        hoverlabel=dict(font_color="white"),
     )
     if hidden:
         fig.update_layout(hiddenlabels=list(hidden))
     return fig
+
+
+def build_countries_legend(countries_df, hidden_labels=None):
+    """Custom HTML replacement for fig_epmc_countries_pie's legend.
+
+    Mirrors the pie's own country order/colors exactly (same whitelist
+    filter, same sort, same PUBLICATIONS_COLORWAY cycling) so swatches line
+    up with their slices. Each item is independently clickable — toggling it
+    in/out of epmc-countries-hidden-store, which both this function and
+    fig_epmc_countries_pie read to stay in sync.
+    """
+    df = _prepare_countries_df(countries_df)
+    if df is None:
+        return []
+
+    hidden = set(hidden_labels) if hidden_labels else set()
+
+    items = []
+    for i, cn in enumerate(df["country_normalized"]):
+        color = PUBLICATIONS_COLORWAY[i % len(PUBLICATIONS_COLORWAY)]
+        is_hidden = cn in hidden
+        items.append(
+            html.Button(
+                [
+                    html.Span(className="country-legend-swatch", style={"backgroundColor": color}),
+                    html.Span(cn, className="country-legend-label"),
+                ],
+                id={"type": "country-legend-item", "country": cn},
+                n_clicks=0,
+                className="country-legend-item" + (" country-legend-item--hidden" if is_hidden else ""),
+            )
+        )
+    return items
 
 
 def fig_epmc_countries_choropleth(countries_df):
@@ -131,37 +184,58 @@ def fig_epmc_countries_choropleth(countries_df):
         lambda r: f"{r['country']}<br>{r['pct']}% of author affiliations", axis=1
     )
 
+    # Brand-scaled gradient (white -> red) instead of Plotly's built-in
+    # "Reds" scale, so the data-driven fill matches our own color system.
     fig = px.choropleth(
         df,
         locations="country",
         locationmode="country names",
         color="pct",
-        color_continuous_scale="Reds",
+        color_continuous_scale=[COLORS["white"], COLORS["red"]],
         custom_data=["pct"],
         labels={"pct": "Share (%)", "country": "Country"},
         template="simple_white",
     )
+    # Matches new_ga4gh's services-map.js D3 map exactly — can't reference the
+    # CSS custom properties (--ga4gh-light-grey/--ga4gh-mid-grey/--faint-lightblue)
+    # directly from a Plotly figure, same limitation their own JS comment notes
+    # for its SCSS variables.
     fig.update_traces(
         hovertemplate="<b>%{location}</b><br>%{customdata[0]:.2f}% of author affiliations<extra></extra>",
-        marker_line_color="white",
+        marker_line_color=COLORS["grey"],
         marker_line_width=0.5,
     )
     fig.update_layout(
         autosize=True,
-        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        # t=28 reserves space for the floating modebar (camera/zoom/pan icons)
+        # in the top-right corner — at t=0 the colorbar's own default len=1
+        # matched the *full* plot area including that corner, so its title
+        # ("Share (%)") rendered directly behind the modebar icons. With a
+        # top margin, len=1 (still the default — unset here) now matches the
+        # map's own visible container below that reserved strip instead.
+        margin={"l": 0, "r": 0, "t": 28, "b": 0},
         coloraxis_colorbar={
             "title": "Share (%)",
             "thickness": 12,
             "ticksuffix": "%",
         },
+        # bgcolor left at Plotly's default (matches each hovered point's own
+        # scaled color, from white through to red) — only font color is set,
+        # so text stays legible against whatever shade that point happens to be.
+        hoverlabel=dict(font_color="white"),
     )
     fig.update_geos(
-        showland=True,    landcolor="#DAECC1",
-        showocean=True,   oceancolor="#BBDFF1",
-        showlakes=True,   lakecolor="#BBDFF1",
-        showcountries=True, countrycolor="#999999",
+        showland=True,    landcolor=COLORS["lightgrey"],
+        showocean=True,   oceancolor="rgba(79, 174, 220, 0.31)",
+        showlakes=True,   lakecolor="rgba(79, 174, 220, 0.31)",
+        showcountries=True, countrycolor=COLORS["grey"],
         projection_type="natural earth",
         showframe=False,
+        # "Natural earth" is ~1.92:1 (w:h) — at this card's fixed height, the
+        # full -90/90 lat range pillarboxes the map with empty side margins.
+        # Cropping the (data-free) polar extremes lets the populated
+        # landmass fill the card's width instead.
+        lataxis_range=[-58, 85],
     )
     return fig
 
@@ -183,19 +257,19 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
         x="author_count",
         y="author",
         orientation="h",
-        title=f"Top {top_n} Europe PMC Authors",
         template="simple_white",
         labels={"author_count": "Total Publication", "author": "Author Name"},
     )
-
-    fig.update_traces(marker_line_width=0)
+    bar_colors = [PUBLICATIONS_COLORWAY[i % len(PUBLICATIONS_COLORWAY)] for i in range(len(df))]
+    fig.update_traces(marker_line_width=0, marker_color=bar_colors)
     fig.update_layout(
         yaxis=dict(automargin=True, tickfont=dict(size=9)),
-        xaxis=dict(title="count"),
-        margin=dict(l=240, r=40, t=60, b=40),
+        xaxis=dict(title="count", showgrid=True, gridcolor=COLORS["lightgrey"]),
+        margin=dict(l=240, r=40, t=20, b=40),
         height=max(400, 25 * len(df)),
         xaxis_title="Publication Count",
         yaxis_title="Author Name",
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -439,19 +513,14 @@ def register_epmc_callbacks(app):
                 html.H6("Authors: ", className="fw-bold"),
                 
                 html.Div([
-                    html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
                     html.Span(first_author_text),
-                ], id="author-collapse-button", n_clicks=0, style={
-                    "color": "#0d9cf0",
-                    "cursor": "pointer",
-                    "fontWeight": "600",
+                    html.Span(className="methods-toggle-chevron"),
+                ], id="author-collapse-button", n_clicks=0, className="methods-toggle", style={
                     "fontSize": "14px",
-                    "display": "inline-flex",
-                    "alignItems": "center",
                     "marginBottom": "0.5rem",
                 }),
                 dbc.Collapse(
-                    html.P(all_authors_text, style={"fontSize": "14px", "color": "#555", "marginTop": "8px"}),
+                    html.P(all_authors_text, style={"fontSize": "14px", "color": COLORS["dark"], "marginTop": "8px"}),
                     id="author-collapse",
                     is_open=False,
                 ),
@@ -461,19 +530,13 @@ def register_epmc_callbacks(app):
                 html.H6("Affiliations: ", className="fw-bold"),
                 
                 html.Div([
-                    html.Span("▶ ", style={
-                        "fontSize": "12px",
-                        "marginRight": "4px",
-                        "display": "inline" if rest_aff_components else "none",
-                    }),
                     first_aff_component,
-                ], id="aff-collapse-button", n_clicks=0, style={
-                    "color": "#0d9cf0",
+                    html.Span(className="methods-toggle-chevron", style={
+                        "display": "inline-flex" if rest_aff_components else "none",
+                    }),
+                ], id="aff-collapse-button", n_clicks=0, className="methods-toggle", style={
                     "cursor": "pointer" if rest_aff_components else "default",
-                    "fontWeight": "600",
                     "fontSize": "13px",
-                    "display": "inline-flex",
-                    "alignItems": "center",
                     "marginBottom": "0.5rem",
                 }),
                 dbc.Collapse(
@@ -484,11 +547,10 @@ def register_epmc_callbacks(app):
 
                 html.Br(),
                 dbc.Button(
-                    "View Article",
+                    html.Span("View Article", className="btn-text"),
                     href=doi_url,
                     target="_blank",
-                    color="primary",
-                    className="me-2",
+                    className="ga4gh-btn-dark",
                     disabled=not doi_url,
                 ),
             ]),
@@ -501,23 +563,74 @@ def register_epmc_callbacks(app):
     # -----------------------
     @app.callback(
         Output("epmc-countries-pie", "figure"),
+        Output("epmc-countries-legend", "children"),
         Output("epmc-authors-bar", "figure"),
+        Output("epmc-authors-bar", "style"),
         Output("epmc-authors-card-body", "style"),
+        Output("epmc-authors-bar-title", "children"),
         Input("epmc-top-n-slider", "value"),
-        Input("epmc-countries-pie", "relayoutData"),
+        Input("epmc-countries-hidden-store", "data"),
     )
-    def update_epmc_graphs(top_n, relayout_data):
-        # Legend toggle on the pie — only rebuild the pie with updated percentages
-        if ctx.triggered_id == "epmc-countries-pie":
-            hidden = (relayout_data or {}).get("hiddenlabels") or []
-            if "hiddenlabels" not in (relayout_data or {}):
-                return no_update, no_update, no_update
-            return fig_epmc_countries_pie(countries_df, hidden_labels=hidden), no_update, no_update
+    def update_epmc_graphs(top_n, hidden_countries):
+        # Legend-item click — only rebuild the pie + legend with updated percentages
+        if ctx.triggered_id == "epmc-countries-hidden-store":
+            return (
+                fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries),
+                build_countries_legend(countries_df, hidden_labels=hidden_countries),
+                no_update, no_update, no_update, no_update,
+            )
 
-        fig_pie = fig_epmc_countries_pie(countries_df)
+        fig_pie = fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries)
+        legend_children = build_countries_legend(countries_df, hidden_labels=hidden_countries)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
+        # An explicit height directly on the Graph is required: dcc.Graph
+        # renders in responsive mode (height:100%) with no CSS height of its
+        # own, so it sizes off this card's ancestor container instead of its
+        # own figure.layout.height — that indirection tracks growth fine but
+        # never shrinks back down, since nothing ever forces the ancestor
+        # smaller once Plotly's responsive engine has rendered it larger.
         graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
-        return fig_pie, fig_bar, {"minHeight": f"{graph_height + 96}px"}
+        return (
+            fig_pie,
+            legend_children,
+            fig_bar,
+            {"height": f"{graph_height}px"},
+            {"minHeight": f"{graph_height + 96}px"},
+            f"Top {top_n} Europe PMC Authors",
+        )
+
+    @app.callback(
+        Output("epmc-countries-hidden-store", "data"),
+        Input({"type": "country-legend-item", "country": ALL}, "n_clicks"),
+        State("epmc-countries-hidden-store", "data"),
+        prevent_initial_call=True,
+    )
+    def toggle_country_legend_item(_n_clicks_list, hidden_data):
+        # Despite prevent_initial_call=True, this pattern-matching ALL
+        # callback still fires once (reproduced: twice, in fact) the moment
+        # update_epmc_graphs first populates the 35 legend buttons — every
+        # n_clicks is still 0 then, but ctx.triggered lists all of them as
+        # "triggered" and ctx.triggered_id arbitrarily resolves to the first
+        # one, which would otherwise mark it hidden before any real click.
+        # A genuine click's triggered entry always has value >= 1, so this
+        # guard (not just "is there a triggered entry") is what actually
+        # distinguishes a real click from that spurious mount-time firing.
+        if not ctx.triggered or not ctx.triggered[0].get("value"):
+            return no_update
+        prop_id = ctx.triggered[0]["prop_id"].rsplit(".", 1)[0]
+        try:
+            triggered = json.loads(prop_id)
+        except (ValueError, TypeError):
+            return no_update
+        if not isinstance(triggered, dict):
+            return no_update
+        country = triggered.get("country")
+        hidden = set(hidden_data or [])
+        if country in hidden:
+            hidden.discard(country)
+        else:
+            hidden.add(country)
+        return sorted(hidden)
     
     @app.callback(
         Output("author-collapse", "is_open"),
@@ -528,9 +641,10 @@ def register_epmc_callbacks(app):
     )
     def toggle_author_collapse(n, is_open, first_author):
         new_state = not is_open if n else is_open
+        chevron_class = "methods-toggle-chevron is-open" if new_state else "methods-toggle-chevron"
         label = [
-            html.Span("▼ " if new_state else "▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
             html.Span(first_author or "Authors"),
+            html.Span(className=chevron_class),
         ]
         return new_state, label
 
@@ -544,9 +658,10 @@ def register_epmc_callbacks(app):
     )
     def toggle_aff_collapse(n, is_open, first_affiliation):
         new_state = not is_open if n else is_open
+        chevron_class = "methods-toggle-chevron is-open" if new_state else "methods-toggle-chevron"
         label = [
-            html.Span("▼ " if new_state else "▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
             html.Span(first_affiliation or "Affiliations"),
+            html.Span(className=chevron_class),
         ]
         return new_state, label
 
