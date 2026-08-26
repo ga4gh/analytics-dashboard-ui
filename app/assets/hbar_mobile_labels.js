@@ -227,11 +227,27 @@
 
         var marginT = gd._fullLayout.margin.t;
         var marginB = gd._fullLayout.margin.b;
-        var plotAreaHeight = gd._fullLayout.height - marginT - marginB;
+        var height = gd._fullLayout.height;
+        var plotAreaHeight = height - marginT - marginB;
         if (plotAreaHeight <= 0) return;
 
+        // Safety clamp: this runs every 500ms indefinitely (the chart's own
+        // height/legend can change at any time on desktop), re-measuring
+        // and re-correcting from scratch each time rather than converging
+        // once and stopping — if a measurement is ever wrong in a way that
+        // keeps reporting "still not enough gap" after every correction
+        // (reported in Firefox: the chart's visible plot area shrinking
+        // away to nothing over a few ticks), margin.b would otherwise grow
+        // unbounded with nothing to stop it. Never letting it eat more than
+        // half the figure's own height guarantees the plot area can't be
+        // squeezed away entirely even if some future measurement misbehaves
+        // — worst case is an imperfect gap, not a vanished chart.
+        var newMarginB = Math.min(marginB + delta, height * 0.5);
+        var newPlotAreaHeight = height - marginT - newMarginB;
+        if (newPlotAreaHeight <= 0) return;
+
         Plotly.relayout(gd, {
-            "margin.b": marginB + delta,
+            "margin.b": newMarginB,
             "legend.yanchor": "top",
             "legend.y": gd._fullLayout.legend.y - delta / plotAreaHeight,
         });

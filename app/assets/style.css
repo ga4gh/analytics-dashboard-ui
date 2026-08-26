@@ -1338,16 +1338,18 @@ input.list-filter[type="text"]::placeholder {
 /* ---------- TOP BAR ---------- */
 /* Matches new_ga4gh's layout/_page.scss `header` + layout/_header.scss #menu-primary */
 .top-bar {
-    /* Bootstrap's .row sets --bs-gutter-x: 1.5rem on itself, unconditionally —
-       it does NOT inherit the 0 set on .container-fluid, since .row's own
-       declaration wins over inheritance. Without this, the row's negative
-       left/right margins (-0.75rem each) shift the whole bar left, leaving
-       its right edge ~12px short of the true viewport edge. */
-    --bs-gutter-x: 0;
+    /* This is the OUTER bar chrome (background/border/shadow/fixed
+       positioning) — full width always, unlike .top-bar-row below (the
+       INNER content: logo, title, nav links), which caps at the site's own
+       1440px content width and centers on a wide monitor. They used to be
+       the same element/className pair; split into an outer wrapper +
+       inner row specifically so the bar's background/border can stay
+       edge-to-edge while only the nav content itself gets constrained —
+       see home.py's own comment where the wrapping div was added. */
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;        /* full width */
+    width: 100%;
     z-index: 1000;
     background-color: var(--white);
     /* refcloud-ui's navbar (DaisyUI .navbar) is 4rem/64px tall — matched here
@@ -1358,7 +1360,24 @@ input.list-filter[type="text"]::placeholder {
 }
 
 .top-bar-row {
+    /* Bootstrap's .row sets --bs-gutter-x: 1.5rem on itself, unconditionally —
+       it does NOT inherit the 0 set on .container-fluid, since .row's own
+       declaration wins over inheritance. Without this, the row's negative
+       left/right margins (-0.75rem each) shift the whole bar left, leaving
+       its right edge ~12px short of the true viewport edge. */
+    --bs-gutter-x: 0;
     align-items: center;   /* vertically align nav links with the logo/title */
+    /* Matches the site's own content width (see .ga4gh-footer-container,
+       .dashboard-summary, etc., all max-width:1440px) — below that, width:
+       100% keeps spanning the full .top-bar same as before; above it, this
+       caps the row and margin-inline:auto centers it, instead of the logo
+       and nav links spreading out to the far edges of a very wide monitor
+       while the rest of the page's content stays centered at 1440px. The
+       bar's own background/border/shadow (.top-bar, its parent) stays full
+       width regardless — only this inner content row is constrained. */
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
 }
 
 .menu-container {
@@ -1739,6 +1758,13 @@ body.mobile-nav-open .mobile-menu-toggle-col #mob-menu-trigger {
    .f-social's own treatment and reads as one consistent, centered footer. */
 @media (pointer: coarse), (max-width: 768px) {
     .ga4gh-footer-container {
+        /* flex-direction:column (not just relying on flex-wrap) forces the
+           two blocks to always stack single-column at every width in this
+           breakpoint — flex-wrap alone only wraps once content stops
+           fitting on one row, so at the wider end of this range (e.g.
+           tablet-ish widths) .f-logo and .f-social had enough room to sit
+           side by side as two columns instead. */
+        flex-direction: column;
         justify-content: center;
     }
 

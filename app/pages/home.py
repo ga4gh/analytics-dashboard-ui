@@ -150,6 +150,15 @@ layout = dbc.Container(
        html.Div(
     [
         # ---------- TOP BAR ----------
+        # .top-bar (outer): the bar's own full-width chrome (background,
+        # border, shadow, fixed positioning) — split from .top-bar-row
+        # (inner): the actual nav content (logo, title, links), which caps
+        # at the site's own 1440px content width and centers on a wide
+        # monitor instead of spreading out with the bar's own full-width
+        # background. These two used to be one Row carrying both
+        # classNames; wrapping it in this outer Div is what lets the bar
+        # stay edge-to-edge while only its content gets constrained.
+        html.Div(
 dbc.Row(
     [
         dbc.Col(
@@ -217,8 +226,10 @@ dbc.Row(
             className="mobile-menu-toggle-wrap",
         ),
     ],
-    className="top-bar top-bar-row",  # 👈 add this
+    className="top-bar-row",
 ),
+            className="top-bar",
+        ),
 
       # ---------- HERO ----------
       # Matches new_ga4gh's layout/_page-heroes.scss `.page-hero-standard-wrapper.none`
