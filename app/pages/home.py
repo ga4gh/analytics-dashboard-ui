@@ -185,7 +185,10 @@ html.Div(
             [
 
                 html.H1(
-                    "GA4GH Analytics Dashboard",
+                    [
+                        html.Span("GA4GH", className="title-ga4gh"),
+                        " Analytics Dashboard",
+                    ],
                     className="dashboard-title",
                 ),
 
@@ -209,34 +212,37 @@ html.Div(
                     [
                         html.Div(
                             [
-                                dbc.Badge("Created by:", className="hero-cta"),
-                                dbc.Badge("GA4GH Technical Team", className="hero-badge"),
+                                html.Span("Created by:", className="hero-label"),
+                                html.Span("GA4GH Technical Team", className="hero-value"),
                             ],
                             className="hero-badge-group",
                         ),
                         html.Div(
                             [
-                                dbc.Badge("Data Sources:", className="hero-cta"),
-                                dbc.Badge("Implementation Registry, Europe PMC, GitHub, PyPI", className="hero-badge"),
+                                html.Span("Data Sources:", className="hero-label"),
+                                html.Span("Implementation Registry", className="hero-value"),
+                                html.Span("Europe PMC", className="hero-value"),
+                                html.Span("GitHub", className="hero-value"),
+                                html.Span("PyPI", className="hero-value"),
                             ],
                             className="hero-badge-group",
                         ),
                         html.Div(
                             [
-                                dbc.Badge("Data Updated:", className="hero-cta"),
+                                html.Span("Data Updated:", className="hero-label"),
                                 html.Div(
                                     [
-                                        dbc.Badge(
+                                        html.Span(
                                             f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
-                                            className="hero-badge",
+                                            className="hero-value",
                                         ),
-                                        dbc.Badge(
+                                        html.Span(
                                             f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
-                                            className="hero-badge",
+                                            className="hero-value",
                                         ),
-                                        dbc.Badge(
+                                        html.Span(
                                             f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
-                                            className="hero-badge",
+                                            className="hero-value",
                                         ),
                                     ],
                                     className="hero-badge-values",
