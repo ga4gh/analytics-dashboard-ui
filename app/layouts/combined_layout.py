@@ -5,6 +5,9 @@ from dash import dcc, html
 
 from app.utils.ga4gh_theme import COLORS, chart_expand_button
 
+_heading = {"fontWeight": "600", "fontSize": "13px", "marginBottom": "4px", "color": "#2c3e50"}
+_caption = {"fontSize": "11px", "color": "#888", "marginTop": "6px"}
+
 
 def _build_source_year_df(df, year_col, item_col, source_name):
     """Return normalized [year, item, Source] rows for one source."""
@@ -69,12 +72,12 @@ def _make_source_growth_figure(
 
     fig.update_layout(
         showlegend=False,
-        height=430,
-        margin={"l": 40, "r": 20, "t": 20, "b": 50},
-        yaxis=dict(title="Cumulative Items", showgrid=True, gridcolor=COLORS["lightgrey"]),
+        height=200,
+        margin={"l": 0, "r": 0, "t": 4, "b": 30},
+        yaxis=dict(title="", automargin=True, showgrid=True, gridcolor=COLORS["lightgrey"]),
+        xaxis=dict(title=""),
         hoverlabel=dict(font_color="white"),
     )
-    fig.update_xaxes(title_text="Year")
     return fig
 
 
@@ -137,36 +140,40 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     citations_fig.update_layout(yaxis_title="Cumulative Citations")
 
 
+    def _chart_col(title, graph_id, fig):
+        return dbc.Col(
+            [
+                chart_expand_button(graph_id),
+                html.Div(title, style=_heading),
+                dcc.Graph(
+                    id=graph_id, figure=fig,
+                    config={"displayModeBar": False},
+                    responsive=True,
+                    style={"height": "200px"},
+                ),
+            ],
+            lg=6, md=6, sm=12,
+            style={"position": "relative"},
+        )
+
     return dbc.Card(
         dbc.CardBody(
-            html.Figure([
+            [
                 dbc.Row(
                     [
-                        dbc.Col([
-                            chart_expand_button("combined-growth-epmc"),
-                            html.H5("GA4GH-Related Articles", style={"marginBottom": "1rem"}),
-                            dcc.Graph(id="combined-growth-epmc", figure=epmc_fig),
-                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
-                        dbc.Col([
-                            chart_expand_button("combined-citations-over-years"),
-                            html.H5("Europe PMC Cumulative Citations Per Year", style={"marginBottom": "1rem"}),
-                            dcc.Graph(id="combined-citations-over-years", figure=citations_fig),
-                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
-                        dbc.Col([
-                            chart_expand_button("combined-growth-github"),
-                            html.H5("GitHub Repositories", style={"marginBottom": "1rem"}),
-                            dcc.Graph(id="combined-growth-github", figure=gh_fig),
-                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
-                        dbc.Col([
-                            chart_expand_button("combined-growth-pypi"),
-                            html.H5("PyPI Packages", style={"marginBottom": "1rem"}),
-                            dcc.Graph(id="combined-growth-pypi", figure=pypi_fig),
-                        ], lg=6, md=6, sm=12, style={"position": "relative"}),
+                        _chart_col("GA4GH-Related Articles",           "combined-growth-epmc",          epmc_fig),
+                        _chart_col("Europe PMC Citations Per Year",     "combined-citations-over-years", citations_fig),
+                        _chart_col("GitHub Repositories",              "combined-growth-github",        gh_fig),
+                        _chart_col("PyPI Packages",                    "combined-growth-pypi",          pypi_fig),
                     ],
-                    className="g-3 chart-cards-row",
+                    className="g-2",
                 ),
-                html.Figcaption("Cumulative number of GA4GH-Related Articles and their Citations from Europe PMC, as well as GitHub Repositories, and PyPI Packages per year.")
-            ])
+                html.Figcaption(
+                    "Cumulative growth of GA4GH-related articles and their citations from Europe PMC, GitHub repositories, and PyPI packages per year.",
+                    style=_caption,
+                ),
+            ],
+            id="combined-metrics-card-body",
         ),
         className="mb-4 shadow-sm",
         style={"borderRadius": "12px"},

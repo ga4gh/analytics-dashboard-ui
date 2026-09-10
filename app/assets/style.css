@@ -1770,6 +1770,10 @@ input.list-filter[type="text"]::placeholder {
     min-height: 47rem;
 }
 
+#combined-metrics-card-body {
+    min-height: auto !important;
+}
+
 .rc-slider-track{
     background-color: var(--lightblue);
 }
