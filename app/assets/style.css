@@ -1335,346 +1335,119 @@ input.list-filter[type="text"]::placeholder {
     }
 }
 
-/* ---------- TOP BAR ---------- */
-/* Matches new_ga4gh's layout/_page.scss `header` + layout/_header.scss #menu-primary */
-.top-bar {
-    /* This is the OUTER bar chrome (background/border/shadow/fixed
-       positioning) — full width always, unlike .top-bar-row below (the
-       INNER content: logo, title, nav links), which caps at the site's own
-       1440px content width and centers on a wide monitor. They used to be
-       the same element/className pair; split into an outer wrapper +
-       inner row specifically so the bar's background/border can stay
-       edge-to-edge while only the nav content itself gets constrained —
-       see home.py's own comment where the wrapping div was added. */
+/* ---------- LEFT SIDEBAR ---------- */
+.left-sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 240px;
+    height: 100vh;
     z-index: 1000;
-    background-color: var(--white);
-    /* refcloud-ui's navbar (DaisyUI .navbar) is 4rem/64px tall — matched here
-       via vertical padding, since content height (logo) + border stay fixed. */
-    padding: 0.5rem 2.5rem;
-    box-shadow: 0 12px 10px -12px #262626;
-    border-bottom: 2px solid #000;
-}
-
-.top-bar-row {
-    /* Bootstrap's .row sets --bs-gutter-x: 1.5rem on itself, unconditionally —
-       it does NOT inherit the 0 set on .container-fluid, since .row's own
-       declaration wins over inheritance. Without this, the row's negative
-       left/right margins (-0.75rem each) shift the whole bar left, leaving
-       its right edge ~12px short of the true viewport edge. */
-    --bs-gutter-x: 0;
-    align-items: center;   /* vertically align nav links with the logo/title */
-    /* Matches the site's own content width (see .ga4gh-footer-container,
-       .dashboard-summary, etc., all max-width:1440px) — below that, width:
-       100% keeps spanning the full .top-bar same as before; above it, this
-       caps the row and margin-inline:auto centers it, instead of the logo
-       and nav links spreading out to the far edges of a very wide monitor
-       while the rest of the page's content stays centered at 1440px. The
-       bar's own background/border/shadow (.top-bar, its parent) stays full
-       width regardless — only this inner content row is constrained. */
-    width: 100%;
-    max-width: 1440px;
-    margin-inline: auto;
-}
-
-.menu-container {
+    background-color: white;
+    border-right: 1px solid var(--grey);
+    padding: 20px 0 20px 0;
     display: flex;
-    align-items: center;
-    column-gap: 1.25rem; 
-    flex-wrap: wrap;       /* ✅ allows items to wrap */
-    justify-content: center;
-    transition: all 0.3s ease;
+    flex-direction: column;
+    gap: 0;
+    overflow-y: auto;
 }
 
-/* Hamburger toggle — visually matches new_ga4gh's own mobile-menu trigger
-   (three lines that animate into an X), but driven by assets/mobile_nav.js
-   toggling .mobile-nav-open on <body> on click, rather than their
-   checkbox/:checked trick (dash.html has no native <input>/<label>).
-   Hidden on desktop; the (pointer: coarse), (max-width: 768px) block below
-   switches it on — defined here, BEFORE that media query, so the media
-   query's display:flex actually wins the cascade (same specificity + a
-   later rule wins on source order; media query must come second). */
-.mobile-menu-toggle-col {
-    display: none;
-    position: relative;
-    width: 2rem;
-    height: 2rem;
-    align-items: center;
-    justify-content: center;
+.logo-img {
+    width: 100%;
+    padding: 0 16px;
+    max-height: 80px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.sidebar-divider {
+    margin: 16px 0;
     border: none;
-    background: none;
-    padding: 0;
-    cursor: pointer;
+    border-top: 1px solid var(--grey);
 }
 
-/* .mob-menu-trigger-wrapper is a plain positioning container — only its
-   ::before/::after pseudo-elements (top/bottom lines) and its nested
-   #mob-menu-trigger span (middle line) should actually draw a bar. The
-   wrapper itself was accidentally included in this shared selector too,
-   so it rendered as a 4th, always-static horizontal line that never got
-   transformed away on open — reading as an asterisk under the X instead
-   of a clean X. */
-.mob-menu-trigger-wrapper {
+.sidebar-section-label {
     display: block;
-    position: relative;
-    width: 2rem;
-    height: 2px;
+    padding: 0 16px 8px 16px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--border-grey);
 }
 
-.mob-menu-trigger-wrapper::before,
-.mob-menu-trigger-wrapper::after,
-#mob-menu-trigger {
-    display: block;
-    position: absolute;
-    left: 0;
-    width: 2rem;
-    height: 2px;
-    background-color: var(--dark);
-    border-radius: 1rem;
-    transition: all 300ms ease;
+.left-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
-.mob-menu-trigger-wrapper::before {
-    content: "";
-    top: -0.5rem;
-}
-
-.mob-menu-trigger-wrapper::after {
-    content: "";
-    top: 0.5rem;
-}
-
-#mob-menu-trigger {
-    top: 0;
-}
-
-.mobile-menu-toggle-col:hover .mob-menu-trigger-wrapper::before,
-.mobile-menu-toggle-col:hover .mob-menu-trigger-wrapper::after,
-.mobile-menu-toggle-col:hover #mob-menu-trigger {
-    background-color: var(--darkblue);
-}
-
-body.mobile-nav-open .mobile-menu-toggle-col .mob-menu-trigger-wrapper::before {
-    top: 0;
-    transform: rotate(135deg);
-}
-
-body.mobile-nav-open .mobile-menu-toggle-col .mob-menu-trigger-wrapper::after {
-    top: 0;
-    transform: rotate(-135deg);
-}
-
-body.mobile-nav-open .mobile-menu-toggle-col #mob-menu-trigger {
-    transform: scaleX(0);
-}
-
-/* new_ga4gh's own responsive-breakpoint mixin (abstracts/_breakpoints.scss):
-   triggers on touch devices too, not just narrow viewports, since a coarse
-   pointer means the hover-driven desktop nav doesn't really apply either. */
-@media (pointer: coarse), (max-width: 768px) {
-
-    .section-standard-width {
-    max-width: 1440px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-    .mobile-menu-toggle-col {
-        display: flex;
-    }
-
-    /* .h-100 and .card-body's min-height floor are already reset to auto
-       for mobile in the (max-width: 768px)-only block further down — but a
-       coarse-pointer tablet wider than 768px matches THIS query instead, so
-       .chart-cards-row's single-column stacking just above would otherwise
-       land inside a card still floored at h-100/47rem tall from the old
-       side-by-side desktop sizing. Same fix, same reasoning, repeated here
-       for the query this file actually uses for touch devices. */
-    .h-100 {
-        height: auto !important;
-    }
-
-    .card-body {
-        min-height: auto !important;
-    }
-
-    /* Chart card pairs (EPMC/GitHub/PyPI/funder/researcher/developer/
-       community/combined sections) sit two-per-row on desktop via
-       dbc.Col(md=6) — Bootstrap's own md breakpoint already stacks those
-       under 768px width, but a coarse-pointer device (e.g. a tablet in
-       touch mode) can be wider than that, where md=6 would still render two
-       columns side by side while the rest of the page (nav, hero, tabs) is
-       already in its mobile layout. This lives in the same (pointer:
-       coarse) query as pie_autofit.js's own breakpoint so a stacked card
-       always hands that script the post-stack width, not a stale
-       still-two-column one. Cards inside already carry h-100 for desktop's
-       equal-height row, which the auto-height override further up already
-       un-does once stacked to one column. */
-    .chart-cards-row {
-        --bs-gutter-x: 0;
-        display: grid;
-        /* minmax(0, 1fr), not bare 1fr — a bare fr track's automatic minimum
-           is its content's min-content size, so a wide child (e.g. the
-           DataTable card, or a chart pie_autofit.js has already given an
-           explicit fixed pixel width) would stop the track — and this whole
-           row, and every sibling sharing it — from ever shrinking below
-           that width, no matter how narrow the actual viewport is. */
-        grid-template-columns: minmax(0, 1fr);
-        gap: 1rem;
-    }
-
-    /* Same min-content-floor issue as above applies to the grid ITEMS too:
-       Bootstrap's .col classes (and flexbox children generally) default to
-       min-width:auto, which can independently stop a card from shrinking to
-       fit its 1fr track even once the track itself is unconstrained. */
-    .chart-cards-row > * {
-        min-width: 0;
-    }
-
-    /* Bootstrap's .row wraps by default — with the logo lockup's text
-       wrapping to 2 lines at narrow widths and the hamburger column keeping
-       its own fixed (col-auto) width, the row was otherwise pushing the
-       hamburger onto a second line below the logo instead of sitting next
-       to the title.
-       justify-content is flex-start (not space-between): .menu-col
-       collapses to 0 width at this breakpoint (see below), so space-between
-       would put its entire leftover space as one gap right after the title.
-       margin-left:auto on .mobile-menu-toggle-wrap (the actual flex-item
-       Col wrapping the hamburger button — margin on the button itself
-       wouldn't do anything, since its Col already sizes exactly to fit it)
-       does the "float right" instead: it pins the hamburger to the row's
-       far edge by consuming whatever space is left, while .logo-col's own
-       margin-right still guarantees at least 0.5rem between the title and
-       the hamburger if the title ever grows wide enough to meet it. */
-    .top-bar-row {
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-    }
-
-    .mobile-menu-toggle-wrap {
-        margin-left: auto;
-    }
-
-    .top-bar {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    /* .brand-link (an <a>, display:inline by default) was following inline/
-       baseline layout inside .logo-col instead of being centered within it —
-       align-items:center on .top-bar-row only centers .logo-col itself as a
-       flex item, not the inline content nested inside it. Making .logo-col
-       flex blockifies .brand-link (inline -> block) but doesn't fix the
-       real cause one level deeper: .brand-lockup (inline-flex) was still
-       laying out via normal inline/baseline rules *inside* .brand-link's
-       own block box, whose line box includes an invisible "strut" sized by
-       the inherited line-height — taller than the 40px logo icon, so the
-       icon sat near the strut's top rather than centered in it. Making
-       .brand-link itself a flex container (not just a blockified flex
-       item) centers .brand-lockup by flex alignment instead, sidestepping
-       that inline strut entirely.
-       min-width:0 overrides Bootstrap's flex-item default of min-width:auto,
-       which otherwise blocks the shrink the clamp() below relies on. */
-    .logo-col {
-        display: flex;
-        align-items: center;
-        min-width: 0;
-        margin-right: 0.5rem;
-    }
-
-    .brand-link {
-        display: flex;
-        align-items: center;
-    }
-
-    /* Shrinks fluidly with viewport width instead of the desktop-fixed
-       1.5rem, and stays on one line (nowrap) so it reads as a title sitting
-       between the icon and hamburger rather than wrapping across them —
-       tuned so it still fits with a 0.5rem gap to the hamburger at 320px,
-       the narrowest width this app supports. */
-    .brand-lockup {
-        gap: 0.5rem;
-        font-size: clamp(0.65rem, 4.4vw, 1.5rem);
-        min-width: 0;
-    }
-
-    .brand-text-primary,
-    .brand-text-base {
-        white-space: nowrap;
-    }
-
-    /* The row's middle column collapses to nothing — .menu-container (its
-       child) becomes a position:fixed dropdown panel below, so it no longer
-       needs to occupy space in the logo/hamburger row itself. display can't
-       go to `none` here though, since that would hide .menu-container too
-       (a display:none ancestor hides fixed-position descendants just the
-       same as static ones). */
-    .menu-col {
-        flex: 0 0 0;
-        width: 0;
-        padding: 0;
-        overflow: visible;
-    }
-
-    /* Reuses the SAME <a> links/ids as the desktop row (rather than a
-       duplicated mobile-only nav) so persona-driven show/hide keeps working
-       unchanged — only this element's own layout changes at the breakpoint.
-       Matches new_ga4gh's mobile-nav panel: fixed dropdown below the header,
-       collapsed via max-height — driven here by assets/mobile_nav.js
-       toggling .mobile-nav-open on <body> rather than a :checked checkbox. */
-    .menu-container {
-        position: fixed;
-        top: 3rem;
-        left: 0;
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-        max-height: 0;
-        overflow-y: auto;
-        overflow-x: hidden;
-        background: var(--white);
-        transition: max-height 0.3s ease;
-    }
-
-    /* border-bottom was unconditional on .menu-container above — max-height:0
-       only clips the content box, not the border, so the collapsed panel
-       still rendered its own 2px black line, sitting right below (and
-       reading as a duplicate of) .top-bar's own border-bottom even while
-       the menu was fully closed. Only draw it once the panel is actually
-       open and has content to close off. */
-    body.mobile-nav-open .menu-container {
-        max-height: 80vh;
-        padding: 1rem;
-        border-bottom: 2px solid var(--black);
-    }
-
-    .menu-link {
-        display: block;
-        width: 100%;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--lightgrey);
-    }
+#page-container {
+    padding-left: 260px !important;
 }
 
 .menu-link {
     color: var(--dark);
-    font-family: var(--font-ws-bold);
-    font-weight: 700;
-    font-size: clamp(0.7rem, 0.75vw, 0.95rem);
-    text-transform: uppercase;
+    font-family: "Work Sans", "WorkSans-Bold", sans-serif;
+    font-weight: 500;
+    font-size: 0.875rem;
     text-decoration: none;
-    transition: color 0.3s ease;
+    display: block;
+    padding: 7px 16px;
+    border-left: 3px solid transparent;
+    line-height: 1.4;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .menu-link:hover,
-.menu-link:focus-visible {
+.menu-link.active {
+    background-color: var(--faint-lightblue);
+    border-left-color: var(--lightblue);
     color: var(--darkblue);
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .left-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        border-right: none;
+        border-bottom: 2px solid #000;
+        padding: 12px 16px;
+    }
+
+    .sidebar-divider,
+    .sidebar-section-label {
+        display: none;
+    }
+
+    .left-nav-links {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .menu-link {
+        padding: 6px 10px;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        font-size: 0.8rem;
+    }
+
+    .menu-link:hover,
+    .menu-link.active {
+        border-left: none;
+        border-bottom-color: var(--lightblue);
+        background-color: var(--faint-lightblue);
+    }
+
+    #page-container {
+        padding-left: 15px !important;
+    }
 }
 
 
@@ -1690,11 +1463,7 @@ body.mobile-nav-open .mobile-menu-toggle-col #mob-menu-trigger {
 #developer-charts,
 #community-charts,
 #tables {
-    /* Navbar's actual rendered height is ~65.6px (4.1rem) — 4.25rem leaves a
-       small safety buffer instead of the previous 4.5rem's larger gap, which
-       was tuned before the navbar was shortened and left the anchor target
-       sitting noticeably lower than the navbar than it needed to. */
-    scroll-margin-top: 4.25rem;
+    scroll-margin-top: 20px;
 }
 
 /* Footer, matching refcloud-ui's components/layout/Footer.tsx + styles/globals.css */
