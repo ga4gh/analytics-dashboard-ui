@@ -49,7 +49,7 @@ figcaption {
 .card-body > figure {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: auto;
 }
 
 .card-body > figure > .dash-graph {
@@ -1103,20 +1103,7 @@ input.list-filter[type="text"]::placeholder {
         height: auto !important;
     }
 
-    /* .card-body's own base rule floors every card at 47rem/752px tall (see
-       below) — a desktop-era rule for cards with big fixed-height charts,
-       already special-cased off for a couple of specific cards
-       (#epmc-authors-card-body, .methods-card-body). On mobile, where cards
-       stack instead of sharing a row height, every card should just hug its
-       own content the same way those two already do. */
-    .card-body {
-        /* !important: needed since the unconditional .card-body{min-height:
-           47rem} rule sits later in this file — at equal specificity a
-           later rule always wins regardless of which one's media query
-           actually matches, so a plain (non-important) override here would
-           silently lose even though this block IS the one in effect. */
-        min-height: auto !important;
-    }
+
 
     /* assets/pie_autofit.js measures each chart's actual rendered pie and
        legend, then sets an exact pixel height directly on this element
@@ -1766,12 +1753,8 @@ input.list-filter[type="text"]::placeholder {
     content: "\f09a";
 }
 
-.card-body{
-    min-height: 47rem;
-}
-
-#combined-metrics-card-body {
-    min-height: auto !important;
+.card-body {
+    min-height: auto;
 }
 
 .rc-slider-track{
