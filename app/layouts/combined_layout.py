@@ -5,8 +5,6 @@ from dash import dcc, html
 
 from app.utils.ga4gh_theme import COLORS, chart_expand_button
 
-_heading = {"fontWeight": "600", "fontSize": "13px", "marginBottom": "4px", "color": "#2c3e50"}
-_caption = {"fontSize": "11px", "color": "#888", "marginTop": "6px"}
 
 
 def _build_source_year_df(df, year_col, item_col, source_name):
@@ -144,7 +142,7 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
         return dbc.Col(
             [
                 chart_expand_button(graph_id),
-                html.Div(title, style=_heading),
+                html.Div(title, className="chart-heading"),
                 dcc.Graph(
                     id=graph_id, figure=fig,
                     config={"displayModeBar": False},
@@ -170,7 +168,7 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
                 ),
                 html.Figcaption(
                     "Cumulative growth of GA4GH-related articles and their citations from Europe PMC, GitHub repositories, and PyPI packages per year.",
-                    style=_caption,
+                    className="chart-figcaption",
                 ),
             ],
             id="combined-metrics-card-body",

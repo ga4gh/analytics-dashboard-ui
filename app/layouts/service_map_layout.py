@@ -129,14 +129,13 @@ def get_service_map_layout(standards_df, services_df, deployments_df):
 
     fig = _make_service_map_figure(st_df, s_df, d_df)
 
-    _heading = {"fontWeight": "600", "fontSize": "13px", "marginBottom": "4px", "color": "#2c3e50"}
-    _caption = {"fontSize": "11px", "color": "#888", "marginTop": "6px"}
+
 
     return dbc.Card(
         dbc.CardBody(
             [
                 chart_expand_button("service_map"),
-                html.Div("Map of Registered GA4GH Services", style=_heading),
+                html.Div("Map of Registered GA4GH Services", className="chart-heading"),
                 dcc.Graph(
                     id="service_map",
                     figure=fig,
@@ -147,7 +146,7 @@ def get_service_map_layout(standards_df, services_df, deployments_df):
                 dcc.Store(id="service_map-zoom-clamp-dummy"),
                 html.Figcaption(
                     "Interactive map of registered services implementing GA4GH API specifications.",
-                    style=_caption,
+                    className="chart-figcaption",
                 ),
             ],
             id="service-map-card-body",

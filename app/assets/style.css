@@ -62,8 +62,26 @@ figcaption {
     height: 100% !important;
 }
 
+/* Shared chart heading — small, semi-bold label above every chart. */
+.chart-heading {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 4px;
+    margin-top: 0;
+}
+
+/* Shared chart description — applied via .card-body > figure figcaption
+   (automatic for figure-wrapped charts) and .chart-figcaption (standalone). */
+.card-body > figure figcaption,
+.chart-figcaption {
+    font-size: 0.72rem;
+    color: #888;
+    line-height: 1.4;
+    margin-top: 0.75rem;
+}
+
 .card-body > figure figcaption {
-    margin-top: 2rem;
     flex: 0 0 auto;
 }
 

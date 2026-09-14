@@ -40,14 +40,17 @@ def _prepare_countries_df(countries_df):
     return df.sort_values("count", ascending=False).reset_index(drop=True)
 
 
-def fig_epmc_countries_pie(countries_df, hidden_labels=None):
+def fig_epmc_countries_pie(countries_df, hidden_labels=None, top_n=None):
     """Pie chart – article count by affiliation country.
 
     hidden_labels: collection of country names currently toggled off in the
     legend.  Percentages are recalculated against the visible-only total so
     the displayed values stay correct after toggling.
+    top_n: if set, only the top N countries by count are shown.
     """
     df = _prepare_countries_df(countries_df)
+    if df is not None and top_n is not None:
+        df = df.head(top_n)
     if df is None:
         return go.Figure().update_layout(title="No country data available")
 
@@ -68,10 +71,12 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
         else:
             pct = cnt / visible_total * 100
             pct_fmt = f"{pct:.1f}%"
-            if pct > 5.0:
+            if pct > 25.0:
                 slice_text.append(f"{cn}<br>{pct_fmt}")
-            else:
+            elif pct > 5.0:
                 slice_text.append(pct_fmt)
+            else:
+                slice_text.append("")
             hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
 
     # Always "inside", matching every other pie chart in the app (see
@@ -122,7 +127,7 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None):
     return fig
 
 
-def build_countries_legend(countries_df, hidden_labels=None):
+def build_countries_legend(countries_df, hidden_labels=None, top_n=None):
     """Custom HTML replacement for fig_epmc_countries_pie's legend.
 
     Mirrors the pie's own country order/colors exactly (same whitelist
@@ -130,10 +135,13 @@ def build_countries_legend(countries_df, hidden_labels=None):
     up with their slices. Each item is independently clickable — toggling it
     in/out of epmc-countries-hidden-store, which both this function and
     fig_epmc_countries_pie read to stay in sync.
+    top_n: if set, only the top N countries by count are shown.
     """
     df = _prepare_countries_df(countries_df)
     if df is None:
         return []
+    if top_n is not None:
+        df = df.head(top_n)
 
     hidden = set(hidden_labels) if hidden_labels else set()
 
@@ -250,7 +258,7 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
         return go.Figure().update_layout(title="No author data available")
 
     df = df.head(top_n).copy()
-    df = df.sort_values("author_count", ascending=True)
+    df = df.sort_values("author_count", ascending=False)
 
     fig = px.bar(
         df,
@@ -265,10 +273,9 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
     fig.update_layout(
         yaxis=dict(automargin=True, tickfont=dict(size=9)),
         xaxis=dict(title="count", showgrid=True, gridcolor=COLORS["lightgrey"]),
-        margin=dict(l=240, r=40, t=20, b=40),
-        height=max(400, 25 * len(df)),
+        margin=dict(l=5, r=20, t=10, b=40),
         xaxis_title="Publication Count",
-        yaxis_title="Author Name",
+        yaxis_title="",
         hoverlabel=dict(font_color="white"),
     )
     return fig
@@ -284,7 +291,7 @@ def build_most_cited_rows(entries_df):
             return []
         df = entries_df[list(needed)].copy()
         df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0).astype(int)
-        df = df.sort_values("cited_by_count", ascending=False).head(20)
+        df = df.sort_values("cited_by_count", ascending=False)
         rows = []
         for _, row in df.iterrows():
             doi = str(row.get("doi") or "")
@@ -569,19 +576,20 @@ def register_epmc_callbacks(app):
         Output("epmc-authors-card-body", "style"),
         Output("epmc-authors-bar-title", "children"),
         Input("epmc-top-n-slider", "value"),
+        Input("epmc-top-countries-slider", "value"),
         Input("epmc-countries-hidden-store", "data"),
     )
-    def update_epmc_graphs(top_n, hidden_countries):
+    def update_epmc_graphs(top_n, top_countries, hidden_countries):
         # Legend-item click — only rebuild the pie + legend with updated percentages
         if ctx.triggered_id == "epmc-countries-hidden-store":
             return (
-                fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries),
-                build_countries_legend(countries_df, hidden_labels=hidden_countries),
+                fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries, top_n=top_countries),
+                build_countries_legend(countries_df, hidden_labels=hidden_countries, top_n=top_countries),
                 no_update, no_update, no_update, no_update,
             )
 
-        fig_pie = fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries)
-        legend_children = build_countries_legend(countries_df, hidden_labels=hidden_countries)
+        fig_pie = fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries, top_n=top_countries)
+        legend_children = build_countries_legend(countries_df, hidden_labels=hidden_countries, top_n=top_countries)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
         # An explicit height directly on the Graph is required: dcc.Graph
         # renders in responsive mode (height:100%) with no CSS height of its
@@ -589,13 +597,12 @@ def register_epmc_callbacks(app):
         # own figure.layout.height — that indirection tracks growth fine but
         # never shrinks back down, since nothing ever forces the ancestor
         # smaller once Plotly's responsive engine has rendered it larger.
-        graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
         return (
             fig_pie,
             legend_children,
             fig_bar,
-            {"height": f"{graph_height}px"},
-            {"minHeight": f"{graph_height + 96}px"},
+            no_update,
+            no_update,
             f"Top {top_n} Europe PMC Authors",
         )
 

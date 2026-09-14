@@ -4,8 +4,6 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-# Reuse the shared annual publications figure
-from app.layouts.funder_layout import _annual_publications_figure
 from app.utils.ga4gh_theme import COLORS, PUBLICATIONS_COLORWAY, chart_expand_button
 
 
@@ -115,7 +113,7 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("researcher-pub-type-donut"),
-                                    html.H5("Publication Types", style={"marginBottom": "1rem"}),
+                                    html.Div("Publication Types", className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-pub-type-donut",
                                         figure=pub_type_fig,
@@ -139,7 +137,7 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("researcher-oa-donut"),
-                                    html.H5("Open Access Status", style={"marginBottom": "1rem"}),
+                                    html.Div("Open Access Status", className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-oa-donut",
                                         figure=oa_fig,

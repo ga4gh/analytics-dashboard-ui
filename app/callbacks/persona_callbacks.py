@@ -33,7 +33,7 @@ ALL_SECTION_IDS = [
     "github",
     "pypi",
     "tables",
-    # shared publication trend chart (funder + researcher)
+    # shared choropleth (funder + researcher + community)
     "publication-charts",
     # funder-only charts
     "funder-only-charts",

@@ -161,7 +161,7 @@ layout = dbc.Container(
                         html.Div(html.A("Service Map",         href="#servicemap",         className="menu-link"), id="nav-servicemap"),
                         html.Div(html.A("Cumulative Metrics",  href="#metrics",            className="menu-link"), id="nav-metrics"),
                         html.Div(html.A("EPMC",                href="#epmc",               className="menu-link"), id="nav-epmc"),
-                        html.Div(html.A("Publication Trends",  href="#publication-charts", className="menu-link"), id="nav-publication-charts",  style={"display": "none"}),
+                        html.Div(html.A("Global Distribution",  href="#publication-charts", className="menu-link"), id="nav-publication-charts",  style={"display": "none"}),
                         html.Div(html.A("Funding Analytics",   href="#funder-only-charts", className="menu-link"), id="nav-funder-only-charts",   style={"display": "none"}),
                         html.Div(html.A("Research Profile",    href="#researcher-charts",  className="menu-link"), id="nav-researcher-charts",    style={"display": "none"}),
                         html.Div(html.A("GitHub",              href="#github",             className="menu-link"), id="nav-github"),
