@@ -28,7 +28,10 @@
         });
 
         if (maxWidth > 0) {
-            legend.style.gridTemplateColumns = "repeat(auto-fit, " + Math.ceil(maxWidth) + "px)";
+            var numCols = Math.ceil(items.length / 5);
+            legend.style.gridAutoFlow = "column";
+            legend.style.gridTemplateRows = "repeat(5, auto)";
+            legend.style.gridTemplateColumns = "repeat(" + numCols + ", " + Math.ceil(maxWidth) + "px)";
         }
     }
 

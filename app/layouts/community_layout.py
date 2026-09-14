@@ -132,8 +132,7 @@ def get_community_charts_section(
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("community-workstream-activity"),
-                                    html.H5("GitHub Repositories by Work Stream & Activity",
-                                            style={"marginBottom": "1rem"}),
+                                    html.Div("GitHub Repositories by Work Stream & Activity", className="chart-heading"),
                                     dcc.Graph(
                                         id="community-workstream-activity",
                                         figure=fig_workstream,
@@ -155,8 +154,7 @@ def get_community_charts_section(
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("community-top-repos-interest"),
-                                    html.H5("Top 10 Repos by Community Interest",
-                                            style={"marginBottom": "1rem"}),
+                                    html.Div("Top 10 Repos by Community Interest", className="chart-heading"),
                                     dcc.Graph(
                                         id="community-top-repos-interest",
                                         figure=fig_interest,

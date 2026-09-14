@@ -149,86 +149,31 @@ layout = dbc.Container(
     [
        html.Div(
     [
-        # ---------- TOP BAR ----------
-        # .top-bar (outer): the bar's own full-width chrome (background,
-        # border, shadow, fixed positioning) — split from .top-bar-row
-        # (inner): the actual nav content (logo, title, links), which caps
-        # at the site's own 1440px content width and centers on a wide
-        # monitor instead of spreading out with the bar's own full-width
-        # background. These two used to be one Row carrying both
-        # classNames; wrapping it in this outer Div is what lets the bar
-        # stay edge-to-edge while only its content gets constrained.
+        # ---------- LEFT SIDEBAR ----------
         html.Div(
-dbc.Row(
-    [
-        dbc.Col(
-            html.A(
-                html.Span(
+            [
+                html.Img(src="/assets/logo-full-color.svg", className="logo-img"),
+                html.Hr(className="sidebar-divider"),
+                html.Span("ON THIS PAGE", className="sidebar-section-label"),
+                html.Nav(
                     [
-                        html.Img(
-                            src="/assets/logo-mark-color.svg",
-                            alt="The Global Alliance for Genomics and Health",
-                            className="brand-logo-img",
-                        ),
-                        html.Span("GA4GH", className="brand-text-primary"),
-                        html.Span("Analytics Dashboard", className="brand-text-base"),
+                        html.A("Overview", href="#overview", className="menu-link"),
+                        html.Div(html.A("Service Map",         href="#servicemap",         className="menu-link"), id="nav-servicemap"),
+                        html.Div(html.A("Cumulative Metrics",  href="#metrics",            className="menu-link"), id="nav-metrics"),
+                        html.Div(html.A("EPMC",                href="#epmc",               className="menu-link"), id="nav-epmc"),
+                        html.Div(html.A("Global Distribution",  href="#publication-charts", className="menu-link"), id="nav-publication-charts",  style={"display": "none"}),
+                        html.Div(html.A("Funding Analytics",   href="#funder-only-charts", className="menu-link"), id="nav-funder-only-charts",   style={"display": "none"}),
+                        html.Div(html.A("Research Profile",    href="#researcher-charts",  className="menu-link"), id="nav-researcher-charts",    style={"display": "none"}),
+                        html.Div(html.A("GitHub",              href="#github",             className="menu-link"), id="nav-github"),
+                        html.Div(html.A("PyPI",                href="#pypi",               className="menu-link"), id="nav-pypi"),
+                        html.Div(html.A("Developer Analytics", href="#developer-charts",   className="menu-link"), id="nav-developer-charts",     style={"display": "none"}),
+                        html.Div(html.A("Community Overview",  href="#community-charts",   className="menu-link"), id="nav-community-charts",     style={"display": "none"}),
+                        html.Div(html.A("Tables",              href="#tables",             className="menu-link"), id="nav-tables"),
                     ],
-                    className="brand-lockup",
+                    className="left-nav-links",
                 ),
-                href="/",
-                className="brand-link",
-            ),
-            width="auto",
-            className="logo-col",
-        ),
-
-        dbc.Col(
-            html.Div(
-                [
-                    html.A("Overview", href="#overview", className="menu-link"),
-                    html.A("Service Map", href="#servicemap", className="menu-link", id="navlink-servicemap"),
-                    html.A("Cumulative Metrics", href="#metrics", className="menu-link"),
-                    html.A("EPMC", href="#epmc", className="menu-link", id="navlink-epmc"),
-                    html.A("Publications", href="#publication-charts", className="menu-link", id="navlink-publication-charts"),
-                    html.A("Funding", href="#funder-only-charts", className="menu-link", id="navlink-funder-only-charts"),
-                    html.A("Research", href="#researcher-charts", className="menu-link", id="navlink-researcher-charts"),
-                    html.A("GitHub", href="#github", className="menu-link", id="navlink-github"),
-                    html.A("PyPI", href="#pypi", className="menu-link", id="navlink-pypi"),
-                    html.A("Developer", href="#developer-charts", className="menu-link", id="navlink-developer-charts"),
-                    html.A("Community", href="#community-charts", className="menu-link", id="navlink-community-charts"),
-                    html.A("Tables", href="#tables", className="menu-link", id="navlink-tables"),
-                ],
-                className="menu-container",
-            ),
-            className="menu-col d-flex justify-content-end",
-        ),
-
-        # ---------- MOBILE HAMBURGER TOGGLE ----------
-        # dash.html has no native <input>/<label> (those need dcc, which
-        # doesn't support type="checkbox"), so this is a plain button whose
-        # click toggles a "mobile-nav-open" class on <body> instead of
-        # new_ga4gh's own checkbox-trick — same visual result (see
-        # assets/mobile_nav.js), just class-driven rather than :checked-
-        # driven. Only shown at the responsive breakpoint (see style.css);
-        # .menu-container itself becomes the dropdown panel there instead
-        # of a separate duplicated nav.
-        dbc.Col(
-            html.Button(
-                html.Span(
-                    html.Span(id="mob-menu-trigger"),
-                    className="mob-menu-trigger-wrapper",
-                ),
-                id="mobile-menu-toggle-btn",
-                className="mobile-menu-toggle-col",
-                **{"aria-label": "Toggle menu"},
-            ),
-            width="auto",
-            className="mobile-menu-toggle-wrap",
-        ),
-    ],
-    className="top-bar-row",
-),
-            className="top-bar",
+            ],
+            className="left-sidebar",
         ),
 
       # ---------- HERO ----------
@@ -240,7 +185,10 @@ html.Div(
             [
 
                 html.H1(
-                    "GA4GH Analytics Dashboard",
+                    [
+                        html.Span("GA4GH", className="title-ga4gh"),
+                        " Analytics Dashboard",
+                    ],
                     className="dashboard-title",
                 ),
 
@@ -264,34 +212,37 @@ html.Div(
                     [
                         html.Div(
                             [
-                                dbc.Badge("Created by:", className="hero-cta"),
-                                dbc.Badge("GA4GH Technical Team", className="hero-badge"),
+                                html.Span("Created by:", className="hero-label"),
+                                html.Span("GA4GH Technical Team", className="hero-value"),
                             ],
                             className="hero-badge-group",
                         ),
                         html.Div(
                             [
-                                dbc.Badge("Data Sources:", className="hero-cta"),
-                                dbc.Badge("Implementation Registry, Europe PMC, GitHub, PyPI", className="hero-badge"),
+                                html.Span("Data Sources:", className="hero-label"),
+                                html.Span("Implementation Registry", className="hero-value"),
+                                html.Span("Europe PMC", className="hero-value"),
+                                html.Span("GitHub", className="hero-value"),
+                                html.Span("PyPI", className="hero-value"),
                             ],
                             className="hero-badge-group",
                         ),
                         html.Div(
                             [
-                                dbc.Badge("Data Updated:", className="hero-cta"),
+                                html.Span("Data Updated:", className="hero-label"),
                                 html.Div(
                                     [
-                                        dbc.Badge(
+                                        html.Span(
                                             f"Europe PMC: {(_summary_overview or {}).get('epmc', {}).get('last_ingested') or 'N/A'}",
-                                            className="hero-badge",
+                                            className="hero-value",
                                         ),
-                                        dbc.Badge(
+                                        html.Span(
                                             f"GitHub: {(_summary_overview or {}).get('github', {}).get('last_ingested') or 'N/A'}",
-                                            className="hero-badge",
+                                            className="hero-value",
                                         ),
-                                        dbc.Badge(
+                                        html.Span(
                                             f"PyPI: {(_summary_overview or {}).get('pypi', {}).get('last_ingested') or 'N/A'}",
-                                            className="hero-badge",
+                                            className="hero-value",
                                         ),
                                     ],
                                     className="hero-badge-values",
@@ -868,4 +819,5 @@ html.Div(
 
     ],
     fluid=True,
+    id="page-container",
 )

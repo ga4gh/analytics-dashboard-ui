@@ -180,49 +180,19 @@ def _kpi_card(value, label, color_class):
 
 def get_publication_charts_section(entries_df, choropleth_fig=None):
     """
-    Annual publications bar + global author distribution choropleth.
-    Shared across funder + researcher personas; hidden by default.
+    Global author distribution choropleth. Shared across funder, researcher,
+    and community personas; hidden by default.
     """
-    annual_fig = _annual_publications_figure(entries_df)
-
     return html.Div(
         [
-            html.Div("Publication Trends", className="section-title"),
-
-            # Row 1: annual bar chart
-            dbc.Row(
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            html.Figure([
-                                chart_expand_button("annual-publications-bar"),
-                                html.H5("Annual Publications", style={"marginBottom": "1rem"}),
-                                dcc.Graph(
-                                    id="annual-publications-bar",
-                                    figure=annual_fig,
-                                ),
-                                html.Figcaption(
-                                    "Annual count of GA4GH-related publications indexed in Europe PMC.",
-                                    style={"color": COLORS["grey"], "marginTop": "6px"},
-                                ),
-                            ])
-                        ),
-                        className="mb-4 shadow-sm",
-                        style={"borderRadius": "12px"},
-                    ),
-                    width=12,
-                ),
-                className="mb-2",
-            ),
-
-            # Row 2: full-width choropleth
+            html.Div("Global Author Distribution", className="section-title"),
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
                                 chart_expand_button("epmc-countries-choropleth"),
-                                html.H5("Global Author Affiliation Distribution", style={"marginBottom": "1rem"}),
+                                html.Div("Global Author Affiliation Distribution", className="chart-heading"),
                                 dcc.Graph(
                                     id="epmc-countries-choropleth",
                                     figure=choropleth_fig or go.Figure(),
@@ -266,7 +236,7 @@ def get_funder_only_charts_section(agencies_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("funder-top-agencies-bar"),
-                                    html.H5("Top 15 Funding Agencies", style={"marginBottom": "1rem"}),
+                                    html.Div("Top 15 Funding Agencies", className="chart-heading"),
                                     dcc.Graph(
                                         id="funder-top-agencies-bar",
                                         figure=agencies_fig,
@@ -289,7 +259,7 @@ def get_funder_only_charts_section(agencies_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("funder-region-pie"),
-                                    html.H5("Funders by Region", style={"marginBottom": "1rem"}),
+                                    html.Div("Funders by Region", className="chart-heading"),
                                     dcc.Graph(
                                         id="funder-region-pie",
                                         figure=region_fig,

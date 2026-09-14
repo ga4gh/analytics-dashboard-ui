@@ -33,7 +33,7 @@ ALL_SECTION_IDS = [
     "github",
     "pypi",
     "tables",
-    # shared publication trend chart (funder + researcher)
+    # shared choropleth (funder + researcher + community)
     "publication-charts",
     # funder-only charts
     "funder-only-charts",
@@ -62,24 +62,10 @@ ALL_COL_IDS = [
     "researcher-kpi-open-access",
 ]
 
-ALL_CONTROLLED_IDS = ALL_SECTION_IDS + ALL_COL_IDS
+# Sidebar nav wrapper divs — toggled in sync with their section
+ALL_NAV_IDS = [f"nav-{s}" for s in ALL_SECTION_IDS]
 
-# Fixed nav bar links — each mirrors the visibility of the section it points to.
-# "Overview" and "Cumulative Metrics" are not persona-controlled and stay out
-# of this map, so they remain visible in every persona.
-NAV_LINK_TO_SECTION = {
-    "navlink-servicemap":         "servicemap",
-    "navlink-epmc":               "epmc",
-    "navlink-publication-charts": "publication-charts",
-    "navlink-funder-only-charts": "funder-only-charts",
-    "navlink-researcher-charts":  "researcher-charts",
-    "navlink-github":             "github",
-    "navlink-pypi":               "pypi",
-    "navlink-developer-charts":   "developer-charts",
-    "navlink-community-charts":  "community-charts",
-    "navlink-tables":             "tables",
-}
-ALL_NAV_LINK_IDS = list(NAV_LINK_TO_SECTION.keys())
+ALL_CONTROLLED_IDS = ALL_SECTION_IDS + ALL_COL_IDS
 
 # ---------------------------------------------------------------------------
 # Per-persona whitelist — only list what IS shown.
@@ -149,10 +135,11 @@ def register_persona_callbacks(app):
         return classes + outlines
 
     # ------------------------------------------------------------------
-    # 3. Show / hide sections based on active persona
+    # 3. Show / hide sections + sidebar nav links based on active persona
     # ------------------------------------------------------------------
     @app.callback(
-        [Output(eid, "style") for eid in ALL_CONTROLLED_IDS],
+        [Output(eid, "style") for eid in ALL_CONTROLLED_IDS]
+        + [Output(eid, "style") for eid in ALL_NAV_IDS],
         Input("active-persona", "data"),
     )
     def toggle_persona_sections(active_persona):
@@ -160,26 +147,14 @@ def register_persona_callbacks(app):
         config = PERSONA_SHOW.get(persona, PERSONA_SHOW["default"])
         shown_sections = set(config["sections"])
         shown_cols     = set(config["cols"])
-        return [
+        section_styles = [
             {"display": "block"} if eid in shown_sections
             else {}              if eid in shown_cols
             else {"display": "none"}
             for eid in ALL_CONTROLLED_IDS
         ]
-
-    # ------------------------------------------------------------------
-    # 4. Show / hide the matching nav bar links based on active persona
-    # ------------------------------------------------------------------
-    @app.callback(
-        [Output(nid, "style") for nid in ALL_NAV_LINK_IDS],
-        Input("active-persona", "data"),
-    )
-    def toggle_persona_nav_links(active_persona):
-        persona = active_persona or "default"
-        config = PERSONA_SHOW.get(persona, PERSONA_SHOW["default"])
-        shown_sections = set(config["sections"])
-        return [
-            {} if NAV_LINK_TO_SECTION[nid] in shown_sections
-            else {"display": "none"}
-            for nid in ALL_NAV_LINK_IDS
+        nav_styles = [
+            {"display": "block"} if nav_id[4:] in shown_sections else {"display": "none"}
+            for nav_id in ALL_NAV_IDS
         ]
+        return section_styles + nav_styles
