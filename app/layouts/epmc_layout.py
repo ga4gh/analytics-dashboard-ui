@@ -67,10 +67,12 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         chart_expand_button("epmc-authors-bar"),
                                         dcc.Graph(
                                             id="epmc-authors-bar",
-                                            style={"height": "280px"},
+                                            style={"height": "420px"},
+                                            config={"responsive": True},
                                         ),
                                         html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
                                     ]),
+                                    html.Div(style={"flex": "1"}),
                                 ],
                                 id="epmc-authors-card-body",
                                 style={"display": "flex", "flexDirection": "column"},
@@ -93,7 +95,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         config={"responsive": True},
                                     ),
                                     html.Div(id="epmc-countries-legend", className="country-legend",
-                                             style={"marginTop": "1rem"}),
+                                             style={"marginTop": "1rem", "height": "140px", "overflowY": "auto"}),
                                     html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author's affiliation for all publications.")
                                 ])
                             ),
