@@ -82,44 +82,6 @@ def _annual_publications_figure(entries_df):
     return fig
 
 
-def _top_agencies_figure(agencies: list) -> go.Figure:
-    if not agencies:
-        return go.Figure().update_layout(title="No funding agency data available")
-
-    df = pd.DataFrame(agencies[:15]).sort_values("count", ascending=False)
-    df["region"] = df["agency"].apply(_classify_region)
-
-    fig = px.bar(
-        df,
-        x="count",
-        y="agency",
-        color="region",
-        color_discrete_map=_REGION_COLORS,
-        category_orders={"agency": df["agency"].tolist()},
-        orientation="h",
-        labels={"count": "Number of Grants", "agency": "Funding Agency", "region": "Region"},
-        template="simple_white",
-    )
-    fig.update_traces(marker_line_width=0, hovertemplate="%{y}<br>Grants: %{x}<extra></extra>")
-    fig.update_layout(
-        # autosize (not a fixed height) — paired with config={"responsive":
-        # True} on the dcc.Graph, this lets the chart fill and resize with
-        # its card the same way its row sibling funder-region-pie already
-        # does, instead of staying pinned at 480px regardless of viewport
-        # width.
-        autosize=True,
-        margin={"l": 10, "r": 20, "t": 30, "b": 90},
-        xaxis={"title": "Number of Grants", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
-        yaxis={"title": "", "automargin": True},
-        # px.bar auto-titles the legend from the color= column name
-        # ("region") — an explicit "" overrides that default, merely
-        # omitting a title_text kwarg does not.
-        legend=dict(title_text="", orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
-        hoverlabel=dict(font_color="white"),
-    )
-    return fig
-
-
 def _region_pie_figure(agencies: list) -> go.Figure:
     if not agencies:
         return go.Figure().update_layout(title="No region data available")
@@ -220,10 +182,9 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
 
 def get_funder_only_charts_section(agencies_list):
     """
-    Funder-specific charts: top agencies bar + region pie.
+    Funder-specific charts: region pie.
     Hidden by default; shown only when Funder persona is active.
     """
-    agencies_fig = _top_agencies_figure(agencies_list)
     region_fig = _region_pie_figure(agencies_list)
 
     return html.Div(
@@ -231,29 +192,6 @@ def get_funder_only_charts_section(agencies_list):
             html.Div("Funding Analytics", className="section-title"),
             dbc.Row(
                 [
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                html.Figure([
-                                    chart_expand_button("funder-top-agencies-bar"),
-                                    html.Div("Top 15 Funding Agencies", className="chart-heading"),
-                                    dcc.Graph(
-                                        id="funder-top-agencies-bar",
-                                        figure=agencies_fig,
-                                        config={"responsive": True},
-                                    ),
-                                    html.Figcaption(
-                                        "Top 15 funding bodies by number of associated grants in the GA4GH publication dataset.",
-                                        style={"color": COLORS["grey"], "marginTop": "6px"},
-                                    ),
-                                ])
-                            ),
-                            className="shadow-sm h-100 w-100",
-                            style={"borderRadius": "12px"},
-                        ),
-                        className="d-flex",
-                        md=6,
-                    ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(

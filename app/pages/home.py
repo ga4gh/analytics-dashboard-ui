@@ -46,7 +46,6 @@ _epmc_unique_countries, _epmc_countries_entries = _countries_stats_whitelist(_ep
 
 _epmc_kpis = compute_epmc_kpis(_epmc_entries_df, _epmc_citations_df, _epmc_total_entries)
 _epmc_yoy_growth_pct   = _epmc_kpis["yoy_growth_pct"]
-_epmc_avg_citations    = _epmc_kpis["avg_citations"]
 _epmc_total_citations  = _epmc_kpis["total_citations"]
 
 _epmc_funding_data     = get_funding_agencies(limit=50)
@@ -66,14 +65,6 @@ else:
     _yearly_pub_counts = {}
 _yoy_year_options = [{"label": str(y), "value": y} for y in sorted(_yearly_pub_counts.keys())]
 _yoy_default_year = max(_yearly_pub_counts.keys()) if _yearly_pub_counts else None
-
-# Open Access rate — computed from entries_df (no extra API needed)
-if not _epmc_entries_df.empty and "is_open_access" in _epmc_entries_df.columns:
-    _oa_count = int(_epmc_entries_df["is_open_access"].sum())
-    _oa_rate  = round(_oa_count / len(_epmc_entries_df) * 100, 1)
-else:
-    _oa_count = 0
-    _oa_rate  = 0.0
 
 # Prepare PyPI module data
 _pypi_details = get_pypi_details()
@@ -97,7 +88,6 @@ _epmc_layout = get_epmc_layout(
 
 # Build persona chart components
 _agencies_list = _epmc_funding_data.get("agencies", []) if isinstance(_epmc_funding_data, dict) else []
-_funding_bodies_count = _epmc_funding_data.get("total_unique", 0) if isinstance(_epmc_funding_data, dict) else 0
 
 _choropleth_fig      = fig_epmc_countries_choropleth(_epmc_countries_df)
 _publication_charts  = get_publication_charts_section(_epmc_entries_df, _choropleth_fig)
@@ -186,8 +176,7 @@ html.Div(
 
                 html.H1(
                     [
-                        html.Span("GA4GH", className="title-ga4gh"),
-                        " Analytics Dashboard",
+                        html.Span("GA4GH Analytics Dashboard"),
                     ],
                     className="dashboard-title",
                 ),
@@ -266,7 +255,7 @@ html.Div(
 
         html.Div(className="section-spacer"),
 
-        dcc.Store(id="active-persona", storage_type="session", data="default"),
+        dcc.Store(id="active-persona", storage_type="session", data="community"),
         dcc.Store(id="yearly-pub-counts", data=_yearly_pub_counts),
 
         # ---------- METHODS CARDS -----------
@@ -566,11 +555,10 @@ html.Div(
                 html.Span("View as:", className="persona-selector-label"),
                 html.Div(
                     [
-                        dbc.Button("Default",        id="persona-btn-default",    n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
+                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
                         dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                         dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                         dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                     ],
                     className="persona-btn-group",
                 ),
@@ -624,16 +612,6 @@ html.Div(
                     md=2,
                     id="kpi-citations",
                 ),
-                dbc.Col(
-                    indicator_card(
-                        str(_epmc_avg_citations),
-                        "Avg Citations / Paper",
-                        "border-secondary-orange",
-                    ),
-                    md=2,
-                    id="funder-kpi-avg-citations",
-                    style={"display": "none"},
-                ),
                 # --- Authors group ---
                 dbc.Col(
                     indicator_card(
@@ -671,17 +649,6 @@ html.Div(
                     ),
                     md=2,
                     id="kpi-pypi",
-                ),
-                # --- Researcher-specific KPIs — hidden by default ---
-                dbc.Col(
-                    indicator_card(
-                        f"{_oa_rate}%",
-                        "Open Access Rate",
-                        "border-darkgreen",
-                    ),
-                    md=2,
-                    id="researcher-kpi-open-access",
-                    style={"display": "none"},
                 ),
             ],
             className="mb-4 gy-3 section-standard-width kpi-row",

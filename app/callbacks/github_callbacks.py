@@ -1,4 +1,4 @@
-from dash import Input, Output
+from dash import Input, Output, dcc
 from app.services.github_client import prepare_github_data
 import dash_bootstrap_components as dbc
 import plotly.express as px
@@ -301,13 +301,17 @@ def register_github_callbacks(app):
     
     @app.callback(
         Output("repo-details", "children"),
-        Input("github-projects-table", "selected_rows")
+        Input("github-projects-table", "active_cell"),
+        Input("github-projects-table", "page_current"),
     )
-    def show_repo_details(selected_rows):
-        if not selected_rows:
+    def show_repo_details(active_cell, page_current):
+        if not active_cell:
             return dbc.Alert("Select a repository to see details", color="info")
-        
-        repo = gh_df.iloc[selected_rows[0]]
+
+        row_idx = (page_current or 0) * 15 + active_cell["row"]
+        if row_idx >= len(gh_df):
+            return dbc.Alert("Select a repository to see details", color="info")
+        repo = gh_df.iloc[row_idx]
         
         return dbc.Card([
             dbc.CardHeader(
@@ -433,3 +437,11 @@ def register_github_callbacks(app):
         fig2 = fig_github_activity_bar(df_top, color_map=color_map)
 
         return fig2, fig_status, fig_ws, fig3
+
+    @app.callback(
+        Output("github-download", "data"),
+        Input("github-export-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def export_github_csv(n_clicks):
+        return dcc.send_data_frame(gh_df.to_csv, "github_repositories.csv", index=False)

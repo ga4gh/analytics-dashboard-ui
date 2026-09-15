@@ -1,4 +1,4 @@
-from dash import Input, Output
+from dash import Input, Output, dcc
 import pandas as pd
 import plotly.express as px
 
@@ -170,14 +170,18 @@ def register_pypi_callbacks(app):
     
     @app.callback(
         Output("pypi-project-details", "children"),
-        Input("projects-table", "selected_rows")
+        Input("projects-table", "active_cell"),
+        Input("projects-table", "page_current"),
     )
-    def show_project_details(selected_rows):
+    def show_project_details(active_cell, page_current):
 
-        if not selected_rows:
+        if not active_cell:
             return dbc.Alert("Select a project to see details", color="info")
         pypi_details = _pypi_df
-        project = pypi_details.iloc[selected_rows[0]]
+        row_idx = (page_current or 0) * 15 + active_cell["row"]
+        if row_idx >= len(pypi_details):
+            return dbc.Alert("Select a project to see details", color="info")
+        project = pypi_details.iloc[row_idx]
         github_url = project.get("github_url")
         versions_count = project.get("versions_count")
 
@@ -227,5 +231,11 @@ def register_pypi_callbacks(app):
             ])
 
         ], style={"boxShadow": "0 4px 10px rgba(0,0,0,0.1)"})
-        
-    
+
+    @app.callback(
+        Output("pypi-download", "data"),
+        Input("pypi-export-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def export_pypi_csv(n_clicks):
+        return dcc.send_data_frame(_pypi_df.to_csv, "pypi_packages.csv", index=False)
