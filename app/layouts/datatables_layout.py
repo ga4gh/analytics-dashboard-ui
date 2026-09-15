@@ -71,6 +71,7 @@ def get_datatables_layout(
             # ========== EPMC TABLE SECTION ==========
             html.H4("Europe PMC Publications", style={"marginTop": "40px", "marginBottom": "15px"}),
             html.Figcaption("Metadata for all GA4GH-related articles found in Europe PMC.", style={"marginTop": "15px", "marginBottom": "15px"}),
+            dcc.Download(id="epmc-download"),
             html.Div(
                 [
                     dcc.Input(
@@ -106,7 +107,7 @@ def get_datatables_layout(
                     "marginBottom": "1rem",
                 },
             ),
-            
+
             dcc.Store(id="first-author-store"),
             dcc.Store(id="first-affiliation-store"),
             dbc.Row(
@@ -115,34 +116,39 @@ def get_datatables_layout(
                     dbc.Col(
                         [
                             html.Div(
-                                dash_table.DataTable(
-                                    id="epmc-entries-table",
-                                    columns=[
-                                        {"name": "Title", "id": "title"},
-                                        {"name": "Year", "id": "pub_year"},
-                                    ],
-                                    data=epmc_entries_df.to_dict("records") if not epmc_entries_df.empty else [],
-                                    export_format="csv",
-                                    page_size=15,
-                                    sort_action="native",
-                                    style_table={"overflowX": "auto"},
-                                    style_cell={
-                                        "textAlign": "left",
-                                        "padding": "10px",
-                                        "whiteSpace": "normal",
-                                        "fontFamily": DATATABLE_CELL_FONT_FAMILY,
-                                        "cursor": "pointer",
-                                    },
-                                    style_header={
-                                        "backgroundColor": COLORS["dark"],
-                                        "color": "white",
-                                        "fontWeight": "bold",
-                                        "fontFamily": DATATABLE_HEADER_FONT_FAMILY,
-                                    },
-                                    style_data_conditional=[
-                                        {"if": {"state": "active"}, "backgroundColor": "rgba(229, 115, 26, 0.12)", "border": "1px solid rgba(229, 115, 26, 0.4)"},
-                                    ],
-                                ),
+                                [
+                                    dash_table.DataTable(
+                                        id="epmc-entries-table",
+                                        columns=[
+                                            {"name": "Title", "id": "title"},
+                                            {"name": "Year", "id": "pub_year"},
+                                        ],
+                                        data=epmc_entries_df.to_dict("records") if not epmc_entries_df.empty else [],
+                                        page_size=15,
+                                        sort_action="native",
+                                        style_table={"overflowX": "auto"},
+                                        style_cell={
+                                            "textAlign": "left",
+                                            "padding": "10px",
+                                            "whiteSpace": "normal",
+                                            "fontFamily": DATATABLE_CELL_FONT_FAMILY,
+                                            "cursor": "pointer",
+                                        },
+                                        style_header={
+                                            "backgroundColor": COLORS["dark"],
+                                            "color": "white",
+                                            "fontWeight": "bold",
+                                            "fontFamily": DATATABLE_HEADER_FONT_FAMILY,
+                                        },
+                                        style_data_conditional=[
+                                            {"if": {"state": "active"}, "backgroundColor": "rgba(229, 115, 26, 0.12)", "border": "1px solid rgba(229, 115, 26, 0.4)"},
+                                        ],
+                                    ),
+                                    html.Div(
+                                        html.Button("Export", id="epmc-export-btn", className="export"),
+                                        className="dash-spreadsheet-menu",
+                                    ),
+                                ],
                                 className="datatable-controls-inline",
                             )
                         ],
@@ -158,34 +164,40 @@ def get_datatables_layout(
             # ========== GITHUB TABLE SECTION ==========
             html.H4("GitHub Repositories", style={"marginBottom": "15px"}),
             html.Figcaption("Metadata and usage metrics for all GA4GH-related GitHub repositories.", style={"marginTop": "15px", "marginBottom": "15px"}),
+            dcc.Download(id="github-download"),
             dcc.Input(
                 id='github-table-search',
                 type='text',
                 placeholder='Search repositories...',
                 debounce=False,
                 className="list-filter",
-                style={'margin-bottom': '1rem', 'width': '350px'},
+                style={'marginBottom': '1rem', 'width': '350px'},
             ),
             dbc.Row([
                 # LEFT: GITHUB TABLE
                 dbc.Col([
                     html.Div(
-                        dash_table.DataTable(
-                            id="github-projects-table",
-                            columns=[
-                                {"name": "Project", "id": "name"},
-                                {"name": "Work Stream", "id": "workstream"},
-                            ],
-                            data = gh_df.to_dict("records") if not gh_df.empty and all(col in gh_df.columns for col in ["name", "workstream"]) else [],
-                            export_format="csv",
-                            page_size=15,
-                            style_table={"overflowX": "auto"},
-                            style_cell={"textAlign": "left", "padding": "10px", "whiteSpace": "normal", "fontFamily": DATATABLE_CELL_FONT_FAMILY, "cursor": "pointer"},
-                            style_header={"backgroundColor": COLORS["dark"], "color": "white", "fontWeight": "bold", "fontFamily": DATATABLE_HEADER_FONT_FAMILY},
-                            style_data_conditional=[
-                                {"if": {"state": "active"}, "backgroundColor": "rgba(229, 115, 26, 0.12)", "border": "1px solid rgba(229, 115, 26, 0.4)"},
-                            ],
-                        ),
+                        [
+                            dash_table.DataTable(
+                                id="github-projects-table",
+                                columns=[
+                                    {"name": "Project", "id": "name"},
+                                    {"name": "Work Stream", "id": "workstream"},
+                                ],
+                                data = gh_df.to_dict("records") if not gh_df.empty and all(col in gh_df.columns for col in ["name", "workstream"]) else [],
+                                page_size=15,
+                                style_table={"overflowX": "auto"},
+                                style_cell={"textAlign": "left", "padding": "10px", "whiteSpace": "normal", "fontFamily": DATATABLE_CELL_FONT_FAMILY, "cursor": "pointer"},
+                                style_header={"backgroundColor": COLORS["dark"], "color": "white", "fontWeight": "bold", "fontFamily": DATATABLE_HEADER_FONT_FAMILY},
+                                style_data_conditional=[
+                                    {"if": {"state": "active"}, "backgroundColor": "rgba(229, 115, 26, 0.12)", "border": "1px solid rgba(229, 115, 26, 0.4)"},
+                                ],
+                            ),
+                            html.Div(
+                                html.Button("Export", id="github-export-btn", className="export"),
+                                className="dash-spreadsheet-menu",
+                            ),
+                        ],
                         className="datatable-controls-inline",
                     )
                 ], md=6),
@@ -202,46 +214,52 @@ def get_datatables_layout(
             # ========== PYPI TABLE SECTION ==========
             html.H4("PyPI Packages", style={"marginBottom": "15px"}),
             html.Figcaption("Project metadata for all GA4GH-related PyPI packages.", style={"marginTop": "15px", "marginBottom": "15px"}),
+            dcc.Download(id="pypi-download"),
             dcc.Input(
                 id='table-search',
                 type='text',
                 placeholder='Search projects...',
                 debounce=False,
                 className="list-filter",
-                style={'margin-bottom': '1rem', 'width': '350px'},
+                style={'marginBottom': '1rem', 'width': '350px'},
             ),
 
             dbc.Row([
                 dbc.Col(
                     html.Div(
-                        dash_table.DataTable(
-                            id="projects-table",
-                            columns=[
-                                {"name": "Project", "id": "project_name"},
-                                {"name": "Category", "id": "category"},
-                            ],
-                            data=pypi_details[["project_name", "category"]].to_dict("records") if not pypi_details.empty and "project_name" in pypi_details.columns else [],
-                            export_format="csv",
-                            page_size=15,
-                            sort_action="native",
-                            style_table={"overflowX": "auto"},
-                            style_cell={
-                                "textAlign": "left",
-                                "padding": "10px",
-                                "whiteSpace": "normal",
-                                "fontFamily": DATATABLE_CELL_FONT_FAMILY,
-                                "cursor": "pointer",
-                            },
-                            style_header={
-                                "backgroundColor": COLORS["dark"],
-                                "color": "white",
-                                "fontWeight": "bold",
-                                "fontFamily": DATATABLE_HEADER_FONT_FAMILY,
-                            },
-                            style_data_conditional=[
-                                {"if": {"state": "active"}, "backgroundColor": "rgba(229, 115, 26, 0.12)", "border": "1px solid rgba(229, 115, 26, 0.4)"},
-                            ],
-                        ),
+                        [
+                            dash_table.DataTable(
+                                id="projects-table",
+                                columns=[
+                                    {"name": "Project", "id": "project_name"},
+                                    {"name": "Category", "id": "category"},
+                                ],
+                                data=pypi_details[["project_name", "category"]].to_dict("records") if not pypi_details.empty and "project_name" in pypi_details.columns else [],
+                                page_size=15,
+                                sort_action="native",
+                                style_table={"overflowX": "auto"},
+                                style_cell={
+                                    "textAlign": "left",
+                                    "padding": "10px",
+                                    "whiteSpace": "normal",
+                                    "fontFamily": DATATABLE_CELL_FONT_FAMILY,
+                                    "cursor": "pointer",
+                                },
+                                style_header={
+                                    "backgroundColor": COLORS["dark"],
+                                    "color": "white",
+                                    "fontWeight": "bold",
+                                    "fontFamily": DATATABLE_HEADER_FONT_FAMILY,
+                                },
+                                style_data_conditional=[
+                                    {"if": {"state": "active"}, "backgroundColor": "rgba(229, 115, 26, 0.12)", "border": "1px solid rgba(229, 115, 26, 0.4)"},
+                                ],
+                            ),
+                            html.Div(
+                                html.Button("Export", id="pypi-export-btn", className="export"),
+                                className="dash-spreadsheet-menu",
+                            ),
+                        ],
                         className="datatable-controls-inline",
                     ),
                     md=6

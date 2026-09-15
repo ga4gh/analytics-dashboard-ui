@@ -387,6 +387,10 @@ input.list-filter[type="text"]::placeholder {
 /* Keep DataTable export and pagination controls on one bottom row, with a
    1rem gap above them so they don't sit flush against the table's last row.
    48px accounts for the Export button's own clamp(2.5rem,10vw,3rem) height. */
+.datatable-controls-inline {
+    position: relative;
+}
+
 .datatable-controls-inline .dash-table-container {
     position: relative;
     padding-bottom: calc(48px + 1rem);

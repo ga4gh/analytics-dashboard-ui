@@ -1,4 +1,4 @@
-from dash import Input, Output
+from dash import Input, Output, dcc
 import pandas as pd
 import plotly.express as px
 
@@ -231,5 +231,11 @@ def register_pypi_callbacks(app):
             ])
 
         ], style={"boxShadow": "0 4px 10px rgba(0,0,0,0.1)"})
-        
-    
+
+    @app.callback(
+        Output("pypi-download", "data"),
+        Input("pypi-export-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def export_pypi_csv(n_clicks):
+        return dcc.send_data_frame(_pypi_df.to_csv, "pypi_packages.csv", index=False)

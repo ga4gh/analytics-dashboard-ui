@@ -692,3 +692,11 @@ def register_epmc_callbacks(app):
         pct = round((curr - prev) / prev * 100, 1)
         return f"+{pct}%" if pct >= 0 else f"{pct}%"
 
+    @app.callback(
+        Output("epmc-download", "data"),
+        Input("epmc-export-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def export_epmc_csv(n_clicks):
+        return dcc.send_data_frame(entries_df.to_csv, "epmc_publications.csv", index=False)
+

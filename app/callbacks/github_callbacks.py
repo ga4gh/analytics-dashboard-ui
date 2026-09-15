@@ -1,4 +1,4 @@
-from dash import Input, Output
+from dash import Input, Output, dcc
 from app.services.github_client import prepare_github_data
 import dash_bootstrap_components as dbc
 import plotly.express as px
@@ -437,3 +437,11 @@ def register_github_callbacks(app):
         fig2 = fig_github_activity_bar(df_top, color_map=color_map)
 
         return fig2, fig_status, fig_ws, fig3
+
+    @app.callback(
+        Output("github-download", "data"),
+        Input("github-export-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def export_github_csv(n_clicks):
+        return dcc.send_data_frame(gh_df.to_csv, "github_repositories.csv", index=False)
