@@ -186,8 +186,7 @@ html.Div(
 
                 html.H1(
                     [
-                        html.Span("GA4GH", className="title-ga4gh"),
-                        " Analytics Dashboard",
+                        html.Span("GA4GH Analytics Dashboard"),
                     ],
                     className="dashboard-title",
                 ),
@@ -266,7 +265,7 @@ html.Div(
 
         html.Div(className="section-spacer"),
 
-        dcc.Store(id="active-persona", storage_type="session", data="default"),
+        dcc.Store(id="active-persona", storage_type="session", data="community"),
         dcc.Store(id="yearly-pub-counts", data=_yearly_pub_counts),
 
         # ---------- METHODS CARDS -----------
@@ -566,11 +565,10 @@ html.Div(
                 html.Span("View as:", className="persona-selector-label"),
                 html.Div(
                     [
-                        dbc.Button("Default",        id="persona-btn-default",    n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
+                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=False, className="persona-btn active-persona"),
                         dbc.Button("Funder",         id="persona-btn-funder",     n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                         dbc.Button("Researcher",     id="persona-btn-researcher", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                         dbc.Button("Developer",      id="persona-btn-developer",  n_clicks=0, color="primary", outline=True,  className="persona-btn"),
-                        dbc.Button("GA4GH Community", id="persona-btn-community", n_clicks=0, color="primary", outline=True,  className="persona-btn"),
                     ],
                     className="persona-btn-group",
                 ),

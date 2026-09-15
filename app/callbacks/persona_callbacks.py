@@ -1,19 +1,17 @@
 from dash import Input, Output, ctx
 
 PERSONA_BUTTONS = [
-    "persona-btn-default",
+    "persona-btn-community",
     "persona-btn-funder",
     "persona-btn-researcher",
     "persona-btn-developer",
-    "persona-btn-community",
 ]
 
 BUTTON_TO_PERSONA = {
-    "persona-btn-default":    "default",
+    "persona-btn-community":  "community",
     "persona-btn-funder":     "funder",
     "persona-btn-researcher": "researcher",
     "persona-btn-developer":  "developer",
-    "persona-btn-community":  "community",
 }
 
 # ---------------------------------------------------------------------------
@@ -72,11 +70,6 @@ ALL_CONTROLLED_IDS = ALL_SECTION_IDS + ALL_COL_IDS
 # Anything omitted is hidden automatically.
 # ---------------------------------------------------------------------------
 PERSONA_SHOW = {
-    "default": {
-        "sections": ["servicemap", "metrics", "epmc", "github", "pypi", "tables"],
-        "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
-                     "kpi-github", "kpi-pypi"],
-    },
     "funder": {
         "sections": ["metrics", "epmc", "publication-charts", "funder-only-charts"],
         "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
@@ -115,7 +108,7 @@ def register_persona_callbacks(app):
         prevent_initial_call=True,
     )
     def update_active_persona(*_):
-        return BUTTON_TO_PERSONA.get(ctx.triggered_id, "default")
+        return BUTTON_TO_PERSONA.get(ctx.triggered_id, "community")
 
     # ------------------------------------------------------------------
     # 2. Highlight the active button; reset all others
@@ -126,7 +119,7 @@ def register_persona_callbacks(app):
         Input("active-persona", "data"),
     )
     def update_button_styles(active_persona):
-        active = active_persona or "default"
+        active = active_persona or "community"
         classes = [
             "persona-btn active-persona" if BUTTON_TO_PERSONA[b] == active else "persona-btn"
             for b in PERSONA_BUTTONS
@@ -143,8 +136,8 @@ def register_persona_callbacks(app):
         Input("active-persona", "data"),
     )
     def toggle_persona_sections(active_persona):
-        persona = active_persona or "default"
-        config = PERSONA_SHOW.get(persona, PERSONA_SHOW["default"])
+        persona = active_persona or "community"
+        config = PERSONA_SHOW.get(persona, PERSONA_SHOW["community"])
         shown_sections = set(config["sections"])
         shown_cols     = set(config["cols"])
         section_styles = [
