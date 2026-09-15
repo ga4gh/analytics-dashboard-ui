@@ -95,7 +95,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         config={"responsive": True},
                                     ),
                                     html.Div(id="epmc-countries-legend", className="country-legend",
-                                             style={"marginTop": "1rem", "height": "140px", "overflowY": "auto"}),
+                                             style={"height": "140px", "overflowY": "auto", "marginTop": "0.5rem", "position": "relative", "zIndex": "10"}),
                                     html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author's affiliation for all publications.")
                                 ])
                             ),
