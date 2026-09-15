@@ -4,66 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-
-# ---------------------------------------------------------------------------
-# Figure builders
-# ---------------------------------------------------------------------------
-
-def _annual_publications_figure(entries_df):
-    if entries_df is None or entries_df.empty or "pub_year" not in entries_df.columns:
-        return go.Figure().update_layout(title="No publication year data available")
-
-    yearly = (
-        entries_df[entries_df["pub_year"].notna()]
-        .groupby("pub_year")
-        .size()
-        .reset_index(name="count")
-        .sort_values("pub_year")
-    )
-    yearly["pub_year"] = yearly["pub_year"].astype(int)
-
-    fig = px.bar(
-        yearly,
-        x="pub_year",
-        y="count",
-        labels={"pub_year": "Year", "count": "Publications"},
-        template="simple_white",
-        color_discrete_sequence=["#1b75bb"],
-    )
-    fig.update_traces(hovertemplate="Year: %{x}<br>Publications: %{y}<extra></extra>")
-    fig.update_layout(
-        height=380,
-        margin={"l": 40, "r": 20, "t": 30, "b": 50},
-        xaxis={"tickmode": "linear", "dtick": 1, "title": "Year"},
-        yaxis={"title": "Number of Publications"},
-        bargap=0.25,
-    )
-    return fig
-
-
-def _top_agencies_figure(agencies: list) -> go.Figure:
-    if not agencies:
-        return go.Figure().update_layout(title="No funding agency data available")
-
-    df = pd.DataFrame(agencies[:15]).sort_values("count", ascending=True)
-    fig = px.bar(
-        df,
-        x="count",
-        y="agency",
-        orientation="h",
-        labels={"count": "Number of Grants", "agency": "Funding Agency"},
-        template="simple_white",
-        color_discrete_sequence=["#1b75bb"],
-    )
-    fig.update_traces(hovertemplate="%{y}<br>Grants: %{x}<extra></extra>")
-    fig.update_layout(
-        height=480,
-        margin={"l": 10, "r": 20, "t": 30, "b": 50},
-        xaxis={"title": "Number of Grants"},
-        yaxis={"title": "", "automargin": True},
-    )
-    return fig
-
+from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS, chart_expand_button, chart_info_icon
 
 _REGION_MAP = {
     "US": [
@@ -88,6 +29,13 @@ _REGION_MAP = {
     ],
 }
 
+_REGION_COLORS = {
+    "US": FUNDING_COLORWAY[0],
+    "UK": FUNDING_COLORWAY[1],
+    "EU": FUNDING_COLORWAY[2],
+    "Other": FUNDING_COLORWAY[3],
+}
+
 
 def _classify_region(agency_name: str) -> str:
     for region, names in _REGION_MAP.items():
@@ -95,6 +43,43 @@ def _classify_region(agency_name: str) -> str:
             if name.lower() in agency_name.lower():
                 return region
     return "Other"
+
+
+# ---------------------------------------------------------------------------
+# Figure builders
+# ---------------------------------------------------------------------------
+
+def _annual_publications_figure(entries_df):
+    if entries_df is None or entries_df.empty or "pub_year" not in entries_df.columns:
+        return go.Figure().update_layout(title="No publication year data available")
+
+    yearly = (
+        entries_df[entries_df["pub_year"].notna()]
+        .groupby("pub_year")
+        .size()
+        .reset_index(name="count")
+        .sort_values("pub_year")
+    )
+    yearly["pub_year"] = yearly["pub_year"].astype(int)
+
+    fig = px.bar(
+        yearly,
+        x="pub_year",
+        y="count",
+        labels={"pub_year": "Year", "count": "Publications"},
+        template="simple_white",
+        color_discrete_sequence=[COLORS["pink"]],
+    )
+    fig.update_traces(hovertemplate="Year: %{x}<br>Publications: %{y}<extra></extra>")
+    fig.update_layout(
+        height=380,
+        margin={"l": 40, "r": 20, "t": 30, "b": 50},
+        xaxis={"tickmode": "linear", "dtick": 1, "title": "Year"},
+        yaxis={"title": "Number of Publications", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
+        bargap=0.25,
+        hoverlabel=dict(font_color="white"),
+    )
+    return fig
 
 
 def _region_pie_figure(agencies: list) -> go.Figure:
@@ -115,15 +100,26 @@ def _region_pie_figure(agencies: list) -> go.Figure:
         names="region",
         values="grants",
         color="region",
-        color_discrete_map={"US": "#1b75bb", "UK": "#e63946", "EU": "#2a9d8f", "Other": "#adb5bd"},
+        color_discrete_map=_REGION_COLORS,
         template="simple_white",
+        hole=1/3,
     )
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
+        textfont_color="white",
         hovertemplate="%{label}<br>Grants: %{value}<br>Share: %{percent}<extra></extra>",
     )
-    fig.update_layout(height=380, margin={"l": 20, "r": 20, "t": 30, "b": 20}, showlegend=True)
+    fig.update_layout(
+        # autosize (not a fixed height) — paired with config={"responsive":
+        # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
+        # scales with the card's actual width at any viewport.
+        autosize=True,
+        margin={"l": 20, "r": 20, "t": 30, "b": 20},
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
+    )
     return fig
 
 
@@ -146,56 +142,28 @@ def _kpi_card(value, label, color_class):
 
 def get_publication_charts_section(entries_df, choropleth_fig=None):
     """
-    Annual publications bar + global author distribution choropleth.
-    Shared across funder + researcher personas; hidden by default.
+    Global author distribution choropleth. Shared across funder, researcher,
+    and community personas; hidden by default.
     """
-    annual_fig = _annual_publications_figure(entries_df)
-
     return html.Div(
         [
-            html.Div("Publication Trends", className="section-title"),
-
-            # Row 1: annual bar chart
+            html.Div("Global Author Distribution", className="section-title"),
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
-                                dcc.Graph(
-                                    id="annual-publications-bar",
-                                    figure=annual_fig,
-                                    config={"displayModeBar": False},
-                                ),
-                                html.Figcaption(
-                                    "Annual count of GA4GH-related publications indexed in Europe PMC.",
-                                    style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
-                                ),
-                            ])
-                        ),
-                        className="mb-4 shadow-sm",
-                        style={"borderRadius": "12px"},
-                    ),
-                    width=12,
-                ),
-                className="mb-2",
-            ),
-
-            # Row 2: full-width choropleth
-            dbc.Row(
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            html.Figure([
-                                html.H5("Global Author Affiliation Distribution", style={"marginBottom": "6px"}),
+                                chart_expand_button("epmc-countries-choropleth"),
+                                html.Div([html.Span("Global Author Affiliation Distribution")] + chart_info_icon("epmc-countries-choropleth", "World map shaded by each country's share of total author affiliations across GA4GH-related publications. Darker shading indicates a higher proportion of affiliated authors."), className="chart-heading"),
                                 dcc.Graph(
                                     id="epmc-countries-choropleth",
                                     figure=choropleth_fig or go.Figure(),
-                                    config={"displayModeBar": False},
                                     style={"height": "650px"},
                                 ),
+                                dcc.Store(id="epmc-countries-choropleth-zoom-clamp-dummy"),
                                 html.Figcaption(
                                     "Each country's share (%) of total author affiliations across all GA4GH-related publications. Hover over a country to see its exact percentage.",
-                                    style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                    style={"color": COLORS["grey"], "marginTop": "6px"},
                                 ),
                             ])
                         ),
@@ -214,10 +182,9 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
 
 def get_funder_only_charts_section(agencies_list):
     """
-    Funder-specific charts: top agencies bar + region pie.
+    Funder-specific charts: region pie.
     Hidden by default; shown only when Funder persona is active.
     """
-    agencies_fig = _top_agencies_figure(agencies_list)
     region_fig = _region_pie_figure(agencies_list)
 
     return html.Div(
@@ -229,45 +196,28 @@ def get_funder_only_charts_section(agencies_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    html.H5("Top 15 Funding Agencies", style={"marginBottom": "8px"}),
-                                    dcc.Graph(
-                                        id="funder-top-agencies-bar",
-                                        figure=agencies_fig,
-                                        config={"displayModeBar": False},
-                                    ),
-                                    html.Figcaption(
-                                        "Top 15 funding bodies by number of associated grants in the GA4GH publication dataset.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
-                                    ),
-                                ])
-                            ),
-                            className="mb-4 shadow-sm",
-                            style={"borderRadius": "12px"},
-                        ),
-                        md=8,
-                    ),
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                html.Figure([
-                                    html.H5("Funders by Region", style={"marginBottom": "8px"}),
+                                    chart_expand_button("funder-region-pie"),
+                                    html.Div([html.Span("Funders by Region")] + chart_info_icon("funder-region-pie", "Donut chart grouping funding agencies by geographic region (US, UK, EU, Other). Based on grant records linked to GA4GH-related publications in Europe PMC."), className="chart-heading"),
                                     dcc.Graph(
                                         id="funder-region-pie",
                                         figure=region_fig,
-                                        config={"displayModeBar": False},
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True},
                                     ),
                                     html.Figcaption(
                                         "Grant distribution grouped by funder region (US, UK, EU, Other).",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
-                        md=4,
+                        className="d-flex",
+                        md=6,
                     ),
                 ],
+                className="mb-4 chart-cards-row",
             ),
         ],
         id="funder-only-charts",
