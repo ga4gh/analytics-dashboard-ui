@@ -1,7 +1,7 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button
+from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
 from app.layouts.funder_layout import _annual_publications_figure
 
 # ---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 [
-                                    html.Div(id="epmc-authors-bar-title", className="chart-heading"),
+                                    html.Div([html.Span(id="epmc-authors-bar-title")] + chart_info_icon("epmc-authors-bar", "Ranks individual researchers by the number of GA4GH-related articles they have authored. Use the slider to adjust how many authors are shown."), className="chart-heading"),
                                     html.Div(style={"flex": "1"}),
                                     html.Figure([
                                         chart_expand_button("epmc-authors-bar"),
@@ -86,7 +86,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("epmc-countries-pie"),
-                                    html.Div("Affiliation - Countries Represented", className="chart-heading"),
+                                    html.Div([html.Span("Affiliation - Countries Represented")] + chart_info_icon("epmc-countries-pie", "Pie chart showing the proportion of author affiliations by country across all GA4GH-related publications. Countries are filtered to a curated whitelist of nations."), className="chart-heading"),
                                     dcc.Graph(
                                         id="epmc-countries-pie",
                                         style={"height": "280px"},
@@ -114,7 +114,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("epmc-publications-trend"),
-                                    html.Div("Annual GA4GH Publications", className="chart-heading"),
+                                    html.Div([html.Span("Annual GA4GH Publications")] + chart_info_icon("epmc-publications-trend", "Bar chart of the number of GA4GH-related articles published each year, sourced from Europe PMC. Reflects growth in the GA4GH research community over time."), className="chart-heading"),
                                     dcc.Graph(
                                         id="epmc-publications-trend",
                                         figure=_annual_publications_figure(entries_df),
@@ -134,7 +134,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Div([
-                                    html.Div("Most Cited GA4GH Publications", className="chart-heading"),
+                                    html.Div([html.Span("Most Cited GA4GH Publications")] + chart_info_icon("epmc-most-cited-table", "Ranked list of GA4GH-related articles by citation count. Pagination is supported — all records can be browsed."), className="chart-heading"),
                                 html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                 dash_table.DataTable(
                                     id="epmc-most-cited-table",

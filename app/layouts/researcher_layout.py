@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, PUBLICATIONS_COLORWAY, chart_expand_button
+from app.utils.ga4gh_theme import COLORS, PUBLICATIONS_COLORWAY, chart_expand_button, chart_info_icon
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +113,7 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("researcher-pub-type-donut"),
-                                    html.Div("Publication Types", className="chart-heading"),
+                                    html.Div([html.Span("Publication Types")] + chart_info_icon("researcher-pub-type-donut", "Breakdown of GA4GH-related publications by type — e.g. Journal Article, Review, Preprint. Each article is assigned one primary type; counts sum to the total unique article count."), className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-pub-type-donut",
                                         figure=pub_type_fig,
@@ -137,7 +137,7 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("researcher-oa-donut"),
-                                    html.Div("Open Access Status", className="chart-heading"),
+                                    html.Div([html.Span("Open Access Status")] + chart_info_icon("researcher-oa-donut", "Proportion of GA4GH-related publications that are freely available as Open Access versus those that are restricted behind a paywall."), className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-oa-donut",
                                         figure=oa_fig,

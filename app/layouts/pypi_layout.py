@@ -2,7 +2,7 @@ from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import pandas as pd
 
-from app.utils.ga4gh_theme import chart_expand_button
+from app.utils.ga4gh_theme import chart_expand_button, chart_info_icon
 
 def get_pypi_layout(pypi_details, total_packages):
     """
@@ -105,7 +105,7 @@ def get_pypi_layout(pypi_details, total_packages):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("datatable-bar"),
-                                    html.Div(id="datatable-bar-title", className="chart-heading"),
+                                    html.Div([html.Span(id="datatable-bar-title")] + chart_info_icon("datatable-bar", "Bar chart of the top GA4GH-related PyPI packages by total number of published versions. Use the slider to adjust how many packages are shown, and the filters to narrow by author or category."), className="chart-heading"),
                                     dcc.Graph(id="datatable-bar", config={"responsive": True}),
                                     html.Figcaption("Total number of versions for the top GA4GH-related PyPI packages, sorted in descending order by number of versions.")
                                 ])
@@ -121,7 +121,7 @@ def get_pypi_layout(pypi_details, total_packages):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("category-distribution"),
-                                    html.Div("Category Distribution", className="chart-heading"),
+                                    html.Div([html.Span("Category Distribution")] + chart_info_icon("category-distribution", "Donut chart of GA4GH-related PyPI packages grouped by category: GA4GH Standard (implements a GA4GH spec), Implementation (standalone tool), or GA4GH Mentions (references GA4GH in metadata)."), className="chart-heading"),
                                     dcc.Graph(
                                         id="category-distribution",
                                         className="chart-aspect-tall",

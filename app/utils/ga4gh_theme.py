@@ -3,6 +3,7 @@ from typing import Optional
 import plotly.graph_objects as go
 import plotly.io as pio
 from dash import html
+import dash_bootstrap_components as dbc
 
 # ------------------------------------------------------------------
 # COLORS
@@ -96,6 +97,21 @@ WORKSTREAM_COLORS = {
 # ------------------------------------------------------------------
 # CHART EXPAND-TO-MODAL BUTTON
 # ------------------------------------------------------------------
+def chart_info_icon(graph_id: str, tooltip_text: str) -> list:
+    """
+    Returns [bi icon element, dbc.Tooltip] to splice into a chart-heading div.
+    Uses Bootstrap Icons bi-info-circle-fill (requires Bootstrap Icons stylesheet).
+    Usage:
+        html.Div([html.Span("Title")] + chart_info_icon("my-graph", "..."),
+                 className="chart-heading")
+    """
+    icon_id = f"info-icon-{graph_id}"
+    return [
+        html.I(id=icon_id, className="bi bi-info-circle-fill chart-info-icon"),
+        dbc.Tooltip(tooltip_text, target=icon_id, placement="right"),
+    ]
+
+
 def chart_expand_button(graph_id: str) -> html.Button:
     """
     Small "expand to fullscreen" trigger for a chart card, matching

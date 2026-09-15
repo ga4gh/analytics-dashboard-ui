@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button
+from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +132,7 @@ def get_community_charts_section(
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("community-workstream-activity"),
-                                    html.Div("GitHub Repositories by Work Stream & Activity", className="chart-heading"),
+                                    html.Div([html.Span("GitHub Repositories by Work Stream & Activity")] + chart_info_icon("community-workstream-activity", "Stacked bar chart showing the activity status breakdown for repositories within each GA4GH work stream — Active (pushed < 1 year), Moderate (1–3 years), Inactive (3+ years), or Archived."), className="chart-heading"),
                                     dcc.Graph(
                                         id="community-workstream-activity",
                                         figure=fig_workstream,
@@ -154,7 +154,7 @@ def get_community_charts_section(
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("community-top-repos-interest"),
-                                    html.Div("Top 10 Repos by Community Interest", className="chart-heading"),
+                                    html.Div([html.Span("Top 10 Repos by Community Interest")] + chart_info_icon("community-top-repos-interest", "The 10 GA4GH repositories with the highest combined community interest score, calculated from stars, forks, and watchers. Highlights the most widely adopted projects."), className="chart-heading"),
                                     dcc.Graph(
                                         id="community-top-repos-interest",
                                         figure=fig_interest,

@@ -69,6 +69,22 @@ figcaption {
     color: #2c3e50;
     margin-bottom: 4px;
     margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.chart-info-icon {
+    font-size: 14px;
+    cursor: help;
+    flex-shrink: 0;
+    color: #000000;
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+
+.chart-info-icon:hover {
+    opacity: 1;
 }
 
 /* Shared chart description — applied via .card-body > figure figcaption

@@ -124,7 +124,7 @@ def get_datatables_layout(
                                             {"name": "Year", "id": "pub_year"},
                                         ],
                                         data=epmc_entries_df.to_dict("records") if not epmc_entries_df.empty else [],
-                                        page_size=15,
+                                        page_size=10,
                                         sort_action="native",
                                         style_table={"overflowX": "auto"},
                                         style_cell={
@@ -185,7 +185,7 @@ def get_datatables_layout(
                                     {"name": "Work Stream", "id": "workstream"},
                                 ],
                                 data = gh_df.to_dict("records") if not gh_df.empty and all(col in gh_df.columns for col in ["name", "workstream"]) else [],
-                                page_size=15,
+                                page_size=10,
                                 style_table={"overflowX": "auto"},
                                 style_cell={"textAlign": "left", "padding": "10px", "whiteSpace": "normal", "fontFamily": DATATABLE_CELL_FONT_FAMILY, "cursor": "pointer"},
                                 style_header={"backgroundColor": COLORS["dark"], "color": "white", "fontWeight": "bold", "fontFamily": DATATABLE_HEADER_FONT_FAMILY},
@@ -235,7 +235,7 @@ def get_datatables_layout(
                                     {"name": "Category", "id": "category"},
                                 ],
                                 data=pypi_details[["project_name", "category"]].to_dict("records") if not pypi_details.empty and "project_name" in pypi_details.columns else [],
-                                page_size=15,
+                                page_size=10,
                                 sort_action="native",
                                 style_table={"overflowX": "auto"},
                                 style_cell={
