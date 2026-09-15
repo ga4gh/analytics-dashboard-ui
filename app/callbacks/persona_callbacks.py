@@ -53,11 +53,8 @@ ALL_COL_IDS = [
     # GitHub / PyPI KPIs — now persona-controlled
     "kpi-github",
     "kpi-pypi",
-    # Funder / researcher shared KPIs
+    # Funder-specific KPI
     "funder-kpi-yoy",
-    "funder-kpi-avg-citations",
-    # Researcher-only KPI
-    "researcher-kpi-open-access",
 ]
 
 # Sidebar nav wrapper divs — toggled in sync with their section
@@ -73,13 +70,12 @@ PERSONA_SHOW = {
     "funder": {
         "sections": ["metrics", "epmc", "publication-charts", "funder-only-charts"],
         "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations"],
+                     "funder-kpi-yoy"],
     },
     "researcher": {
         "sections": ["metrics", "epmc", "tables", "publication-charts", "researcher-charts"],
         "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations",
-                     "researcher-kpi-open-access"],
+                     "funder-kpi-yoy"],
     },
     "developer": {
         "sections": ["servicemap", "metrics", "github", "pypi", "developer-charts"],
@@ -90,9 +86,7 @@ PERSONA_SHOW = {
                      "publication-charts", "funder-only-charts", "researcher-charts",
                      "developer-charts", "community-charts"],
         "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
-                     "kpi-github", "kpi-pypi",
-                     "funder-kpi-yoy", "funder-kpi-avg-citations",
-                     "researcher-kpi-open-access"],
+                     "kpi-github", "kpi-pypi", "funder-kpi-yoy"],
     },
 }
 
