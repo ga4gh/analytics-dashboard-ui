@@ -301,13 +301,17 @@ def register_github_callbacks(app):
     
     @app.callback(
         Output("repo-details", "children"),
-        Input("github-projects-table", "selected_rows")
+        Input("github-projects-table", "active_cell"),
+        Input("github-projects-table", "page_current"),
     )
-    def show_repo_details(selected_rows):
-        if not selected_rows:
+    def show_repo_details(active_cell, page_current):
+        if not active_cell:
             return dbc.Alert("Select a repository to see details", color="info")
-        
-        repo = gh_df.iloc[selected_rows[0]]
+
+        row_idx = (page_current or 0) * 15 + active_cell["row"]
+        if row_idx >= len(gh_df):
+            return dbc.Alert("Select a repository to see details", color="info")
+        repo = gh_df.iloc[row_idx]
         
         return dbc.Card([
             dbc.CardHeader(

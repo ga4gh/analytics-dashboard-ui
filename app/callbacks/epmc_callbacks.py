@@ -372,20 +372,22 @@ def register_epmc_callbacks(app):
         Output("epmc-entry-details", "children"),
         Output("first-author-store", "data"),
         Output("first-affiliation-store", "data"),
-        Input("epmc-entries-table", "selected_rows"),
+        Input("epmc-entries-table", "active_cell"),
         Input("epmc-table-search", "value"),
         Input("epmc-year-filter", "value"),
         Input("epmc-affiliation-filter", "value"),
+        Input("epmc-entries-table", "page_current"),
     )
-    def show_epmc_details(selected_rows, search_value, year_filter, affiliation_filter):
-        if not selected_rows or entries_df.empty:
+    def show_epmc_details(active_cell, search_value, year_filter, affiliation_filter, page_current):
+        if not active_cell or entries_df.empty:
             return dbc.Alert("Select an entry to see details", color="info"), None, None
 
+        row_idx = (page_current or 0) * 15 + active_cell["row"]
         filtered_df = get_filtered_sorted_df(search_value, year_filter, affiliation_filter)
-        if filtered_df.empty or selected_rows[0] >= len(filtered_df):
+        if filtered_df.empty or row_idx >= len(filtered_df):
             return dbc.Alert("Select an entry to see details", color="info"), None, None
 
-        entry = filtered_df.iloc[selected_rows[0]]
+        entry = filtered_df.iloc[row_idx]
 
         abstract  = entry.get("abstract_text") or "No abstract available"
         pub_year  = entry.get("pub_year") or "N/A"
