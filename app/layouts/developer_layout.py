@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import WORKSTREAM_COLORS, COLORS, chart_expand_button
+from app.utils.ga4gh_theme import WORKSTREAM_COLORS, COLORS, chart_expand_button, chart_info_icon
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +149,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("dev-repos-by-workstream"),
-                                    html.Div("GitHub Repositories by Work Stream", className="chart-heading"),
+                                    html.Div([html.Span("GitHub Repositories by Work Stream")] + chart_info_icon("dev-repos-by-workstream", "Count of GA4GH GitHub repositories grouped by Work Stream. Shows where development effort is concentrated across the GA4GH ecosystem."), className="chart-heading"),
                                     dcc.Graph(
                                         id="dev-repos-by-workstream",
                                         figure=fig_workstream,
@@ -171,7 +171,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("dev-pypi-releases-per-year"),
-                                    html.Div("PyPI Packages Released Per Year", className="chart-heading"),
+                                    html.Div([html.Span("PyPI Packages Released Per Year")] + chart_info_icon("dev-pypi-releases-per-year", "Year-by-year count of new GA4GH-related Python packages first published to PyPI. Reflects the growth of the GA4GH open-source software ecosystem."), className="chart-heading"),
                                     dcc.Graph(
                                         id="dev-pypi-releases-per-year",
                                         figure=fig_pypi,
@@ -199,7 +199,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                         dbc.CardBody(
                             html.Figure([
                                 chart_expand_button("dev-standards-service-count"),
-                                html.Div("GA4GH Standards by Registered Service Count", className="chart-heading"),
+                                html.Div([html.Span("GA4GH Standards by Registered Service Count")] + chart_info_icon("dev-standards-service-count", "Number of publicly registered services implementing each GA4GH standard, as reported in the GA4GH Service Registry. Indicates real-world adoption of each standard."), className="chart-heading"),
                                 dcc.Graph(
                                     id="dev-standards-service-count",
                                     figure=fig_standards,

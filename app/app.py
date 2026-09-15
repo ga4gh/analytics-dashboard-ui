@@ -13,7 +13,10 @@ def create_app():
     app = Dash(__name__,
                use_pages=True, 
                suppress_callback_exceptions=True,
-               external_stylesheets=[dbc.themes.BOOTSTRAP],
+               external_stylesheets=[
+                   dbc.themes.BOOTSTRAP,
+                   "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
+               ],
                health_endpoint="/health",
                title="GA4GH Analytics Dashboard",
                description="Welcome to the GA4GH Analytics Dashboard"

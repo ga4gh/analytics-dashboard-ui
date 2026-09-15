@@ -6,7 +6,7 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button
+from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
 
 LATITUDE=0
 LONGITUDE=1
@@ -135,7 +135,7 @@ def get_service_map_layout(standards_df, services_df, deployments_df):
         dbc.CardBody(
             [
                 chart_expand_button("service_map"),
-                html.Div("Map of Registered GA4GH Services", className="chart-heading"),
+                html.Div([html.Span("Map of Registered GA4GH Services")] + chart_info_icon("service_map", "World map of services registered in the GA4GH Service Registry. Each marker represents a publicly accessible service implementing a GA4GH standard. Click a marker to see service details."), className="chart-heading"),
                 dcc.Graph(
                     id="service_map",
                     figure=fig,

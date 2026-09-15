@@ -3,7 +3,7 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button
+from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
 
 
 
@@ -138,11 +138,11 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     citations_fig.update_layout(yaxis_title="Cumulative Citations")
 
 
-    def _chart_col(title, graph_id, fig):
+    def _chart_col(title, graph_id, fig, tooltip):
         return dbc.Col(
             [
                 chart_expand_button(graph_id),
-                html.Div(title, className="chart-heading"),
+                html.Div([html.Span(title)] + chart_info_icon(graph_id, tooltip), className="chart-heading"),
                 dcc.Graph(
                     id=graph_id, figure=fig,
                     config={"displayModeBar": False},
@@ -159,10 +159,14 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
             [
                 dbc.Row(
                     [
-                        _chart_col("GA4GH-Related Articles",           "combined-growth-epmc",          epmc_fig),
-                        _chart_col("Europe PMC Citations Per Year",     "combined-citations-over-years", citations_fig),
-                        _chart_col("GitHub Repositories",              "combined-growth-github",        gh_fig),
-                        _chart_col("PyPI Packages",                    "combined-growth-pypi",          pypi_fig),
+                        _chart_col("GA4GH-Related Articles",       "combined-growth-epmc",          epmc_fig,
+                                   "Cumulative count of GA4GH-related articles indexed in Europe PMC each year, with annual new additions shown alongside the running total."),
+                        _chart_col("Europe PMC Citations Per Year", "combined-citations-over-years", citations_fig,
+                                   "Year-by-year citation counts for GA4GH-related publications, showing both new citations received each year and the cumulative total over time."),
+                        _chart_col("GitHub Repositories",          "combined-growth-github",        gh_fig,
+                                   "Cumulative growth of GA4GH-related GitHub repositories over time, with bars showing newly created repositories each year and the line tracking the running total."),
+                        _chart_col("PyPI Packages",                "combined-growth-pypi",          pypi_fig,
+                                   "Cumulative count of GA4GH-related Python packages published to PyPI each year, showing both new releases and the total number of packages available over time."),
                     ],
                     className="g-2",
                 ),

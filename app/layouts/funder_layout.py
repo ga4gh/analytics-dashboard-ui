@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS, chart_expand_button
+from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS, chart_expand_button, chart_info_icon
 
 _REGION_MAP = {
     "US": [
@@ -154,7 +154,7 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                         dbc.CardBody(
                             html.Figure([
                                 chart_expand_button("epmc-countries-choropleth"),
-                                html.Div("Global Author Affiliation Distribution", className="chart-heading"),
+                                html.Div([html.Span("Global Author Affiliation Distribution")] + chart_info_icon("epmc-countries-choropleth", "World map shaded by each country's share of total author affiliations across GA4GH-related publications. Darker shading indicates a higher proportion of affiliated authors."), className="chart-heading"),
                                 dcc.Graph(
                                     id="epmc-countries-choropleth",
                                     figure=choropleth_fig or go.Figure(),
@@ -197,7 +197,7 @@ def get_funder_only_charts_section(agencies_list):
                             dbc.CardBody(
                                 html.Figure([
                                     chart_expand_button("funder-region-pie"),
-                                    html.Div("Funders by Region", className="chart-heading"),
+                                    html.Div([html.Span("Funders by Region")] + chart_info_icon("funder-region-pie", "Donut chart grouping funding agencies by geographic region (US, UK, EU, Other). Based on grant records linked to GA4GH-related publications in Europe PMC."), className="chart-heading"),
                                     dcc.Graph(
                                         id="funder-region-pie",
                                         figure=region_fig,
