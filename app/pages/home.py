@@ -88,7 +88,6 @@ _epmc_layout = get_epmc_layout(
 
 # Build persona chart components
 _agencies_list = _epmc_funding_data.get("agencies", []) if isinstance(_epmc_funding_data, dict) else []
-_funding_bodies_count = _epmc_funding_data.get("total_unique", 0) if isinstance(_epmc_funding_data, dict) else 0
 
 _choropleth_fig      = fig_epmc_countries_choropleth(_epmc_countries_df)
 _publication_charts  = get_publication_charts_section(_epmc_entries_df, _choropleth_fig)
