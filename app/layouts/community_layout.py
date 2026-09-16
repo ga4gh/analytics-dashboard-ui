@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
+from app.constants.constants import STYLE_HEIGHT_3X
 
 
 # ---------------------------------------------------------------------------
@@ -136,6 +137,7 @@ def get_community_charts_section(
                                     dcc.Graph(
                                         id="community-workstream-activity",
                                         figure=fig_workstream,
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Activity status breakdown per GA4GH work stream — Active (pushed within 1 year), Moderate (1–3 years), Inactive (3+ years), Archived.",
@@ -158,6 +160,7 @@ def get_community_charts_section(
                                     dcc.Graph(
                                         id="community-top-repos-interest",
                                         figure=fig_interest,
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Ranked by combined stars, forks, and watchers count.",

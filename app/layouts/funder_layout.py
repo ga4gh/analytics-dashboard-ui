@@ -6,6 +6,7 @@ from dash import dcc, html
 
 from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS, chart_expand_button, chart_info_icon
 from app.layouts.researcher_layout import _pub_type_figure, _open_access_figure
+from app.constants.constants import STYLE_HEIGHT_3X
 
 _REGION_MAP = {
     "US": [
@@ -201,6 +202,7 @@ def get_funder_only_charts_section(agencies_list, entries_df=None, pub_types_lis
                             id=graph_id,
                             figure=fig,
                             className="chart-aspect-tall",
+                            style={"height": STYLE_HEIGHT_3X},
                             config={"responsive": True},
                         ),
                         html.Figcaption(figcaption, style={"color": COLORS["grey"], "marginTop": "6px"}),
