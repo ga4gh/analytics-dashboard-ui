@@ -31,7 +31,6 @@ from app.layouts.datatables_layout import get_datatables_layout
 # Persona layout components
 from app.layouts.funder_layout import get_publication_charts_section, get_funder_only_charts_section
 from app.callbacks.epmc_callbacks import fig_epmc_countries_choropleth
-from app.layouts.researcher_layout import get_researcher_charts_section
 from app.layouts.developer_layout import get_developer_charts_section
 from app.layouts.community_layout import get_community_charts_section
 from app.services.summary_client import get_summary_overview
@@ -91,8 +90,7 @@ _agencies_list = _epmc_funding_data.get("agencies", []) if isinstance(_epmc_fund
 
 _choropleth_fig      = fig_epmc_countries_choropleth(_epmc_countries_df)
 _publication_charts  = get_publication_charts_section(_epmc_entries_df, _choropleth_fig)
-_funder_only_charts  = get_funder_only_charts_section(_agencies_list)
-_researcher_charts   = get_researcher_charts_section(_epmc_entries_df, _epmc_pub_types)
+_funder_only_charts  = get_funder_only_charts_section(_agencies_list, _epmc_entries_df, _epmc_pub_types)
 _developer_charts    = get_developer_charts_section(_gh_df, _pypi_first_releases.to_dict("records") if not _pypi_first_releases.empty else [], services_df)
 _summary_overview    = get_summary_overview()
 _community_charts    = get_community_charts_section(_gh_df, _gh_interest_df)
@@ -152,8 +150,7 @@ layout = dbc.Container(
                         html.Div(html.A("Cumulative Metrics",  href="#metrics",            className="menu-link"), id="nav-metrics"),
                         html.Div(html.A("EPMC",                href="#epmc",               className="menu-link"), id="nav-epmc"),
                         html.Div(html.A("Global Distribution",  href="#publication-charts", className="menu-link"), id="nav-publication-charts",  style={"display": "none"}),
-                        html.Div(html.A("Funding Analytics",   href="#funder-only-charts", className="menu-link"), id="nav-funder-only-charts",   style={"display": "none"}),
-                        html.Div(html.A("Research Profile",    href="#researcher-charts",  className="menu-link"), id="nav-researcher-charts",    style={"display": "none"}),
+                        html.Div(html.A("Publication & Funding", href="#funder-only-charts", className="menu-link"), id="nav-funder-only-charts", style={"display": "none"}),
                         html.Div(html.A("GitHub",              href="#github",             className="menu-link"), id="nav-github"),
                         html.Div(html.A("PyPI",                href="#pypi",               className="menu-link"), id="nav-pypi"),
                         html.Div(html.A("Developer Analytics", href="#developer-charts",   className="menu-link"), id="nav-developer-charts",     style={"display": "none"}),
@@ -700,7 +697,6 @@ html.Div(
 
 _publication_charts,
 _funder_only_charts,
-_researcher_charts,
 
 html.Div(
     [

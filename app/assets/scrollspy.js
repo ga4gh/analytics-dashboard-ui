@@ -7,7 +7,6 @@
         "epmc",
         "publication-charts",
         "funder-only-charts",
-        "researcher-charts",
         "github",
         "pypi",
         "developer-charts",

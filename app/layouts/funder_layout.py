@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS, chart_expand_button, chart_info_icon
+from app.layouts.researcher_layout import _pub_type_figure, _open_access_figure
 
 _REGION_MAP = {
     "US": [
@@ -180,41 +181,63 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
     )
 
 
-def get_funder_only_charts_section(agencies_list):
+def get_funder_only_charts_section(agencies_list, entries_df=None, pub_types_list=None):
     """
-    Funder-specific charts: region pie.
-    Hidden by default; shown only when Funder persona is active.
+    Combined publication & funding analytics: Funders by Region, Publication Types, Open Access.
+    Hidden by default; shown when Funder, Researcher, or Community persona is active.
     """
-    region_fig = _region_pie_figure(agencies_list)
+    region_fig   = _region_pie_figure(agencies_list)
+    pub_type_fig = _pub_type_figure(pub_types_list or [])
+    oa_fig       = _open_access_figure(entries_df)
+
+    def _pie_col(graph_id, title, tooltip, fig, figcaption):
+        return dbc.Col(
+            dbc.Card(
+                dbc.CardBody(
+                    html.Figure([
+                        chart_expand_button(graph_id),
+                        html.Div([html.Span(title)] + chart_info_icon(graph_id, tooltip), className="chart-heading"),
+                        dcc.Graph(
+                            id=graph_id,
+                            figure=fig,
+                            className="chart-aspect-tall",
+                            config={"responsive": True},
+                        ),
+                        html.Figcaption(figcaption, style={"color": COLORS["grey"], "marginTop": "6px"}),
+                    ])
+                ),
+                className="shadow-sm h-100 w-100",
+                style={"borderRadius": "12px"},
+            ),
+            className="d-flex",
+            md=4,
+        )
 
     return html.Div(
         [
-            html.Div("Funding Analytics", className="section-title"),
+            html.Div("Publication & Funding Analytics", className="section-title"),
             dbc.Row(
                 [
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                html.Figure([
-                                    chart_expand_button("funder-region-pie"),
-                                    html.Div([html.Span("Funders by Region")] + chart_info_icon("funder-region-pie", "Donut chart grouping funding agencies by geographic region (US, UK, EU, Other). Based on grant records linked to GA4GH-related publications in Europe PMC."), className="chart-heading"),
-                                    dcc.Graph(
-                                        id="funder-region-pie",
-                                        figure=region_fig,
-                                        className="chart-aspect-tall",
-                                        config={"responsive": True},
-                                    ),
-                                    html.Figcaption(
-                                        "Grant distribution grouped by funder region (US, UK, EU, Other).",
-                                        style={"color": COLORS["grey"], "marginTop": "6px"},
-                                    ),
-                                ])
-                            ),
-                            className="shadow-sm h-100 w-100",
-                            style={"borderRadius": "12px"},
-                        ),
-                        className="d-flex",
-                        md=6,
+                    _pie_col(
+                        "funder-region-pie",
+                        "Funders by Region",
+                        "Donut chart grouping funding agencies by geographic region (US, UK, EU, Other). Based on grant records linked to GA4GH-related publications in Europe PMC.",
+                        region_fig,
+                        "Grant distribution grouped by funder region (US, UK, EU, Other).",
+                    ),
+                    _pie_col(
+                        "researcher-pub-type-donut",
+                        "Publication Types",
+                        "Breakdown of GA4GH-related publications by type — e.g. Journal Article, Review, Preprint. Each article is assigned one primary type; counts sum to the total unique article count.",
+                        pub_type_fig,
+                        "Each article is assigned one primary type — counts sum to the total unique article count.",
+                    ),
+                    _pie_col(
+                        "researcher-oa-donut",
+                        "Open Access Status",
+                        "Proportion of GA4GH-related publications that are freely available as Open Access versus those that are restricted behind a paywall.",
+                        oa_fig,
+                        "Proportion of GA4GH-related publications available as open access.",
                     ),
                 ],
                 className="mb-4 chart-cards-row",

@@ -136,7 +136,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Div([
-                                    html.Div([html.Span("Most Cited GA4GH Publications")] + chart_info_icon("epmc-most-cited-table", "Ranked list of GA4GH-related articles by citation count. Pagination is supported — all records can be browsed."), className="chart-heading"),
+                                    html.Div([html.Span("Most Cited GA4GH Publications")] + chart_info_icon("epmc-most-cited-table", "Ranked list of GA4GH-related articles by citation count, sorted in descending order."), className="chart-heading"),
                                 html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                 dash_table.DataTable(
                                     id="epmc-most-cited-table",
@@ -146,7 +146,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         {"name": "Citations", "id": "cited_by_count"},
                                     ],
                                     data=[],
-                                    page_size=10,
+                                    page_action="none",
                                     style_table={"overflowX": "auto"},
                                     style_data={
                                         "height": "auto",
@@ -154,14 +154,14 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         "lineHeight": "1",
                                     },
                                     style_cell={
-                                        "textAlign": "left", "padding": "4px 6px",
+                                        "textAlign": "left",
                                         "fontSize": "13px",
                                         "fontFamily": "'Figtree-Regular', 'Figtree', sans-serif",
                                         "verticalAlign": "top",
                                     },
                                     style_header={
                                         "backgroundColor": COLORS["dark"], "color": "white",
-                                        "fontWeight": "bold", "padding": "5px 6px",
+                                        "fontWeight": "bold",
                                         "fontFamily": "'Figtree-SemiBold', 'Figtree', sans-serif",
                                     },
                                     style_cell_conditional=[
@@ -170,8 +170,9 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         {"if": {"column_id": "cited_by_count"}, "width": "16%", "textAlign": "right"},
                                     ],
                                     css=[
-                                        {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.1;"},
-                                        {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:2px 8px; border:1px solid {COLORS['orange']}; background-color:{COLORS['orange']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: background-color 0.2s ease, border-color 0.2s ease;"},
+                                        {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.4;"},
+                                        {"selector": "td.dash-cell", "rule": "padding-top: 2px !important; padding-bottom: 2px !important;"},
+                                        {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; border:1px solid {COLORS['orange']}; background-color:{COLORS['orange']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: background-color 0.2s ease, border-color 0.2s ease;"},
                                         {"selector": "td[data-dash-column='article_link'] a:hover", "rule": f"border-color:{COLORS['red']}; background-color:{COLORS['red']};"},
                                         {"selector": "td[data-dash-column='article_link'] a::after", "rule": "font-family:'FontAwesomeSolid'; font-style:normal; font-weight:normal; content:'\\f08e'; margin-left:0.4em;"},
                                     ],
