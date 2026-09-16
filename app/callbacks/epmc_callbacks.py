@@ -273,7 +273,7 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
     fig.update_layout(
         yaxis=dict(automargin=True, tickfont=dict(size=9)),
         xaxis=dict(title="count", showgrid=True, gridcolor=COLORS["lightgrey"]),
-        margin=dict(l=5, r=20, t=10, b=40),
+        margin=dict(l=5, r=20, t=10, b=10),
         xaxis_title="Publication Count",
         yaxis_title="",
         hoverlabel=dict(font_color="white"),
