@@ -291,7 +291,7 @@ def build_most_cited_rows(entries_df):
             return []
         df = entries_df[list(needed)].copy()
         df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0).astype(int)
-        df = df.sort_values("cited_by_count", ascending=False)
+        df = df.sort_values("cited_by_count", ascending=False).head(10)
         rows = []
         for _, row in df.iterrows():
             doi = str(row.get("doi") or "")

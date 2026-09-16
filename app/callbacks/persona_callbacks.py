@@ -33,10 +33,8 @@ ALL_SECTION_IDS = [
     "tables",
     # shared choropleth (funder + researcher + community)
     "publication-charts",
-    # funder-only charts
+    # combined publication & funding analytics (funder + researcher + community)
     "funder-only-charts",
-    # researcher-only charts
-    "researcher-charts",
     # developer-only charts
     "developer-charts",
     # community-only charts
@@ -73,7 +71,7 @@ PERSONA_SHOW = {
                      "funder-kpi-yoy"],
     },
     "researcher": {
-        "sections": ["metrics", "epmc", "tables", "publication-charts", "researcher-charts"],
+        "sections": ["metrics", "epmc", "tables", "publication-charts", "funder-only-charts"],
         "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
                      "funder-kpi-yoy"],
     },
@@ -83,7 +81,7 @@ PERSONA_SHOW = {
     },
     "community": {
         "sections": ["servicemap", "metrics", "epmc", "github", "pypi", "tables",
-                     "publication-charts", "funder-only-charts", "researcher-charts",
+                     "publication-charts", "funder-only-charts",
                      "developer-charts", "community-charts"],
         "cols":     ["kpi-publications", "kpi-authors", "kpi-citations", "kpi-countries",
                      "kpi-github", "kpi-pypi", "funder-kpi-yoy"],
