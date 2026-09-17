@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc, html
 
 from app.utils.ga4gh_theme import WORKSTREAM_COLORS, COLORS, chart_expand_button, chart_info_icon
+from app.constants.constants import STYLE_HEIGHT_3X
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +154,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                     dcc.Graph(
                                         id="dev-repos-by-workstream",
                                         figure=fig_workstream,
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Count of GA4GH GitHub repositories grouped by Work Stream.",
@@ -175,6 +177,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                     dcc.Graph(
                                         id="dev-pypi-releases-per-year",
                                         figure=fig_pypi,
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Number of new GA4GH-related PyPI packages first published each year.",
@@ -203,6 +206,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                 dcc.Graph(
                                     id="dev-standards-service-count",
                                     figure=fig_standards,
+                                    style={"height": STYLE_HEIGHT_3X},
                                 ),
                                 html.Figcaption(
                                     "Number of services registered in the GA4GH Implementation Registry per standard.",
