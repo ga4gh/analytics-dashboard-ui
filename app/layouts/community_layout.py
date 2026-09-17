@@ -4,20 +4,13 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
+from app.utils.ga4gh_theme import COLORS, COLORWAY, GITHUB_COLOR, chart_toolbar, chart_info_icon
 from app.constants.constants import STYLE_HEIGHT_3X
 
 
 # ---------------------------------------------------------------------------
 # Figure builders
 # ---------------------------------------------------------------------------
-
-_STATUS_COLORS = {
-    "Active":            COLORS["green"],
-    "Moderate activity": COLORS["orange"],
-    "Inactive":          COLORS["red"],
-    "Archived":          "#adb5bd",
-}
 
 _STATUS_ORDER = ["Active", "Moderate activity", "Inactive", "Archived"]
 
@@ -46,7 +39,7 @@ def _workstream_activity_figure(gh_df: pd.DataFrame) -> go.Figure:
         color="activity_status",
         orientation="h",
         category_orders={"activity_status": _STATUS_ORDER},
-        color_discrete_map=_STATUS_COLORS,
+        color_discrete_sequence=COLORWAY,
         labels={"count": "Repositories", "workstream": "Work Stream", "activity_status": "Status"},
         template="simple_white",
     )
@@ -83,7 +76,7 @@ def _top_repos_interest_figure(gh_interest_df: pd.DataFrame) -> go.Figure:
         orientation="h",
         labels={"total_interest": "Community Interest Score", "name": "Repository"},
         template="simple_white",
-        color_discrete_sequence=[COLORS["green"]],
+        color_discrete_sequence=[GITHUB_COLOR],
         custom_data=["stargazers_count", "forks_count", "subscribers_count"],
     )
     fig.update_traces(
@@ -132,7 +125,7 @@ def get_community_charts_section(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    chart_expand_button("community-workstream-activity"),
+                                    chart_toolbar("community-workstream-activity"),
                                     html.Div([html.Span("GitHub Repositories by Work Stream & Activity")] + chart_info_icon("community-workstream-activity", "Stacked bar chart showing the activity status breakdown for repositories within each GA4GH work stream — Active (pushed < 1 year), Moderate (1–3 years), Inactive (3+ years), or Archived."), className="chart-heading"),
                                     dcc.Graph(
                                         id="community-workstream-activity",
@@ -155,7 +148,7 @@ def get_community_charts_section(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    chart_expand_button("community-top-repos-interest"),
+                                    chart_toolbar("community-top-repos-interest"),
                                     html.Div([html.Span("Top 10 Repos by Community Interest")] + chart_info_icon("community-top-repos-interest", "The 10 GA4GH repositories with the highest combined community interest score, calculated from stars, forks, and watchers. Highlights the most widely adopted projects."), className="chart-heading"),
                                     dcc.Graph(
                                         id="community-top-repos-interest",

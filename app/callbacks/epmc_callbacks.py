@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 
 from app.services.epmc_client import prepare_epmc_data, get_affiliations_by_article
 from app.constants.constants import COUNTRIES_WHITELIST
-from app.utils.ga4gh_theme import COLORWAY, COLORS, PUBLICATIONS_COLORWAY
+from app.utils.ga4gh_theme import COLORWAY, COLORS, PUBLICATIONS_COLOR, HEATMAP_COLORWAY
 
 
 def _prepare_countries_df(countries_df):
@@ -83,10 +83,7 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None, top_n=None):
     # funder_layout.py / researcher_layout.py's textposition="inside") —
     # previously slices >5% (the top 3 countries) went "outside" instead.
 
-    # Countries have no inherent "meaning" color (unlike e.g. a status of
-    # Active/Inactive) and the slice count varies with the data, so this
-    # cycles through the shared brand COLORWAY rather than a fixed mapping.
-    slice_colors = [PUBLICATIONS_COLORWAY[i % len(PUBLICATIONS_COLORWAY)] for i in range(len(df))]
+    slice_colors = [COLORWAY[i % len(COLORWAY)] for i in range(len(df))]
 
     fig = go.Figure(
         data=[
@@ -108,10 +105,7 @@ def fig_epmc_countries_pie(countries_df, hidden_labels=None, top_n=None):
     )
     fig.update_layout(
         template="simple_white",
-        # autosize (not a fixed height) + config={"responsive": True} on the
-        # dcc.Graph + the .chart-aspect-square CSS class on that same graph
-        # let the pie scale with the card's actual width at any viewport.
-        autosize=True,
+        autosize=True,  # paired with config.responsive + .chart-aspect-square
         margin=dict(l=0, r=0, t=0, b=0),
         # Plotly's own legend forces a scrollbar once a single legend passes
         # ~35 entries (this pie's country count), regardless of how much
@@ -131,7 +125,7 @@ def build_countries_legend(countries_df, hidden_labels=None, top_n=None):
     """Custom HTML replacement for fig_epmc_countries_pie's legend.
 
     Mirrors the pie's own country order/colors exactly (same whitelist
-    filter, same sort, same PUBLICATIONS_COLORWAY cycling) so swatches line
+    filter, same sort, same COLORWAY cycling) so swatches line
     up with their slices. Each item is independently clickable — toggling it
     in/out of epmc-countries-hidden-store, which both this function and
     fig_epmc_countries_pie read to stay in sync.
@@ -147,7 +141,7 @@ def build_countries_legend(countries_df, hidden_labels=None, top_n=None):
 
     items = []
     for i, cn in enumerate(df["country_normalized"]):
-        color = PUBLICATIONS_COLORWAY[i % len(PUBLICATIONS_COLORWAY)]
+        color = COLORWAY[i % len(COLORWAY)]
         is_hidden = cn in hidden
         items.append(
             html.Button(
@@ -192,22 +186,17 @@ def fig_epmc_countries_choropleth(countries_df):
         lambda r: f"{r['country']}<br>{r['pct']}% of author affiliations", axis=1
     )
 
-    # Brand-scaled gradient (white -> red) instead of Plotly's built-in
-    # "Reds" scale, so the data-driven fill matches our own color system.
     fig = px.choropleth(
         df,
         locations="country",
         locationmode="country names",
         color="pct",
-        color_continuous_scale=[COLORS["white"], COLORS["red"]],
+        # Reversed so low share reads as purple, high share as white.
+        color_continuous_scale=list(reversed(HEATMAP_COLORWAY)),
         custom_data=["pct"],
         labels={"pct": "Share (%)", "country": "Country"},
         template="simple_white",
     )
-    # Matches new_ga4gh's services-map.js D3 map exactly — can't reference the
-    # CSS custom properties (--ga4gh-light-grey/--ga4gh-mid-grey/--faint-lightblue)
-    # directly from a Plotly figure, same limitation their own JS comment notes
-    # for its SCSS variables.
     fig.update_traces(
         hovertemplate="<b>%{location}</b><br>%{customdata[0]:.2f}% of author affiliations<extra></extra>",
         marker_line_color=COLORS["grey"],
@@ -215,34 +204,23 @@ def fig_epmc_countries_choropleth(countries_df):
     )
     fig.update_layout(
         autosize=True,
-        # t=28 reserves space for the floating modebar (camera/zoom/pan icons)
-        # in the top-right corner — at t=0 the colorbar's own default len=1
-        # matched the *full* plot area including that corner, so its title
-        # ("Share (%)") rendered directly behind the modebar icons. With a
-        # top margin, len=1 (still the default — unset here) now matches the
-        # map's own visible container below that reserved strip instead.
         margin={"l": 0, "r": 0, "t": 28, "b": 0},
         coloraxis_colorbar={
             "title": "Share (%)",
             "thickness": 12,
             "ticksuffix": "%",
         },
-        # bgcolor left at Plotly's default (matches each hovered point's own
-        # scaled color, from white through to red) — only font color is set,
-        # so text stays legible against whatever shade that point happens to be.
         hoverlabel=dict(font_color="white"),
     )
     fig.update_geos(
-        showland=True,    landcolor=COLORS["lightgrey"],
+        # No-data countries show this landcolor, not HEATMAP_COLORWAY.
+        showland=True,    landcolor=COLORS["darkblue"],
         showocean=True,   oceancolor="rgba(79, 174, 220, 0.31)",
         showlakes=True,   lakecolor="rgba(79, 174, 220, 0.31)",
         showcountries=True, countrycolor=COLORS["grey"],
         projection_type="natural earth",
         showframe=False,
-        # "Natural earth" is ~1.92:1 (w:h) — at this card's fixed height, the
-        # full -90/90 lat range pillarboxes the map with empty side margins.
-        # Cropping the (data-free) polar extremes lets the populated
-        # landmass fill the card's width instead.
+        # Crops empty polar extremes so the populated landmass fills the width.
         lataxis_range=[-58, 85],
     )
     return fig
@@ -268,8 +246,7 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
         template="simple_white",
         labels={"author_count": "Total Publication", "author": "Author Name"},
     )
-    bar_colors = [PUBLICATIONS_COLORWAY[i % len(PUBLICATIONS_COLORWAY)] for i in range(len(df))]
-    fig.update_traces(marker_line_width=0, marker_color=bar_colors)
+    fig.update_traces(marker_line_width=0, marker_color=PUBLICATIONS_COLOR)
     fig.update_layout(
         yaxis=dict(automargin=True, tickfont=dict(size=9)),
         xaxis=dict(title="count", showgrid=True, gridcolor=COLORS["lightgrey"]),

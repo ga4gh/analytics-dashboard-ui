@@ -24,6 +24,22 @@ COLORS = {
     "midnight_blue": "#01225f",
     "mamba": "#9c879b",
     "forest_green": "#4a7c2e",
+    # Light variants — second pass of COLORWAY past 14 categories.
+    "darkblue_light": "#8dbadd",
+    "green_light": "#c6e29e",
+    "red_light": "#f1a49c",
+    "lightblue_light": "#a7d6ee",
+    "orange_light": "#fcd299",
+    "purple_light": "#cfbcd8",
+    "secondary_blue_light": "#b2c8de",
+    "darkgreen_light": "#80d4ce",
+    "pink_light": "#f690bc",
+    "midnight_blue_light": "#8090af",
+    "secondary_orange_light": "#f8ad93",
+    "secondary_purple_light": "#d390ba",
+    "mamba_light": "#cec3cd",
+    "forest_green_light": "#a4be96",
+    
     "lightgrey": "#efefef",
     "grey": "#767676",
     "dark": "#363636",
@@ -34,50 +50,55 @@ COLORS = {
 # ------------------------------------------------------------------
 # COLOR SEQUENCE
 # ------------------------------------------------------------------
+# Shared colorway for any multi-category chart; repeats as lighter tints past 14.
 COLORWAY = [
     COLORS["darkblue"],
-    COLORS["orange"],
     COLORS["green"],
     COLORS["red"],
-    COLORS["purple"],
-    COLORS["darkgreen"],
     COLORS["lightblue"],
+    COLORS["orange"],
+    COLORS["purple"],
     COLORS["secondary_blue"],
-    COLORS["secondary_orange"],
+    COLORS["darkgreen"],
     COLORS["pink"],
-    COLORS["secondary_purple"],
     COLORS["midnight_blue"],
+    COLORS["secondary_orange"],
+    COLORS["secondary_purple"],
     COLORS["mamba"],
     COLORS["forest_green"],
+    COLORS["darkblue_light"],
+    COLORS["green_light"],
+    COLORS["red_light"],
+    COLORS["lightblue_light"],
+    COLORS["orange_light"],
+    COLORS["purple_light"],
+    COLORS["secondary_blue_light"],
+    COLORS["darkgreen_light"],
+    COLORS["pink_light"],
+    COLORS["midnight_blue_light"],
+    COLORS["secondary_orange_light"],
+    COLORS["secondary_purple_light"],
+    COLORS["mamba_light"],
+    COLORS["forest_green_light"],
 ]
 
 # ------------------------------------------------------------------
-# SECTION-SPECIFIC COLOR SEQUENCES
+# SECTION SINGLE COLORS
 # ------------------------------------------------------------------
-PUBLICATIONS_COLORWAY = [
-    COLORS["red"],
+PUBLICATIONS_COLOR = COLORS["red"]
+GITHUB_COLOR = COLORS["orange"]
+PYPI_COLOR = COLORS["purple"]
+IMPLEMENTATIONS_COLOR = COLORS["darkblue"]
+
+# ------------------------------------------------------------------
+# HEATMAP / CHOROPLETH COLOR SCALE
+# ------------------------------------------------------------------
+# darkblue excluded deliberately: reserved for "no data" countries' landcolor.
+HEATMAP_COLORWAY = [
+    COLORS["white"],
     COLORS["orange"],
-    COLORS["secondary_orange"],
-    COLORS["pink"],
-]
-
-GITHUB_COLORWAY = [
-    COLORS["green"],
-    COLORS["darkgreen"],
-    COLORS["forest_green"],
-]
-
-PYPI_COLORWAY = [
+    COLORS["red"],
     COLORS["purple"],
-    COLORS["secondary_purple"],
-    COLORS["mamba"],
-]
-
-FUNDING_COLORWAY = [
-    COLORS["darkblue"],
-    COLORS["lightblue"],
-    COLORS["secondary_blue"],
-    COLORS["midnight_blue"],
 ]
 
 # Fixed per-workstream colors so a given workstream renders the same color on
@@ -130,6 +151,40 @@ def chart_expand_button(graph_id: str) -> html.Button:
             "title": "Expand chart",
         },
     )
+
+
+def chart_toolbar(graph_id: str, is_map: bool = False) -> html.Div:
+    """
+    Permanent icon row [reset (maps only), download PNG, expand to modal],
+    replacing Plotly's own modebar. Click handling in assets/chart_toolbar.js
+    and assets/chart_modal.js.
+    """
+    buttons = []
+    if is_map:
+        buttons.append(
+            html.Button(
+                html.I(className="bi bi-arrow-counterclockwise"),
+                className="chart-reset-btn",
+                **{
+                    "data-graph-id": graph_id,
+                    "aria-label": "Reset map view",
+                    "title": "Reset map view",
+                },
+            )
+        )
+    buttons.append(
+        html.Button(
+            html.I(className="bi bi-download"),
+            className="chart-download-btn",
+            **{
+                "data-graph-id": graph_id,
+                "aria-label": "Download chart as PNG",
+                "title": "Download chart as PNG",
+            },
+        )
+    )
+    buttons.append(chart_expand_button(graph_id))
+    return html.Div(buttons, className="chart-toolbar")
 
 
 # ------------------------------------------------------------------

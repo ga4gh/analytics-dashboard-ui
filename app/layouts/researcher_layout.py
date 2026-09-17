@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, PUBLICATIONS_COLORWAY, chart_expand_button, chart_info_icon
+from app.utils.ga4gh_theme import COLORS, COLORWAY, chart_toolbar, chart_info_icon
 
 
 # ---------------------------------------------------------------------------
@@ -12,10 +12,10 @@ from app.utils.ga4gh_theme import COLORS, PUBLICATIONS_COLORWAY, chart_expand_bu
 # ---------------------------------------------------------------------------
 
 _PUB_TYPE_COLORS = {
-    "Journal Article":  PUBLICATIONS_COLORWAY[0],
-    "Review":           PUBLICATIONS_COLORWAY[1],
-    "Preprint":         PUBLICATIONS_COLORWAY[2],
-    "Comment / Letter": PUBLICATIONS_COLORWAY[3],
+    "Journal Article":  COLORWAY[0],
+    "Review":           COLORWAY[1],
+    "Preprint":         COLORWAY[2],
+    "Comment / Letter": COLORWAY[3],
     "Other":            COLORS["grey"],
 }
 
@@ -42,10 +42,7 @@ def _pub_type_figure(pub_types: list) -> go.Figure:
         hovertemplate="%{label}<br>Articles: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        # autosize (not a fixed height) — paired with config={"responsive":
-        # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
-        # scales with the card's actual width at any viewport.
-        autosize=True,
+        autosize=True,  # paired with config.responsive + .chart-aspect-tall
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
@@ -67,7 +64,7 @@ def _open_access_figure(entries_df) -> go.Figure:
         names="label",
         values="count",
         color="label",
-        color_discrete_map={"Open Access": COLORS["darkgreen"], "Restricted": COLORS["grey"]},
+        color_discrete_map={"Open Access": COLORS["green"], "Restricted": COLORS["red"]},
         template="simple_white",
         hole=1/3,
     )
@@ -78,10 +75,7 @@ def _open_access_figure(entries_df) -> go.Figure:
         hovertemplate="%{label}<br>Articles: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        # autosize (not a fixed height) — paired with config={"responsive":
-        # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
-        # scales with the card's actual width at any viewport.
-        autosize=True,
+        autosize=True,  # paired with config.responsive + .chart-aspect-tall
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
@@ -112,13 +106,13 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    chart_expand_button("researcher-pub-type-donut"),
+                                    chart_toolbar("researcher-pub-type-donut"),
                                     html.Div([html.Span("Publication Types")] + chart_info_icon("researcher-pub-type-donut", "Breakdown of GA4GH-related publications by type — e.g. Journal Article, Review, Preprint. Each article is assigned one primary type; counts sum to the total unique article count."), className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-pub-type-donut",
                                         figure=pub_type_fig,
                                         className="chart-aspect-tall",
-                                        config={"responsive": True},
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Each article is assigned one primary type — counts sum to the total unique article count.",
@@ -136,13 +130,13 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    chart_expand_button("researcher-oa-donut"),
+                                    chart_toolbar("researcher-oa-donut"),
                                     html.Div([html.Span("Open Access Status")] + chart_info_icon("researcher-oa-donut", "Proportion of GA4GH-related publications that are freely available as Open Access versus those that are restricted behind a paywall."), className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-oa-donut",
                                         figure=oa_fig,
                                         className="chart-aspect-tall",
-                                        config={"responsive": True},
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Proportion of GA4GH-related publications available as open access.",

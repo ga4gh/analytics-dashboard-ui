@@ -6,7 +6,7 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
+from app.utils.ga4gh_theme import COLORS, IMPLEMENTATIONS_COLOR, chart_toolbar, chart_info_icon
 
 LATITUDE=0
 LONGITUDE=1
@@ -100,22 +100,15 @@ def _make_service_map_figure(st_df, s_df, d_df):
         margin={"l": 0, "r": 0, "t": 0, "b": 0},
     )
 
-    # Matches new_ga4gh's services-map.js D3 map exactly — can't reference the
-    # CSS custom properties (--grey/--lightgrey/--faint-lightblue) directly
-    # from a Plotly figure, same limitation their own JS comment notes for its
-    # SCSS variables.
     fig.update_geos(
-        showland = True, landcolor=COLORS["lightgrey"],
+        showland = True, landcolor=COLORS["green_light"],
         showocean=True, oceancolor="rgba(79, 174, 220, 0.31)",
         showlakes=True, lakecolor="rgba(79, 174, 220, 0.31)",
         showcountries=True, countrycolor=COLORS["grey"],
     )
 
-    # Matches new_ga4gh's .tooltip (layout/_services-map.scss): rgba($dark, .92)
-    # background with white text, instead of Plotly's default (which mirrors
-    # the marker's own blue).
     fig.update_traces(
-        marker=dict(color=COLORS["darkblue"], size=12.5, opacity=1.0),
+        marker=dict(color=IMPLEMENTATIONS_COLOR, size=12.5, opacity=1.0),
         hovertemplate=HOVERTEMPLATE,
         hoverlabel=dict(bgcolor='rgba(54, 54, 54, 0.92)', font_color='white', font_size=13),
     )
@@ -134,7 +127,7 @@ def get_service_map_layout(standards_df, services_df, deployments_df):
     return dbc.Card(
         dbc.CardBody(
             [
-                chart_expand_button("service_map"),
+                chart_toolbar("service_map", is_map=True),
                 html.Div([html.Span("Map of Registered GA4GH Services")] + chart_info_icon("service_map", "World map of services registered in the GA4GH Service Registry. Each marker represents a publicly accessible service implementing a GA4GH standard. Click a marker to see service details."), className="chart-heading"),
                 dcc.Graph(
                     id="service_map",

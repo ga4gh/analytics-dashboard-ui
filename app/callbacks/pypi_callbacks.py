@@ -6,13 +6,13 @@ from app.services.pypi_client import get_pypi_details
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
-from app.utils.ga4gh_theme import PYPI_COLORWAY, COLORS
+from app.utils.ga4gh_theme import COLORWAY, COLORS
 
 
 PYPI_CATEGORY_COLORS = {
-    "Implementation": PYPI_COLORWAY[0],
-    "GA4GH Standard": PYPI_COLORWAY[1],
-    "GA4GH mentions": PYPI_COLORWAY[2],
+    "Implementation": COLORWAY[0],
+    "GA4GH Standard": COLORWAY[1],
+    "GA4GH mentions": COLORWAY[2],
 }
 
 def register_pypi_callbacks(app):
@@ -138,14 +138,10 @@ def register_pypi_callbacks(app):
                 "type": "pie",
                 "hole": 1/3,
                 "textinfo": "label+percent",
-                # Without this, Plotly's default "auto" placement can push
-                # a thin slice's label outside the pie, which combined with
-                # the template's automargin:true shrinks the pie itself to
-                # make room — exactly what broke the mobile auto-fit's
-                # width assumption in assets/pie_autofit.js (it sizes the
-                # pie to fill the card's width exactly, which only holds if
-                # automargin never kicks in). Matches the other pies.
+                # "inside" avoids automargin shrinking the pie for an
+                # outside label, which breaks pie_autofit.js's width sizing.
                 "textposition": "inside",
+                "insidetextorientation": "horizontal",  # matches the other pies
                 "textfont": {"color": "white"},
                 "hoverinfo": "label+value+percent",
                 "marker": {
@@ -159,10 +155,7 @@ def register_pypi_callbacks(app):
                 "plot_bgcolor": COLORS["white"],
                 "paper_bgcolor": COLORS["white"],
                 "legend": {"orientation": "h", "yanchor": "top", "y": -0.1, "xanchor": "center", "x": 0.5},
-                # autosize (not a fixed height) — paired with config={"responsive":
-                # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
-                # scales with the card's actual width at any viewport.
-                "autosize": True,
+                "autosize": True,  # paired with config.responsive + .chart-aspect-tall
                 "hoverlabel": {"font": {"color": "white"}},
             }
         }

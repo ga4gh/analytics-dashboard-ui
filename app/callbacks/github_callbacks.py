@@ -7,7 +7,7 @@ from dash import html
 import pandas as pd
 import numpy as np
 
-from app.utils.ga4gh_theme import WORKSTREAM_COLORS, GITHUB_COLORWAY, COLORS
+from app.utils.ga4gh_theme import WORKSTREAM_COLORS, COLORWAY, COLORS
 
 
 def fig_github_activity_status_pie(gh_activity_counts):
@@ -22,9 +22,9 @@ def fig_github_activity_status_pie(gh_activity_counts):
         "Archived",
     ]
     color_map = {
-        "High": GITHUB_COLORWAY[0],
-        "Moderate": GITHUB_COLORWAY[1],
-        "Low": GITHUB_COLORWAY[2],
+        "High": COLORWAY[0],
+        "Moderate": COLORWAY[1],
+        "Low": COLORWAY[2],
         "Archived": COLORS["grey"],
     }
 
@@ -49,10 +49,7 @@ def fig_github_activity_status_pie(gh_activity_counts):
         plot_bgcolor=COLORS["white"],
         paper_bgcolor=COLORS["white"],
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
-        # autosize (not a fixed height) + config={"responsive": True} on the
-        # dcc.Graph + .chart-aspect-tall in style.css scale this with the
-        # card's actual width at any viewport instead of a fixed 900px.
-        autosize=True,
+        autosize=True,  # paired with config.responsive + .chart-aspect-tall
         hoverlabel=dict(font_color="white"),
     )
 
@@ -107,13 +104,7 @@ def fig_github_activity_bar(gh_activity_df, color_map=None):
         # tick label block's own height doesn't scale with the chart's).
         xaxis=dict(tickangle=-45, automargin=True),
         margin=dict(l=40, r=20, t=20, b=300),
-        # autosize (not a fixed height) — paired with config={"responsive":
-        # True} on the dcc.Graph, this lets the chart fill and resize with
-        # its card the same way its row sibling gh-activity-status-pie
-        # already does, instead of staying pinned at 650px regardless of
-        # viewport width or how many bars the workstream filter leaves it
-        # to draw.
-        autosize=True,
+        autosize=True,  # paired with config.responsive, matches gh-activity-status-pie
         xaxis_title="Repo Name",
         yaxis=dict(title="Activity Score", showgrid=True, gridcolor=COLORS["lightgrey"]),
         legend=dict(orientation="h", yanchor="top", y=-0.55, xanchor="center", x=0.5),
@@ -155,7 +146,7 @@ def fig_github_interest_metrics(gh_interest_df):
         template="simple_white",
         category_orders={"name": df["name"].tolist()},
         labels=labels,
-        color_discrete_sequence=GITHUB_COLORWAY,
+        color_discrete_sequence=COLORWAY,
     )
 
     fig.update_layout(
@@ -183,8 +174,6 @@ def fig_github_interest_metrics(gh_interest_df):
         xaxis_tickangle=-45,
         xaxis_automargin=True,
         margin=dict(l=40, r=20, t=80, b=300),
-        # autosize (not a fixed height) — see fig_github_activity_bar's own
-        # version of this same change for why.
         autosize=True,
     )
 
@@ -266,9 +255,7 @@ def fig_github_workstream_pie(gh_df):
 
     fig.update_layout(
         template="simple_white",
-        # autosize (not a fixed height) — see fig_github_activity_status_pie
-        # for why, and .chart-aspect-tall in style.css.
-        autosize=True,
+        autosize=True,  # paired with config.responsive + .chart-aspect-tall
         legend=dict(traceorder="normal", orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
         hoverlabel=dict(font_color="white"),
     )
@@ -320,15 +307,15 @@ def register_github_callbacks(app):
                     html.Div([
                         dbc.Badge(
                             f"⭐ Stars: {repo['stargazers_count']}",
-                            className="ga4gh-pill ga4gh-pill-green",
+                            className="ga4gh-pill ga4gh-pill-stars",
                         ),
                         dbc.Badge(
                             f"🍴 Forks: {repo['forks_count']}",
-                            className="ga4gh-pill ga4gh-pill-darkgreen",
+                            className="ga4gh-pill ga4gh-pill-forks",
                         ),
                         dbc.Badge(
                             f"👀 Watchers: {repo['watchers_count']}",
-                            className="ga4gh-pill ga4gh-pill-forest-green",
+                            className="ga4gh-pill ga4gh-pill-watchers",
                         ),
                     ], className="github-repo-pills", style={"display": "flex", "alignItems": "center", "flexWrap": "wrap", "gap": "8px"}),
                 ], style={"display": "flex", "alignItems": "center", "justifyContent": "space-between", "flexWrap": "wrap", "gap": "8px"})

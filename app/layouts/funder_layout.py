@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import FUNDING_COLORWAY, COLORS, chart_expand_button, chart_info_icon
+from app.utils.ga4gh_theme import COLORWAY, COLORS, PUBLICATIONS_COLOR, chart_toolbar, chart_info_icon
 from app.layouts.researcher_layout import _pub_type_figure, _open_access_figure
 from app.constants.constants import STYLE_HEIGHT_3X
 
@@ -32,10 +32,10 @@ _REGION_MAP = {
 }
 
 _REGION_COLORS = {
-    "US": FUNDING_COLORWAY[0],
-    "UK": FUNDING_COLORWAY[1],
-    "EU": FUNDING_COLORWAY[2],
-    "Other": FUNDING_COLORWAY[3],
+    "US": COLORWAY[0],
+    "UK": COLORWAY[1],
+    "EU": COLORWAY[2],
+    "Other": COLORWAY[3],
 }
 
 
@@ -70,7 +70,7 @@ def _annual_publications_figure(entries_df):
         y="count",
         labels={"pub_year": "Year", "count": "Publications"},
         template="simple_white",
-        color_discrete_sequence=[COLORS["pink"]],
+        color_discrete_sequence=[PUBLICATIONS_COLOR],
     )
     fig.update_traces(hovertemplate="Year: %{x}<br>Publications: %{y}<extra></extra>")
     fig.update_layout(
@@ -113,10 +113,7 @@ def _region_pie_figure(agencies: list) -> go.Figure:
         hovertemplate="%{label}<br>Grants: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        # autosize (not a fixed height) — paired with config={"responsive":
-        # True} on the dcc.Graph and .chart-aspect-tall in style.css so this
-        # scales with the card's actual width at any viewport.
-        autosize=True,
+        autosize=True,  # paired with config.responsive + .chart-aspect-tall
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
         legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
@@ -155,11 +152,13 @@ def get_publication_charts_section(entries_df, choropleth_fig=None):
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
-                                chart_expand_button("epmc-countries-choropleth"),
+                                chart_toolbar("epmc-countries-choropleth", is_map=True),
                                 html.Div([html.Span("Global Author Affiliation Distribution")] + chart_info_icon("epmc-countries-choropleth", "World map shaded by each country's share of total author affiliations across GA4GH-related publications. Darker shading indicates a higher proportion of affiliated authors."), className="chart-heading"),
                                 dcc.Graph(
                                     id="epmc-countries-choropleth",
                                     figure=choropleth_fig or go.Figure(),
+                                    config={"displayModeBar": False},
+                                    responsive=True,
                                     style={"height": "650px"},
                                 ),
                                 dcc.Store(id="epmc-countries-choropleth-zoom-clamp-dummy"),
@@ -196,14 +195,14 @@ def get_funder_only_charts_section(agencies_list, entries_df=None, pub_types_lis
             dbc.Card(
                 dbc.CardBody(
                     html.Figure([
-                        chart_expand_button(graph_id),
+                        chart_toolbar(graph_id),
                         html.Div([html.Span(title)] + chart_info_icon(graph_id, tooltip), className="chart-heading"),
                         dcc.Graph(
                             id=graph_id,
                             figure=fig,
                             className="chart-aspect-tall",
                             style={"height": STYLE_HEIGHT_3X},
-                            config={"responsive": True},
+                            config={"responsive": True, "displayModeBar": False},
                         ),
                         html.Figcaption(figcaption, style={"color": COLORS["grey"], "marginTop": "6px"}),
                     ])

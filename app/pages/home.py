@@ -140,7 +140,10 @@ layout = dbc.Container(
         # ---------- LEFT SIDEBAR ----------
         html.Div(
             [
-                html.Img(src="/assets/logo-full-color.svg", className="logo-img"),
+                html.Div(
+                    html.Img(src="/assets/logo-full-color.svg", className="logo-img"),
+                    className="sidebar-logo",
+                ),
                 html.Hr(className="sidebar-divider"),
                 html.Span("ON THIS PAGE", className="sidebar-section-label"),
                 html.Nav(
@@ -199,17 +202,25 @@ html.Div(
                         html.Div(
                             [
                                 html.Span("Created by:", className="hero-label"),
-                                html.Span("GA4GH Technical Team", className="hero-value"),
+                                html.Div(
+                                    html.Span("GA4GH Technical Team", className="hero-value"),
+                                    className="hero-badge-values",
+                                ),
                             ],
                             className="hero-badge-group",
                         ),
                         html.Div(
                             [
                                 html.Span("Data Sources:", className="hero-label"),
-                                html.Span("Implementation Registry", className="hero-value"),
-                                html.Span("Europe PMC", className="hero-value"),
-                                html.Span("GitHub", className="hero-value"),
-                                html.Span("PyPI", className="hero-value"),
+                                html.Div(
+                                    [
+                                        html.Span("Implementation Registry", className="hero-value"),
+                                        html.Span("Europe PMC", className="hero-value"),
+                                        html.Span("GitHub", className="hero-value"),
+                                        html.Span("PyPI", className="hero-value"),
+                                    ],
+                                    className="hero-badge-values",
+                                ),
                             ],
                             className="hero-badge-group",
                         ),
@@ -593,7 +604,7 @@ html.Div(
                             ], className="yoy-header-row"),
                             html.Div("YoY Publication Growth", className="indicator-label"),
                         ], className="yoy-card-body"),
-                        className="indicator-card shadow-sm border-pink",
+                        className="indicator-card shadow-sm border-red",
                     ),
                     md=2,
                     id="funder-kpi-yoy",
@@ -604,7 +615,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_total_citations:,}",
                         "Total Citations",
-                        "border-orange",
+                        "border-red",
                     ),
                     md=2,
                     id="kpi-citations",
@@ -614,7 +625,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_unique_authors:,}",
                         "Total Authors",
-                        "border-lightblue",
+                        "border-red",
                     ),
                     md=2,
                     id="kpi-authors",
@@ -623,7 +634,7 @@ html.Div(
                     indicator_card(
                         f"{_epmc_unique_countries:,}",
                         "Total Countries",
-                        "border-darkblue",
+                        "border-red",
                     ),
                     md=2,
                     id="kpi-countries",
@@ -633,7 +644,7 @@ html.Div(
                     indicator_card(
                         f"{_gh_total:,}",
                         "GitHub Repositories",
-                        "border-green",
+                        "border-orange",
                     ),
                     md=2,
                     id="kpi-github",

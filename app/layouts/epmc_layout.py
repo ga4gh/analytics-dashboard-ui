@@ -1,7 +1,7 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
+from app.utils.ga4gh_theme import COLORS, chart_toolbar, chart_info_icon
 from app.layouts.funder_layout import _annual_publications_figure
 from app.constants.constants import STYLE_HEIGHT_1X, STYLE_HEIGHT_2X, STYLE_HEIGHT_3X
 
@@ -65,11 +65,11 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                     html.Div([html.Span(id="epmc-authors-bar-title")] + chart_info_icon("epmc-authors-bar", "Ranks individual researchers by the number of GA4GH-related articles they have authored. Use the slider to adjust how many authors are shown."), className="chart-heading"),
                                     html.Div(style={"flex": "1"}),
                                     html.Figure([
-                                        chart_expand_button("epmc-authors-bar"),
+                                        chart_toolbar("epmc-authors-bar"),
                                         dcc.Graph(
                                             id="epmc-authors-bar",
                                             style={"height": STYLE_HEIGHT_3X},
-                                            config={"responsive": True},
+                                            config={"responsive": True, "displayModeBar": False},
                                         ),
                                         html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
                                     ]),
@@ -88,12 +88,12 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    chart_expand_button("epmc-countries-pie"),
+                                    chart_toolbar("epmc-countries-pie"),
                                     html.Div([html.Span("Affiliation - Countries Represented")] + chart_info_icon("epmc-countries-pie", "Pie chart showing the proportion of author affiliations by country across all GA4GH-related publications. Countries are filtered to a curated whitelist of nations."), className="chart-heading"),
                                     dcc.Graph(
                                         id="epmc-countries-pie",
                                         style={"height": STYLE_HEIGHT_2X},
-                                        config={"responsive": True},
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Div(id="epmc-countries-legend", className="country-legend",
                                              style={"height": STYLE_HEIGHT_1X, "overflowY": "auto", "marginTop": "0.5rem", "position": "relative", "zIndex": "10"}),
@@ -119,7 +119,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                     html.Div([html.Span("Annual GA4GH Publications")] + chart_info_icon("epmc-publications-trend", "Bar chart of the number of GA4GH-related articles published each year, sourced from Europe PMC. Reflects growth in the GA4GH research community over time."), className="chart-heading"),
                                     html.Div(style={"flex": "1"}),
                                     html.Figure([
-                                        chart_expand_button("epmc-publications-trend"),
+                                        chart_toolbar("epmc-publications-trend"),
                                         
                                         html.Div(style={"flex": "1"}),
                                         dcc.Graph(
@@ -144,7 +144,6 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 html.Div([
                                     html.Div([html.Span("Most Cited GA4GH Publications")] + chart_info_icon("epmc-most-cited-table", "Ranked list of GA4GH-related articles by citation count, sorted in descending order."), className="chart-heading"),
-                                    html.Figcaption("Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.", style={"marginBottom": "12px"}),
                                     dash_table.DataTable(
                                         id="epmc-most-cited-table",
                                         columns=[
@@ -156,6 +155,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         page_action="none",
                                         style_table={
                                             "overflowX": "auto",
+                                            "overflowY": "auto",
                                             "height": STYLE_HEIGHT_3X,
                                         },
                                         style_data={
@@ -173,6 +173,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                             "backgroundColor": COLORS["dark"], "color": "white",
                                             "fontWeight": "bold",
                                             "fontFamily": "'Figtree-SemiBold', 'Figtree', sans-serif",
+                                            "textAlign": "center",
                                         },
                                         style_cell_conditional=[
                                             {"if": {"column_id": "article_link"}, "width": "8%", "textAlign": "center"},
@@ -181,12 +182,18 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         ],
                                         css=[
                                             {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.4;"},
-                                            {"selector": "td.dash-cell", "rule": "padding-top: 2px !important; padding-bottom: 2px !important;"},
-                                            {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; border:1px solid {COLORS['orange']}; background-color:{COLORS['orange']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: background-color 0.2s ease, border-color 0.2s ease;"},
-                                            {"selector": "td[data-dash-column='article_link'] a:hover", "rule": f"border-color:{COLORS['red']}; background-color:{COLORS['red']};"},
+                                            # Overrides Dash's own bundled 30px min-height on tr.
+                                            {"selector": ".dash-spreadsheet-container .dash-spreadsheet-inner tr", "rule": "height: auto !important; min-height: 0 !important;"},
+                                            {"selector": "td.dash-cell", "rule": "padding: 0.25rem 0.5rem !important;"},
+                                            {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:0.25rem 0.5rem; border:1px solid {COLORS['red']}; background-color:{COLORS['red']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: filter 0.2s ease;"},
+                                            {"selector": "td[data-dash-column='article_link'] a:hover", "rule": "filter: brightness(0.85);"},
                                             {"selector": "td[data-dash-column='article_link'] a::after", "rule": "font-family:'FontAwesomeSolid'; font-style:normal; font-weight:normal; content:'\\f08e'; margin-left:0.4em;"},
                                         ],
                                         markdown_options={"link_target": "_blank"},
+                                    ),
+                                    html.Figcaption(
+                                        "Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.",
+                                        className="chart-figcaption",
                                     ),
                                 ])
                             ),

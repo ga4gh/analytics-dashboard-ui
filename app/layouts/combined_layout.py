@@ -3,7 +3,7 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-from app.utils.ga4gh_theme import COLORS, chart_expand_button, chart_info_icon
+from app.utils.ga4gh_theme import COLORS, GITHUB_COLOR, PUBLICATIONS_COLOR, PYPI_COLOR, chart_toolbar, chart_info_icon
 
 
 
@@ -110,16 +110,16 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     citations_year_df = _build_source_year_df(ct_df, "pub_year", "citation_item", "Europe PMC Cumulative Citations")
 
     gh_fig = _make_source_growth_figure(
-        github_year_df, "GitHub Repositories", COLORS["green"]
+        github_year_df, "GitHub Repositories", GITHUB_COLOR
     )
 
     epmc_fig = _make_source_growth_figure(
-        epmc_year_df, "GA4GH-Related Articles", COLORS["red"],
+        epmc_year_df, "GA4GH-Related Articles", PUBLICATIONS_COLOR,
         yearly_label="New articles",
         cumulative_label="Total articles to date",
     )
     pypi_fig = _make_source_growth_figure(
-        pypi_year_df, "PyPI Packages", COLORS["purple"],
+        pypi_year_df, "PyPI Packages", PYPI_COLOR,
         yearly_label="New libraries created",
         cumulative_label="Total libraries to date",
     )
@@ -127,7 +127,7 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     citations_fig = _make_source_growth_figure(
         citations_year_df,
         "Europe PMC Cumulative Citations Per Year",
-        COLORS["orange"],
+        PUBLICATIONS_COLOR,
         yearly_label="New citations",
         cumulative_label="Total citations to date",
     )
@@ -141,7 +141,7 @@ def get_combined_layout(github_df, epmc_entries_df, pypi_first_releases_df, epmc
     def _chart_col(title, graph_id, fig, tooltip):
         return dbc.Col(
             [
-                chart_expand_button(graph_id),
+                chart_toolbar(graph_id),
                 html.Div([html.Span(title)] + chart_info_icon(graph_id, tooltip), className="chart-heading"),
                 dcc.Graph(
                     id=graph_id, figure=fig,
