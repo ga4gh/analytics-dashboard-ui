@@ -139,11 +139,6 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                         md=6,
                         className="d-flex flex-column",
                     ),
-                ],
-                justify="center",
-            ),
-            dbc.Row(
-                [
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
@@ -160,7 +155,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         data=[],
                                         page_action="none",
                                         style_table={
-                                            "overflowX": "auto"
+                                            "overflowX": "auto",
+                                            "height": STYLE_HEIGHT_3X,
                                         },
                                         style_data={
                                             "height": "auto",
