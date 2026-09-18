@@ -4,8 +4,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
-# Reuse the shared annual publications figure
-from app.layouts.funder_layout import _annual_publications_figure
+from app.utils.ga4gh_theme import COLORS, COLORWAY, chart_toolbar, chart_info_icon
 
 
 # ---------------------------------------------------------------------------
@@ -13,11 +12,11 @@ from app.layouts.funder_layout import _annual_publications_figure
 # ---------------------------------------------------------------------------
 
 _PUB_TYPE_COLORS = {
-    "Journal Article": "#1b75bb",
-    "Review":          "#e76f51",
-    "Preprint":        "#2a9d8f",
-    "Comment / Letter": "#f4a261",
-    "Other":           "#adb5bd",
+    "Journal Article":  COLORWAY[0],
+    "Review":           COLORWAY[1],
+    "Preprint":         COLORWAY[2],
+    "Comment / Letter": COLORWAY[3],
+    "Other":            COLORS["grey"],
 }
 
 
@@ -34,17 +33,20 @@ def _pub_type_figure(pub_types: list) -> go.Figure:
         color="type",
         color_discrete_map=_PUB_TYPE_COLORS,
         template="simple_white",
-        hole=0.4,
+        hole=1/3,
     )
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
+        textfont_color="white",
         hovertemplate="%{label}<br>Articles: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        height=380,
+        autosize=True,  # paired with config.responsive + .chart-aspect-tall
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
+        legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -62,19 +64,22 @@ def _open_access_figure(entries_df) -> go.Figure:
         names="label",
         values="count",
         color="label",
-        color_discrete_map={"Open Access": "#2a9d8f", "Restricted": "#adb5bd"},
+        color_discrete_map={"Open Access": COLORS["green"], "Restricted": COLORS["red"]},
         template="simple_white",
-        hole=0.4,
+        hole=1/3,
     )
     fig.update_traces(
         textposition="inside",
         textinfo="percent+label",
+        textfont_color="white",
         hovertemplate="%{label}<br>Articles: %{value}<br>Share: %{percent}<extra></extra>",
     )
     fig.update_layout(
-        height=380,
+        autosize=True,  # paired with config.responsive + .chart-aspect-tall
         margin={"l": 20, "r": 20, "t": 30, "b": 20},
         showlegend=True,
+        legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -101,45 +106,52 @@ def get_researcher_charts_section(entries_df, pub_types_list):
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    html.H5("Publication Types", style={"marginBottom": "8px"}),
+                                    chart_toolbar("researcher-pub-type-donut"),
+                                    html.Div([html.Span("Publication Types")] + chart_info_icon("researcher-pub-type-donut", "Breakdown of GA4GH-related publications by type — e.g. Journal Article, Review, Preprint. Each article is assigned one primary type; counts sum to the total unique article count."), className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-pub-type-donut",
                                         figure=pub_type_fig,
-                                        config={"displayModeBar": False},
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Each article is assigned one primary type — counts sum to the total unique article count.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    html.H5("Open Access Status", style={"marginBottom": "8px"}),
+                                    chart_toolbar("researcher-oa-donut"),
+                                    html.Div([html.Span("Open Access Status")] + chart_info_icon("researcher-oa-donut", "Proportion of GA4GH-related publications that are freely available as Open Access versus those that are restricted behind a paywall."), className="chart-heading"),
                                     dcc.Graph(
                                         id="researcher-oa-donut",
                                         figure=oa_fig,
-                                        config={"displayModeBar": False},
+                                        className="chart-aspect-tall",
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Proportion of GA4GH-related publications available as open access.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                 ],
+                className="mb-4 chart-cards-row",
             ),
         ],
         id="researcher-charts",
