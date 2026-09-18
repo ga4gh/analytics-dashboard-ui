@@ -894,6 +894,13 @@ input.list-filter[type="text"]::placeholder {
     }
 }
 
+/* No hover on touch, so the hover-only shadow above never shows there. */
+@media (pointer: coarse), (max-width: 768px) {
+    .indicator-card {
+        box-shadow: 0 5px 12px 0 rgba(0, 0, 0, 0.25) !important;
+    }
+}
+
 .indicator-card-body {
     padding: 1rem;
 }
@@ -971,12 +978,14 @@ input.list-filter[type="text"]::placeholder {
     position: relative;
     background: var(--lightgrey);
     padding: 2.5rem;
+    padding-left: 3.5rem; /* +1rem so the left-edge stripe doesn't eat into it */
     margin-top: clamp(1em, 4vw, 4em);
     margin-bottom: clamp(1em, 4vw, 4em);
 }
 @media (max-width: 768px) {
 .servicemap-section, .metrics-section, .epmc-section, .github-section, .pypi-section, .tables-section {
     padding: 2rem 1rem 1rem;
+    padding-left: 2rem; /* +1rem, same reasoning as the desktop rule above */
     margin-top: clamp(1em, 4vw, 4em);
     margin-bottom: 0;
 }
@@ -1027,7 +1036,7 @@ input.list-filter[type="text"]::placeholder {
 .hero-section {
     position: relative;
     background: var(--gradient-green-darkgreen);
-    padding-top: 7rem; /* clear the fixed .top-bar (now ~4rem tall) */
+    padding-top: 4rem;
     overflow: hidden;
 }
 
@@ -1055,16 +1064,12 @@ input.list-filter[type="text"]::placeholder {
     padding: 0 2rem;
 }
 
-/* Shared horizontal box model matching the hero's actual content offset:
-   hero-standard's 2rem inset + hero-summary's own 2rem inset stack to 4rem,
-   so sections below the hero (methods/terms expander, KPI row, etc.) line
-   up with the hero title/paragraph edges, not just hero-standard's outer box. */
 .section-standard-width {
     max-width: 1440px;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 4rem;
-    padding-right: 4rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
 }
 
 /* WHITE BOX */
@@ -1093,6 +1098,28 @@ input.list-filter[type="text"]::placeholder {
     margin-top: 1.5rem;
 }
 
+/* Scales continuously with viewport width instead of a fixed 200px — was
+   10.417vw at a 1920px viewport, +50% taller. combined_metrics_resize.js
+   keeps Plotly synced to whatever this computes to. */
+@media (min-width: 769px) {
+    #combined-metrics-card-body .dash-graph {
+        height: 15.625vw !important;
+    }
+}
+
+/* Stacks the 3 badges into rows instead of squeezing them side by side. */
+@media (min-width: 769px) and (max-width: 1200px) {
+    .hero-badges-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Fixed label column so all 3 stacked badges' values line up. */
+    .hero-badge-group {
+        grid-template-columns: 8rem 1fr;
+    }
+}
+
 /* Matches new_ga4gh's .info-grid layout and the method cards' Bootstrap
    default .card look. */
 .hero-badge-group {
@@ -1104,7 +1131,7 @@ input.list-filter[type="text"]::placeholder {
     background: var(--white);
     border: 1px solid rgba(0, 0, 0, 0.175);
     flex: 1;
-    min-width: 160px;
+    min-width: 240px; /* was 160px — too narrow, badges wrapped their text */
 }
 
 .hero-badge-values {
@@ -1125,6 +1152,7 @@ input.list-filter[type="text"]::placeholder {
     font-weight: 400;
     color: var(--dark);
     line-height: 1.4;
+    white-space: nowrap;
 }
 
 .hero-label {
@@ -1182,6 +1210,15 @@ input.list-filter[type="text"]::placeholder {
 
 @media (max-width: 768px) {
 
+    /* Gap between charts that sit 2-up on desktop but stack here. */
+    .chart-cards-row {
+        row-gap: 1.5rem;
+    }
+
+    #combined-metrics-card-body .dash-graph {
+        height: 250px !important;
+    }
+
     /* Bootstrap's .h-100 (height:100% !important) is used throughout the
        app so a card matches its row's tallest sibling for equal-height
        side-by-side desktop rows — cards no longer sit side by side once
@@ -1221,7 +1258,7 @@ input.list-filter[type="text"]::placeholder {
     }
 
     .hero-section {
-        padding-top: 4rem;
+        padding-top: 2rem;
     }
 
     .hero-standard {
@@ -1239,17 +1276,14 @@ input.list-filter[type="text"]::placeholder {
     }
 
     .hero-badge-group {
-        align-items: center;
-        text-align: center;
+        grid-template-columns: 8rem 1fr;
+        align-items: start;
+        text-align: left;
         max-width: 100%;
     }
 
-    /* align-items:center above only centers the label as a whole flex item
-       — its own text still defaults left-aligned, which only reads as
-       "centered" by coincidence while it's short enough to stay on one
-       line. text-align:center keeps it centered if it ever wraps too. */
     .hero-label {
-        text-align: center;
+        text-align: left;
     }
 
     .hero-badge-values {
@@ -1258,7 +1292,7 @@ input.list-filter[type="text"]::placeholder {
     }
 
     .hero-value {
-        text-align: center;
+        text-align: left;
         max-width: 100%;
         white-space: normal;
     }
@@ -1398,12 +1432,23 @@ input.list-filter[type="text"]::placeholder {
     width: 240px;
     z-index: 1000;
     background-color: var(--white);
-    border-right: 1px solid #dcdcdc;
     padding: 0 0 1.5rem 0;
     display: flex;
     flex-direction: column;
     gap: 0;
     overflow-y: auto;
+}
+
+/* Desktop: flattened back into plain children of .left-sidebar; mobile
+   (below) turns these into a real top bar + collapsible panel. */
+.sidebar-top-bar,
+.mobile-nav-details,
+.sidebar-nav-panel {
+    display: contents;
+}
+
+.mobile-menu-trigger {
+    display: none;
 }
 
 .sidebar-logo {
@@ -1421,9 +1466,7 @@ input.list-filter[type="text"]::placeholder {
 }
 
 .sidebar-divider {
-    margin: 16px 0;
-    border: none;
-    border-top: 1px solid #dcdcdc;
+    display: none;
 }
 
 /* Matches RefCloud UI's .menu-title (Sidebar.tsx section headings). */
@@ -1441,10 +1484,11 @@ input.list-filter[type="text"]::placeholder {
     display: flex;
     flex-direction: column;
     gap: 0;
+    padding: 1rem 1rem 0;
 }
 
 #page-container {
-    padding-left: 241px !important; /* matches .left-sidebar's 240px + border */
+    padding-left: 240px !important; /* matches .left-sidebar's width (no border now) */
 }
 
 /* Matches RefCloud UI's .anchor-menu-link (globals.css). */
@@ -1455,8 +1499,7 @@ input.list-filter[type="text"]::placeholder {
     font-size: var(--text-base);
     text-decoration: none;
     display: block;
-    padding: 0.5rem 1rem;
-    margin-left: 1rem;
+    padding: 0.5rem 0;
     line-height: 1.4;
     transition: color 0.15s;
 }
@@ -1471,13 +1514,103 @@ input.list-filter[type="text"]::placeholder {
     .left-sidebar {
         width: 100%;
         height: auto;
-        position: relative;
-        flex-direction: row;
-        align-items: center;
-        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        overflow: visible; /* was overflow-y:auto from the desktop rule, which clipped the dropdown */
+        flex-direction: column;
+        align-items: stretch;
         border-right: none;
         border-bottom: 2px solid #000;
-        padding: 1rem;
+        padding: 0;
+    }
+
+    /* Logo (always visible) + hamburger, matching new_ga4gh's mobile header.
+       Shadow moved here (not .sidebar-logo) so it spans the full bar width,
+       since the logo only spans part of the row now. */
+    .sidebar-top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 82px;
+        box-shadow: 0 12px 10px -12px #262626;
+    }
+
+    .sidebar-logo {
+        flex: 1 1 auto;
+        padding: 0.5rem 1rem;
+        box-shadow: none;
+    }
+
+    .logo-img {
+        max-height: 44px;
+    }
+
+    .mobile-nav-details {
+        display: block;
+        flex: 0 0 auto;
+    }
+
+    /* Resets <button>'s native chrome so it looks like a plain icon. */
+    .mobile-menu-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        margin-right: 1rem;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        font: inherit;
+    }
+
+    /* 3-line hamburger, matching new_ga4gh's .mob-menu-trigger-wrapper. */
+    .mob-menu-trigger-wrapper {
+        width: 100%;
+    }
+
+    .mob-menu-trigger-wrapper::before,
+    .mob-menu-trigger-wrapper::after,
+    .mob-menu-trigger-wrapper #mob-menu-trigger {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 100%;
+        margin: 0.5rem 0;
+        background-color: var(--dark);
+        border-radius: 1rem;
+        transition: all 300ms ease;
+    }
+
+    /* <details open> toggle, matching new_ga4gh's #menu-main-toggle animation. */
+    .mobile-nav-details.is-open .mob-menu-trigger-wrapper::before {
+        transform: translateY(10px) rotate(135deg);
+    }
+    .mobile-nav-details.is-open .mob-menu-trigger-wrapper::after {
+        transform: translateY(-10px) rotate(-135deg);
+    }
+    .mobile-nav-details.is-open .mob-menu-trigger-wrapper #mob-menu-trigger {
+        transform: scaleX(0);
+    }
+
+    /* Anchors to .left-sidebar's own position:relative (above). */
+    .sidebar-nav-panel {
+        display: block;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 0;
+        overflow: hidden;
+        background: var(--white);
+        border-top: 1px solid #dcdcdc;
+    }
+
+    .mobile-nav-details.is-open .sidebar-nav-panel {
+        max-height: 80vh;
+        overflow-y: auto;
     }
 
     .sidebar-divider,
@@ -1486,27 +1619,52 @@ input.list-filter[type="text"]::placeholder {
     }
 
     .left-nav-links {
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 0.5rem;
+        flex-direction: column;
+        gap: 0;
     }
 
+    /* Matches new_ga4gh's .mobile-nav-panel >ul>li>a. */
     .menu-link {
-        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        margin-left: 0;
         border-left: none;
-        border-bottom: 2px solid transparent;
-        font-size: 0.8rem;
+        border-bottom: 1px solid var(--lightgrey);
+        font-size: 0.95rem;
     }
 
-    .menu-link:hover,
+    .menu-link::before {
+        content: "";
+        align-self: stretch;
+        flex: 0 0 auto;
+        width: 0.5rem;
+    }
+
     .menu-link.active {
-        border-left: none;
-        border-bottom-color: var(--lightblue);
         background-color: var(--faint-lightblue);
     }
 
+    /* Reuses each section's own left-edge stripe color. */
+    .nav-stripe-servicemap .menu-link::before { background: var(--darkblue); }
+    .nav-stripe-metrics .menu-link::before,
+    .nav-stripe-tables .menu-link::before {
+        background: linear-gradient(to bottom, var(--red), var(--orange), var(--purple));
+    }
+    .nav-stripe-epmc .menu-link::before { background: var(--red); }
+    .nav-stripe-github .menu-link::before { background: var(--orange); }
+    .nav-stripe-pypi .menu-link::before { background: var(--purple); }
+    .nav-stripe-funder-only-charts .menu-link::before {
+        background: linear-gradient(to bottom, var(--darkblue), var(--red));
+    }
+    .nav-stripe-developer-charts .menu-link::before {
+        background: linear-gradient(to bottom, var(--darkblue), var(--purple), var(--orange));
+    }
+    .nav-stripe-community-charts .menu-link::before { background: var(--orange); }
+
     #page-container {
-        padding-left: 1rem !important;
+        padding-left: 0 !important; /* sidebar stacks above content now, not beside it */
     }
 }
 
@@ -1523,6 +1681,28 @@ input.list-filter[type="text"]::placeholder {
 #community-charts,
 #tables {
     scroll-margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .methods-toggle {
+        margin-left: 0;
+    }
+
+    /* Matches .sidebar-top-bar's min-height — otherwise a section's title
+       scrolls to right underneath the sticky mobile nav bar. */
+    #overview,
+    #servicemap,
+    #metrics,
+    #epmc,
+    #publication-charts,
+    #funder-only-charts,
+    #github,
+    #pypi,
+    #developer-charts,
+    #community-charts,
+    #tables {
+        scroll-margin-top: 82px;
+    }
 }
 
 /* Footer, matching refcloud-ui's components/layout/Footer.tsx + styles/globals.css */
@@ -1883,6 +2063,7 @@ input.list-filter[type="text"]::placeholder {
     font-weight: 700;
     font-size: clamp(0.95rem, 1.15vw, 1.25rem);
     margin-bottom: 1rem;
+    margin-left: 2rem;
     transition: color 0.3s ease;
 }
 

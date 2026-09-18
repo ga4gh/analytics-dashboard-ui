@@ -141,32 +141,53 @@ def indicator_card(value, label, color_class, target_id=None):
 
 layout = dbc.Container(
     [
-       html.Div(
-    [
         # ---------- LEFT SIDEBAR ----------
         html.Div(
             [
                 html.Div(
-                    html.Img(src="/assets/logo-full-color.svg", className="logo-img"),
-                    className="sidebar-logo",
-                ),
-                html.Hr(className="sidebar-divider"),
-                html.Span("ON THIS PAGE", className="sidebar-section-label"),
-                html.Nav(
                     [
-                        html.A("Overview", href="#overview", className="menu-link"),
-                        html.Div(html.A("Service Map",         href="#servicemap",         className="menu-link"), id="nav-servicemap"),
-                        html.Div(html.A("Cumulative Metrics",  href="#metrics",            className="menu-link"), id="nav-metrics"),
-                        html.Div(html.A("EPMC",                href="#epmc",               className="menu-link"), id="nav-epmc"),
-                        html.Div(html.A("Global Distribution",  href="#publication-charts", className="menu-link"), id="nav-publication-charts",  style={"display": "none"}),
-                        html.Div(html.A("Publication & Funding", href="#funder-only-charts", className="menu-link"), id="nav-funder-only-charts", style={"display": "none"}),
-                        html.Div(html.A("GitHub",              href="#github",             className="menu-link"), id="nav-github"),
-                        html.Div(html.A("PyPI",                href="#pypi",               className="menu-link"), id="nav-pypi"),
-                        html.Div(html.A("Developer Analytics", href="#developer-charts",   className="menu-link"), id="nav-developer-charts",     style={"display": "none"}),
-                        html.Div(html.A("Community Overview",  href="#community-charts",   className="menu-link"), id="nav-community-charts",     style={"display": "none"}),
-                        html.Div(html.A("Tables",              href="#tables",             className="menu-link"), id="nav-tables"),
+                        html.Div(
+                            html.Img(src="/assets/logo-full-color.svg", className="logo-img"),
+                            className="sidebar-logo",
+                        ),
+                        # Plain div + button, not <details>/<summary> (that
+                        # combo doesn't reliably respect display:contents).
+                        # Toggled via assets/mobile_nav_toggle.js.
+                        html.Div(
+                            [
+                                html.Button(
+                                    html.Div(html.Span(id="mob-menu-trigger"), className="mob-menu-trigger-wrapper"),
+                                    className="mobile-menu-trigger",
+                                    **{"aria-label": "Toggle navigation menu"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Hr(className="sidebar-divider"),
+                                        html.Span("ON THIS PAGE", className="sidebar-section-label"),
+                                        html.Nav(
+                                            [
+                                                html.A("Overview", href="#overview", className="menu-link"),
+                                                html.Div(html.A("Service Map",         href="#servicemap",         className="menu-link"), id="nav-servicemap", className="nav-stripe-servicemap"),
+                                                html.Div(html.A("Cumulative Metrics",  href="#metrics",            className="menu-link"), id="nav-metrics", className="nav-stripe-metrics"),
+                                                html.Div(html.A("EPMC",                href="#epmc",               className="menu-link"), id="nav-epmc", className="nav-stripe-epmc"),
+                                                html.Div(html.A("Global Distribution",  href="#publication-charts", className="menu-link"), id="nav-publication-charts",  style={"display": "none"}, className="nav-stripe-epmc"),
+                                                html.Div(html.A("Publication & Funding", href="#funder-only-charts", className="menu-link"), id="nav-funder-only-charts", style={"display": "none"}, className="nav-stripe-funder-only-charts"),
+                                                html.Div(html.A("GitHub",              href="#github",             className="menu-link"), id="nav-github", className="nav-stripe-github"),
+                                                html.Div(html.A("PyPI",                href="#pypi",               className="menu-link"), id="nav-pypi", className="nav-stripe-pypi"),
+                                                html.Div(html.A("Developer Analytics", href="#developer-charts",   className="menu-link"), id="nav-developer-charts",     style={"display": "none"}, className="nav-stripe-developer-charts"),
+                                                html.Div(html.A("Community Overview",  href="#community-charts",   className="menu-link"), id="nav-community-charts",     style={"display": "none"}, className="nav-stripe-community-charts"),
+                                                html.Div(html.A("Tables",              href="#tables",             className="menu-link"), id="nav-tables", className="nav-stripe-tables"),
+                                            ],
+                                            className="left-nav-links",
+                                        ),
+                                    ],
+                                    className="sidebar-nav-panel",
+                                ),
+                            ],
+                            className="mobile-nav-details",
+                        ),
                     ],
-                    className="left-nav-links",
+                    className="sidebar-top-bar",
                 ),
             ],
             className="left-sidebar",
@@ -263,8 +284,6 @@ html.Div(
     ),
     className="hero-section",
     id="overview",
-),
-    ]
 ),
 
         html.Div(className="section-spacer"),

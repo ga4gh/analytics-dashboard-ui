@@ -70,7 +70,7 @@ def _make_source_growth_figure(
 
     fig.update_layout(
         showlegend=False,
-        height=200,
+        autosize=True,  # paired with config.responsive so it follows the container's actual height
         margin={"l": 0, "r": 0, "t": 4, "b": 30},
         yaxis=dict(title="", automargin=True, showgrid=True, gridcolor=COLORS["lightgrey"]),
         xaxis=dict(title=""),
