@@ -120,8 +120,8 @@ register_page(
 )
 
 
-def indicator_card(value, label, color_class):
-    return dbc.Card(
+def indicator_card(value, label, color_class, target_id=None):
+    card = dbc.Card(
         dbc.CardBody(
             [
                 html.H3(value, className="indicator-value"),
@@ -131,6 +131,12 @@ def indicator_card(value, label, color_class):
         ),
         className=f"indicator-card shadow-sm {color_class}",
     )
+    if not target_id:
+        return card
+    # dbc.Card doesn't pass through arbitrary attributes (strict prop
+    # whitelist) — wrap it in a plain html.Div for the data attribute and
+    # tabIndex that kpi_card_links.js/CSS key off of.
+    return html.Div(card, tabIndex=0, **{"data-kpi-target": target_id})
 
 
 layout = dbc.Container(
@@ -585,26 +591,31 @@ html.Div(
                         f"{_epmc_article_count:,}",
                         "Europe PMC Publications",
                         "border-red",
+                        target_id="epmc",
                     ),
                     md=2,
                     id="kpi-publications",
                 ),
                 dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody([
-                            html.Div([
-                                html.H3(id="yoy-growth-value", className="indicator-value yoy-value-heading"),
-                                dcc.Dropdown(
-                                    id="yoy-year-selector",
-                                    options=_yoy_year_options,
-                                    value=_yoy_default_year,
-                                    clearable=False,
-                                    className="yoy-year-dropdown",
-                                ),
-                            ], className="yoy-header-row"),
-                            html.Div("YoY Publication Growth", className="indicator-label"),
-                        ], className="yoy-card-body"),
-                        className="indicator-card shadow-sm border-red",
+                    html.Div(
+                        dbc.Card(
+                            dbc.CardBody([
+                                html.Div([
+                                    html.H3(id="yoy-growth-value", className="indicator-value yoy-value-heading"),
+                                    dcc.Dropdown(
+                                        id="yoy-year-selector",
+                                        options=_yoy_year_options,
+                                        value=_yoy_default_year,
+                                        clearable=False,
+                                        className="yoy-year-dropdown",
+                                    ),
+                                ], className="yoy-header-row"),
+                                html.Div("YoY Publication Growth", className="indicator-label"),
+                            ], className="yoy-card-body"),
+                            className="indicator-card shadow-sm border-red",
+                        ),
+                        tabIndex=0,
+                        **{"data-kpi-target": "metrics"},
                     ),
                     md=2,
                     id="funder-kpi-yoy",
@@ -616,6 +627,7 @@ html.Div(
                         f"{_epmc_total_citations:,}",
                         "Total Citations",
                         "border-red",
+                        target_id="epmc",
                     ),
                     md=2,
                     id="kpi-citations",
@@ -626,6 +638,7 @@ html.Div(
                         f"{_epmc_unique_authors:,}",
                         "Total Authors",
                         "border-red",
+                        target_id="epmc",
                     ),
                     md=2,
                     id="kpi-authors",
@@ -635,6 +648,7 @@ html.Div(
                         f"{_epmc_unique_countries:,}",
                         "Total Countries",
                         "border-red",
+                        target_id="epmc",
                     ),
                     md=2,
                     id="kpi-countries",
@@ -645,6 +659,7 @@ html.Div(
                         f"{_gh_total:,}",
                         "GitHub Repositories",
                         "border-orange",
+                        target_id="github",
                     ),
                     md=2,
                     id="kpi-github",
@@ -654,6 +669,7 @@ html.Div(
                         f"{_pypi_total:,}",
                         "PyPI Packages",
                         "border-purple",
+                        target_id="pypi",
                     ),
                     md=2,
                     id="kpi-pypi",

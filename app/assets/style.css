@@ -880,11 +880,22 @@ input.list-filter[type="text"]::placeholder {
 
 .indicator-card {
     border-radius: 0.5rem;
-    height: 4.5rem;
+    height: 6rem;
+    cursor: pointer;
+    transition: 0.3s ease;
+    box-shadow: none !important; /* overrides Bootstrap's .shadow-sm at rest */
+}
+
+/* Matches new_ga4gh's card-hover-lift mixin (abstracts/_mixins.scss). */
+@media (hover: hover) and (pointer: fine) {
+    .indicator-card:hover {
+        box-shadow: 0 5px 12px 0 rgba(0, 0, 0, 0.25) !important;
+        transform: translateY(-3px);
+    }
 }
 
 .indicator-card-body {
-    padding: 0.5rem;
+    padding: 1rem;
 }
 
 /* Spacing between KPI cards comes from the row's own gap now, not each
@@ -957,6 +968,7 @@ input.list-filter[type="text"]::placeholder {
 }
 
 .servicemap-section, .metrics-section, .epmc-section, .github-section, .pypi-section, .tables-section {
+    position: relative;
     background: var(--lightgrey);
     padding: 2.5rem;
     margin-top: clamp(1em, 4vw, 4em);
@@ -968,6 +980,46 @@ input.list-filter[type="text"]::placeholder {
     margin-top: clamp(1em, 4vw, 4em);
     margin-bottom: 0;
 }
+}
+
+/* 1rem color stripe down each section's left edge, identifying which
+   source(s) it covers — a single source's color, or (Cumulative Metrics /
+   Data Tables, which both span EPMC + GitHub + PyPI) a gradient of those
+   colors in COLORWAY order (red, orange, purple). */
+.servicemap-section::before,
+.metrics-section::before,
+.epmc-section::before,
+.github-section::before,
+.pypi-section::before,
+.tables-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 1rem;
+}
+
+.servicemap-section::before { background: var(--darkblue); }
+.epmc-section::before       { background: var(--red); }
+.github-section::before     { background: var(--orange); }
+.pypi-section::before       { background: var(--purple); }
+
+/* These three reuse .epmc-section for layout but cover different sources,
+   so their stripe overrides it (id selectors outrank the shared class). */
+#funder-only-charts::before {
+    background: linear-gradient(to bottom, var(--darkblue), var(--red));
+}
+#developer-charts::before {
+    background: linear-gradient(to bottom, var(--darkblue), var(--purple), var(--orange));
+}
+#community-charts::before {
+    background: var(--orange);
+}
+
+.metrics-section::before,
+.tables-section::before {
+    background: linear-gradient(to bottom, var(--red), var(--orange), var(--purple));
 }
 /* Standard-page hero, matching new_ga4gh's layout/_page-heroes.scss
    `.page-hero-standard-wrapper.none` (the neutral grey/logo fallback used by
@@ -1376,7 +1428,7 @@ input.list-filter[type="text"]::placeholder {
 
 /* Matches RefCloud UI's .menu-title (Sidebar.tsx section headings). */
 .sidebar-section-label {
-    display: block;
+    display: none;
     padding: 0 16px 8px 16px;
     font-family: var(--font-ws-bold);
     font-weight: 700;
@@ -1892,7 +1944,7 @@ input.list-filter[type="text"]::placeholder {
 }
 
 .yoy-card-body {
-    padding: 0.5rem;
+    padding: 1rem;
     min-height: unset;
 }
 

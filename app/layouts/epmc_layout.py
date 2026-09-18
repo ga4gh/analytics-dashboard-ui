@@ -126,6 +126,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                             id="epmc-publications-trend",
                                             figure=_annual_publications_figure(entries_df),
                                             config={"displayModeBar": False},
+                                            responsive=True,
                                             style={"height": STYLE_HEIGHT_3X},
                                         ),
                                         html.Figcaption("Number of GA4GH-related articles published per year from Europe PMC."),
@@ -167,13 +168,14 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                             "textAlign": "left",
                                             "fontSize": "13px",
                                             "fontFamily": "'Figtree-Regular', 'Figtree', sans-serif",
-                                            "verticalAlign": "top",
+                                            "verticalAlign": "middle",
                                         },
                                         style_header={
                                             "backgroundColor": COLORS["dark"], "color": "white",
                                             "fontWeight": "bold",
                                             "fontFamily": "'Figtree-SemiBold', 'Figtree', sans-serif",
                                             "textAlign": "center",
+                                            "verticalAlign": "middle",
                                         },
                                         style_cell_conditional=[
                                             {"if": {"column_id": "article_link"}, "width": "8%", "textAlign": "center"},
@@ -184,7 +186,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                             {"selector": ".dash-cell-value p", "rule": "margin: 0; line-height: 1.4;"},
                                             # Overrides Dash's own bundled 30px min-height on tr.
                                             {"selector": ".dash-spreadsheet-container .dash-spreadsheet-inner tr", "rule": "height: auto !important; min-height: 0 !important;"},
-                                            {"selector": "td.dash-cell", "rule": "padding: 0.25rem 0.5rem !important;"},
+                                            {"selector": "td.dash-cell", "rule": "padding: 0.3rem !important;"},
+                                            {"selector": "th.dash-header", "rule": "height: 2rem !important;"},
                                             {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:0.25rem 0.5rem; border:1px solid {COLORS['red']}; background-color:{COLORS['red']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: filter 0.2s ease;"},
                                             {"selector": "td[data-dash-column='article_link'] a:hover", "rule": "filter: brightness(0.85);"},
                                             {"selector": "td[data-dash-column='article_link'] a::after", "rule": "font-family:'FontAwesomeSolid'; font-style:normal; font-weight:normal; content:'\\f08e'; margin-left:0.4em;"},

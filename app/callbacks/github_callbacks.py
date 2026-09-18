@@ -256,6 +256,7 @@ def fig_github_workstream_pie(gh_df):
     fig.update_layout(
         template="simple_white",
         autosize=True,  # paired with config.responsive + .chart-aspect-tall
+        margin={"l": 20, "r": 20, "t": 30, "b": 20},
         legend=dict(traceorder="normal", orientation="h", yanchor="top", y=-0.1, xanchor="center", x=0.5),
         hoverlabel=dict(font_color="white"),
     )

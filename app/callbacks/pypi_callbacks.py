@@ -156,6 +156,7 @@ def register_pypi_callbacks(app):
                 "paper_bgcolor": COLORS["white"],
                 "legend": {"orientation": "h", "yanchor": "top", "y": -0.1, "xanchor": "center", "x": 0.5},
                 "autosize": True,  # paired with config.responsive + .chart-aspect-tall
+                "margin": {"l": 20, "r": 20, "t": 30, "b": 20},
                 "hoverlabel": {"font": {"color": "white"}},
             }
         }
