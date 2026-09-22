@@ -49,7 +49,7 @@ figcaption {
 .card-body > figure {
     display: flex;
     flex-direction: column;
-    height: auto;
+    height: 100%;
 }
 
 .card-body > figure > .dash-graph {
@@ -64,7 +64,7 @@ figcaption {
 
 /* Shared chart heading — small, semi-bold label above every chart. */
 .chart-heading {
-    font-size: 13px;
+    font-size: var(--text-sm);
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 4px;
@@ -75,7 +75,7 @@ figcaption {
 }
 
 .chart-info-icon {
-    font-size: 14px;
+    font-size: var(--text-sm);
     cursor: help;
     flex-shrink: 0;
     color: #000000;
@@ -91,7 +91,7 @@ figcaption {
    (automatic for figure-wrapped charts) and .chart-figcaption (standalone). */
 .card-body > figure figcaption,
 .chart-figcaption {
-    font-size: 0.72rem;
+    font-size: var(--text-xs);
     color: #888;
     line-height: 1.4;
     margin-top: 0.75rem;
@@ -181,7 +181,7 @@ figcaption {
     background: none;
     padding: 0;
     font: inherit;
-    font-size: 12px;
+    font-size: var(--text-xs);
     color: var(--dark);
     cursor: pointer;
     width: 100%;
@@ -608,7 +608,7 @@ input.list-filter[type="text"]::placeholder {
     gap: 0.5rem;
     font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     color: var(--dark);
 }
 
@@ -659,7 +659,7 @@ input.list-filter[type="text"]::placeholder {
     color: var(--dark) !important;
     font-family: var(--font-ws-bold) !important;
     font-weight: 700 !important;
-    font-size: 1.1rem !important;
+    font-size: var(--text-lg) !important;
     text-align: center;
     padding: 0;
 }
@@ -676,7 +676,7 @@ input.list-filter[type="text"]::placeholder {
     visibility: hidden;
     font-family: var(--font-ws-bold) !important;
     font-weight: 700 !important;
-    font-size: 1.1rem !important;
+    font-size: var(--text-lg) !important;
 }
 
 /* The border-bottom above still loses to dash_table's runtime rule — its
@@ -836,7 +836,7 @@ input.list-filter[type="text"]::placeholder {
 .dashboard-title {
     margin-bottom: 1.5rem;
     margin-top: 2rem;
-    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-size: var(--text-4xl);
     font-weight: 700;
     line-height: 146%;
     font-family: var(--font-ws-bold);
@@ -860,7 +860,7 @@ input.list-filter[type="text"]::placeholder {
     display: inline-flex;
     align-items: center;
     gap: 1rem;
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
     line-height: 1;
 }
 
@@ -941,13 +941,13 @@ input.list-filter[type="text"]::placeholder {
 
 
 .dashboard-text {
-    font-size: clamp(0.9rem, 1vw, 1.1rem);
+    font-size: var(--text-sm);
     color: var(--dark);
     line-height: 1.6;
 }
 
 .dashboard-summary {
-    font-size: clamp(1rem, 1.2vw, 1.25rem);
+    font-size: var(--text-base);
     line-height: 1.5;
     color: var(--dark);
     font-family: var(--font-fi-regular);
@@ -959,7 +959,7 @@ input.list-filter[type="text"]::placeholder {
 }
 
 .section-title {
-    font-size: clamp(1.5rem, 2.5vw, 2.25rem); /* responsive scaling */
+    font-size: var(--text-3xl);
     line-height: 1.22;
     font-family: var(--font-ws-bold);
     font-weight: 700;
@@ -1436,6 +1436,12 @@ input.list-filter[type="text"]::placeholder {
     display: flex;
     flex-direction: column;
     gap: 0;
+    /* Without this cap, the sidebar just grows to its own nav list's height
+       (roughly constant regardless of viewport) — on a short/wide viewport
+       where the page itself is shorter than that, it stuck out past the
+       page's own bottom edge, overlapping the footer. overflow-y:auto then
+       scrolls the nav list internally if it's taller than the viewport. */
+    max-height: 100vh;
     overflow-y: auto;
 }
 
@@ -1632,7 +1638,7 @@ input.list-filter[type="text"]::placeholder {
         margin-left: 0;
         border-left: none;
         border-bottom: 1px solid var(--lightgrey);
-        font-size: 0.95rem;
+        font-size: var(--text-base);
     }
 
     .menu-link::before {
@@ -1710,6 +1716,9 @@ input.list-filter[type="text"]::placeholder {
     background-color: var(--dark);
     color: var(--white);
     padding: 2.5rem;
+    /* Full width again — sidebar_footer_boundary.js keeps the fixed sidebar
+       from ever overlapping this on desktop, by switching it from fixed to
+       absolute (pinned just above the footer) once it scrolls into view. */
 }
 
 .ga4gh-footer-container {
@@ -1740,7 +1749,7 @@ input.list-filter[type="text"]::placeholder {
 .f-logo-text {
     font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: 1.125rem;
+    font-size: var(--text-md);
     line-height: 133%;
 }
 
@@ -2032,6 +2041,14 @@ input.list-filter[type="text"]::placeholder {
     min-height: auto;
 }
 
+/* Row-detail cards (Data Tables section) — match the table's own cell size
+   instead of Bootstrap's default .card-body font-size. */
+#repo-details,
+#epmc-entry-details,
+#pypi-project-details {
+    font-size: var(--text-sm);
+}
+
 .rc-slider-track{
     background-color: var(--lightblue);
 }
@@ -2039,6 +2056,18 @@ input.list-filter[type="text"]::placeholder {
 #epmc-authors-card-body,
 .methods-card-body {
     min-height: auto;
+}
+
+/* These two cards put the heading as a sibling of <figure>, not nested
+   inside it like every other chart card — the shared height:100% rule
+   above assumes figure is card-body's only child, so here it overflowed
+   past the heading's own space instead of sharing it. flex-grow instead
+   of a rigid 100% lets figure correctly take just what's left over. */
+#epmc-authors-card-body > figure,
+#epmc-publications-card-body > figure {
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 /* new_ga4gh's own icon font, base/_fonts.scss's FontAwesomeSolid @font-face
@@ -2061,7 +2090,7 @@ input.list-filter[type="text"]::placeholder {
     cursor: pointer;
     font-family: var(--font-ws-bold);
     font-weight: 700;
-    font-size: clamp(0.95rem, 1.15vw, 1.25rem);
+    font-size: var(--text-base);
     margin-bottom: 1rem;
     margin-left: 2rem;
     transition: color 0.3s ease;
@@ -2130,7 +2159,7 @@ input.list-filter[type="text"]::placeholder {
 }
 
 .yoy-year-dropdown {
-    font-size: 1rem;
+    font-size: var(--text-sm);
     width: 4.5rem;
     min-height: unset;
 }
@@ -2151,7 +2180,7 @@ input.list-filter[type="text"]::placeholder {
 }
 
 .persona-selector-label {
-    font-size: 1rem;
+    font-size: var(--text-sm);
     font-weight: 700;
     color: var(--grey);
     white-space: nowrap;
@@ -2275,7 +2304,7 @@ input.list-filter[type="text"]::placeholder {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.85);
     color: var(--dark);
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     line-height: 1;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -2287,7 +2316,7 @@ input.list-filter[type="text"]::placeholder {
 
 .chart-download-btn,
 .chart-reset-btn {
-    font-size: 0.95rem;
+    font-size: var(--text-base);
 }
 
 .chart-modal {
@@ -2369,7 +2398,7 @@ input.list-filter[type="text"]::placeholder {
     background: none;
     color: var(--white);
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
     line-height: 1;
     cursor: pointer;
 }

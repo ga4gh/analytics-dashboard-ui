@@ -304,7 +304,7 @@ def register_github_callbacks(app):
         return dbc.Card([
             dbc.CardHeader(
                 html.Div([
-                    html.H4(repo["name"], className="mb-0"),
+                    html.H5(repo["name"], className="mb-0"),
                     html.Div([
                         dbc.Badge(
                             f"⭐ Stars: {repo['stargazers_count']}",
