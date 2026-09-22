@@ -1716,16 +1716,9 @@ input.list-filter[type="text"]::placeholder {
     background-color: var(--dark);
     color: var(--white);
     padding: 2.5rem;
-    /* Matches #page-container's own left inset — the footer is a sibling of
-       it (app.py), not wrapped by it, so it never picked up that padding
-       and rendered fully underneath the fixed sidebar's opaque column. */
-    margin-left: 240px;
-}
-
-@media (max-width: 768px) {
-    .footer {
-        margin-left: 0;
-    }
+    /* Full width again — sidebar_footer_boundary.js keeps the fixed sidebar
+       from ever overlapping this on desktop, by switching it from fixed to
+       absolute (pinned just above the footer) once it scrolls into view. */
 }
 
 .ga4gh-footer-container {
