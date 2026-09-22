@@ -214,7 +214,7 @@ html.Div(
                 ),
 
                 html.P(
-                    "Whether you're a Work Stream contributor looking to understand how your efforts are landing, a product lead shaping the next development cycle, or a stakeholder making the case for genomic data sharing — this dashboard gives you the evidence to do it. Explore trends, spot implementation gaps, and see over a decade of open science translated into data.",
+                    "Whether you are a Work Stream contributor looking to understand how your efforts are landing, a product lead shaping the next development cycle, or a stakeholder making the case for genomic data sharing, this dashboard gives you the evidence to do it. Explore trends, spot implementation gaps, and see over a decade of open science translated into data.",
                     className="dashboard-summary",
                 ),
 
@@ -321,26 +321,26 @@ html.Div(
                                                         [
                                                             html.Li(
                                                                 html.Span([
-                                                                    "Scientific research and publications from ",
-                                                                    html.Strong("Europe PMC"),
+                                                                    "Scientific research and publications mentioning GA4GH ",
+                                                                    html.Strong("from Europe PMC"),
                                                                 ])
                                                             ),
                                                             html.Li(
                                                                 html.Span([
-                                                                    "Software development and implementation from ",
-                                                                    html.Strong("GitHub")
+                                                                    "Software development and implementation ",
+                                                                    html.Strong("from GitHub")
                                                                 ])
                                                             ),
                                                             html.Li(
                                                                 html.Span([
-                                                                    "Standards-enabled software distribution from ",
-                                                                    html.Strong("PyPI")
+                                                                    "Standards-enabled software distribution ",
+                                                                    html.Strong("from PyPI")
                                                                 ])
                                                             ),
                                                         ]
                                                     ),
                                                     html.Span([
-                                                        "Rather than focusing on one platform in isolation, the following metrics, figures, and tables act as an executive snapshot of the full GA4GH value chain—from standards implementation, to community adoption, to scientific and clinical impact."
+                                                        "Rather than focusing on one platform in isolation, the following metrics, figures, and tables act as an executive snapshot of the full GA4GH value chain – from standards implementation to community adoption and scientific and clinical impact."
                                                     ]),
                                                 ],
                                                 className="methods-card-body"
@@ -480,13 +480,13 @@ html.Div(
                                                     html.Li(
                                                         html.Span([
                                                             html.Strong("Activity score:"),
-                                                            " A calculated metric to indicate the level of activity in a GitHub repository, determined by the number of days since the most recent code push and repository update."
+                                                            " a calculated metric to indicate the level of activity in a GitHub repository, determined by the number of days since the most recent code push and repository update."
                                                         ])
                                                     ),
                                                     html.Li(
                                                         html.Span([
                                                             html.Strong("Subscriber:"),
-                                                            " A GitHub user who receives notifications about activity (issues, pull requests, releases) for a particular repository, signaling deep interest or active participation in the repository."
+                                                            " A GitHub user who receives notifications about activity (i.e. issues, pull requests, releases) for a particular repository, signaling deep interest or active participation in the repository."
                                                         ])
                                                     ),
                                                     html.Li(

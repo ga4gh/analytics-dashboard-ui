@@ -71,7 +71,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                             style={"height": STYLE_HEIGHT_3X},
                                             config={"responsive": True, "displayModeBar": False},
                                         ),
-                                        html.Figcaption("Bar chart of the number of GA4GH-related articles authored by the top individuals.")
+                                        html.Figcaption("Bar chart of top GA4GH authors — indicates the number of GA4GH-related articles authored by the top 15 individuals")
                                     ]),
                                     html.Div(style={"flex": "1"}),
                                 ],
@@ -97,7 +97,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                     ),
                                     html.Div(id="epmc-countries-legend", className="country-legend",
                                              style={"height": STYLE_HEIGHT_1X, "overflowY": "auto", "marginTop": "0.5rem", "position": "relative", "zIndex": "10"}),
-                                    html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles. Country affiliation is determined from each author's affiliation for all publications.")
+                                    html.Figcaption("Relative proportion of country affiliations for all authors of GA4GH-related articles - country affiliation is determined from each author's affiliation for all publications.")
                                 ])
                             ),
                             className="mb-4 shadow-sm h-100",
@@ -129,7 +129,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                             responsive=True,
                                             style={"height": STYLE_HEIGHT_3X},
                                         ),
-                                        html.Figcaption("Number of GA4GH-related articles published per year from Europe PMC."),
+                                        html.Figcaption("Annual count of GA4GH-related publications indexed in Europe PMC."),
                                     ]),
                                     html.Div(style={"flex": "1"}),
                                 ]
@@ -195,7 +195,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         markdown_options={"link_target": "_blank"},
                                     ),
                                     html.Figcaption(
-                                        "Table of the most cited GA4GH-related articles, sorted in descending order by number of citations.",
+                                        "Table of the most cited GA4GH-related articles, sorted in descending order by number of citations",
                                         className="chart-figcaption",
                                     ),
                                 ])

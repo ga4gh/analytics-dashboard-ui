@@ -78,7 +78,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                         style={"height": STYLE_HEIGHT_4X},
                                         config={"responsive": True, "displayModeBar": False}
                                     ),
-                                    html.Figcaption("Activity score of GA4GH repositories. Includes technical and foundational work streams, as well as TASC / Tech Team repositories. See methods section for definition of activity score.")
+                                    html.Figcaption("Activity score of GA4GH repositories: includes technical and foundational Work Streams, as well as Technical Alignment Subcommittee (TASC) / Tech Team repositories (see methods section for definition of activity score)")
                                 ])
                             ),
                             className="shadow-sm h-100 w-100",
@@ -99,7 +99,7 @@ def get_github_layout(gh_df, total_repositories, workstreams):
                                         style={"height": STYLE_HEIGHT_4X},
                                         config={"responsive": True, "displayModeBar": False},
                                     ),
-                                    html.Figcaption("Relative proportion of GA4GH GitHub repositories at each activity status, which is determined from the number of days that have elapsed since the last update. High: last update less than 6 months ago; Moderate: last update 6 months to 2 years ago; Low: last update more than 2 years ago.")
+                                    html.Figcaption("Relative proportion of GA4GH GitHub repositories at each activity status, which is determined from the number of days that have elapsed since the last update. (High: last update less than 6 months ago; Moderate: last update 6 months to 2 years ago; Low: last update more than 2 years ago.)")
                                 ])
                             ),
                             className="shadow-sm h-100 w-100",
