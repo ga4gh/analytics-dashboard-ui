@@ -63,7 +63,6 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 [
                                     html.Div([html.Span(id="epmc-authors-bar-title")] + chart_info_icon("epmc-authors-bar", "Ranks individual researchers by the number of GA4GH-related articles they have authored. Use the slider to adjust how many authors are shown."), className="chart-heading"),
-                                    html.Div(style={"flex": "1"}),
                                     html.Figure([
                                         chart_toolbar("epmc-authors-bar"),
                                         dcc.Graph(
@@ -73,7 +72,6 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         ),
                                         html.Figcaption("Bar chart of top GA4GH authors — indicates the number of GA4GH-related articles authored by the top 15 individuals")
                                     ]),
-                                    html.Div(style={"flex": "1"}),
                                 ],
                                 id="epmc-authors-card-body",
                                 style={"display": "flex", "flexDirection": "column"},
@@ -117,11 +115,8 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                             dbc.CardBody(
                                 [
                                     html.Div([html.Span("Annual GA4GH Publications")] + chart_info_icon("epmc-publications-trend", "Bar chart of the number of GA4GH-related articles published each year, sourced from Europe PMC. Reflects growth in the GA4GH research community over time."), className="chart-heading"),
-                                    html.Div(style={"flex": "1"}),
                                     html.Figure([
                                         chart_toolbar("epmc-publications-trend"),
-                                        
-                                        html.Div(style={"flex": "1"}),
                                         dcc.Graph(
                                             id="epmc-publications-trend",
                                             figure=_annual_publications_figure(entries_df),
@@ -131,8 +126,9 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         ),
                                         html.Figcaption("Annual count of GA4GH-related publications indexed in Europe PMC."),
                                     ]),
-                                    html.Div(style={"flex": "1"}),
-                                ]
+                                ],
+                                id="epmc-publications-card-body",
+                                style={"display": "flex", "flexDirection": "column"},
                             ),
                             className="mb-4 shadow-sm h-100",
                             style={"borderRadius": "12px"},
@@ -166,7 +162,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                         },
                                         style_cell={
                                             "textAlign": "left",
-                                            "fontSize": "13px",
+                                            "fontSize": "var(--text-sm)",
                                             "fontFamily": "'Figtree-Regular', 'Figtree', sans-serif",
                                             "verticalAlign": "middle",
                                         },
@@ -188,7 +184,7 @@ def get_epmc_layout(entries_df, countries_df, authors_df, total_entries, citatio
                                             {"selector": ".dash-spreadsheet-container .dash-spreadsheet-inner tr", "rule": "height: auto !important; min-height: 0 !important;"},
                                             {"selector": "td.dash-cell", "rule": "padding: 0.3rem !important;"},
                                             {"selector": "th.dash-header", "rule": "height: 2rem !important;"},
-                                            {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:0.25rem 0.5rem; border:none; background-color:{COLORS['dark']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:12px; font-weight:500; line-height:1.1; transition: background-color 0.2s ease, color 0.2s ease;"},
+                                            {"selector": "td[data-dash-column='article_link'] a", "rule": f"display:inline-block; padding:0.25rem 0.5rem; border:none; background-color:{COLORS['dark']}; color:{COLORS['white']}; border-radius:0; text-decoration:none; font-size:var(--text-xs); font-weight:500; line-height:1.1; transition: background-color 0.2s ease, color 0.2s ease;"},
                                             {"selector": "td[data-dash-column='article_link'] a:hover", "rule": f"background-color:{COLORS['lightgrey']}; color:{COLORS['dark']};"},
                                             {"selector": "td[data-dash-column='article_link'] a::after", "rule": "font-family:'FontAwesomeSolid'; font-style:normal; font-weight:normal; content:'\\f08e'; margin-left:0.4em;"},
                                         ],

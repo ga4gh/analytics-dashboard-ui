@@ -181,7 +181,7 @@ def register_pypi_callbacks(app):
 
         return dbc.Card([
 
-            dbc.CardHeader(html.H4(project["project_name"])),
+            dbc.CardHeader(html.H5(project["project_name"])),
 
             dbc.CardBody([
 

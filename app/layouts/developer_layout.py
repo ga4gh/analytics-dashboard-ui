@@ -39,7 +39,7 @@ def _repos_by_workstream_figure(gh_df: pd.DataFrame) -> go.Figure:
     )
     fig.update_traces(marker_color=bar_colors, hovertemplate="%{y}<br>Repos: %{x}<extra></extra>")
     fig.update_layout(
-        height=420,
+        autosize=True,  # paired with config.responsive so it resizes on viewport change
         margin={"l": 10, "r": 20, "t": 30, "b": 50},
         xaxis={"title": "Number of Repositories", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
@@ -76,7 +76,7 @@ def _pypi_releases_per_year_figure(first_releases: list) -> go.Figure:
     )
     fig.update_traces(hovertemplate="Year: %{x}<br>Packages: %{y}<extra></extra>")
     fig.update_layout(
-        height=380,
+        autosize=True,  # paired with config.responsive so it resizes on viewport change
         margin={"l": 40, "r": 20, "t": 30, "b": 50},
         xaxis={"tickmode": "linear", "dtick": 1, "title": "Year"},
         yaxis={"title": "New Packages Released", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
@@ -114,7 +114,7 @@ def _standards_service_count_figure(services_df: pd.DataFrame) -> go.Figure:
     )
     fig.update_traces(hovertemplate="%{y}<br>Services: %{x}<extra></extra>")
     fig.update_layout(
-        height=420,
+        autosize=True,  # paired with config.responsive so it resizes on viewport change
         margin={"l": 10, "r": 20, "t": 30, "b": 50},
         xaxis={"title": "Number of Registered Services", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
@@ -155,6 +155,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                         id="dev-repos-by-workstream",
                                         figure=fig_workstream,
                                         style={"height": STYLE_HEIGHT_3X},
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Count of GA4GH GitHub repositories grouped by Work Stream.",
@@ -178,6 +179,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                         id="dev-pypi-releases-per-year",
                                         figure=fig_pypi,
                                         style={"height": STYLE_HEIGHT_3X},
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Number of new GA4GH-related PyPI packages first published each year.",
@@ -207,6 +209,7 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                                     id="dev-standards-service-count",
                                     figure=fig_standards,
                                     style={"height": STYLE_HEIGHT_3X},
+                                    config={"responsive": True, "displayModeBar": False},
                                 ),
                                 html.Figcaption(
                                     "Number of services registered in the GA4GH Implementation Registry per standard.",

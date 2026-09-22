@@ -12,7 +12,7 @@ DATATABLE_HEADER_FONT_FAMILY = "'Figtree-SemiBold', 'Figtree', sans-serif"
 DATATABLE_STYLE_DATA = {"height": "auto", "whiteSpace": "normal", "lineHeight": "1"}
 DATATABLE_STYLE_CELL = {
     "textAlign": "left",
-    "fontSize": "13px",
+    "fontSize": "var(--text-sm)",
     "fontFamily": DATATABLE_CELL_FONT_FAMILY,
     "verticalAlign": "middle",
     "cursor": "pointer",

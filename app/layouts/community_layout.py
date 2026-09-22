@@ -45,7 +45,7 @@ def _workstream_activity_figure(gh_df: pd.DataFrame) -> go.Figure:
     )
     fig.update_traces(hovertemplate="%{y} — %{fullData.name}<br>Repos: %{x}<extra></extra>")
     fig.update_layout(
-        height=440,
+        autosize=True,  # paired with config.responsive so it resizes on viewport change
         margin={"l": 10, "r": 20, "t": 30, "b": 90},
         xaxis={"title": "Number of Repositories", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
@@ -89,7 +89,7 @@ def _top_repos_interest_figure(gh_interest_df: pd.DataFrame) -> go.Figure:
         )
     )
     fig.update_layout(
-        height=400,
+        autosize=True,  # paired with config.responsive so it resizes on viewport change
         margin={"l": 10, "r": 20, "t": 30, "b": 50},
         xaxis={"title": "Stars + Forks + Watchers", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
@@ -131,6 +131,7 @@ def get_community_charts_section(
                                         id="community-workstream-activity",
                                         figure=fig_workstream,
                                         style={"height": STYLE_HEIGHT_3X},
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Activity status breakdown per GA4GH work stream — Active (pushed within 1 year), Moderate (1–3 years), Inactive (3+ years), Archived.",
@@ -154,6 +155,7 @@ def get_community_charts_section(
                                         id="community-top-repos-interest",
                                         figure=fig_interest,
                                         style={"height": STYLE_HEIGHT_3X},
+                                        config={"responsive": True, "displayModeBar": False},
                                     ),
                                     html.Figcaption(
                                         "Ranked by combined stars, forks, and watchers count.",

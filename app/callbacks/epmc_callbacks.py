@@ -461,7 +461,7 @@ def register_epmc_callbacks(app):
         def aff_item(num, org):
             author_labels = ", ".join(aff_to_authors.get(num, []))
             return html.Div([
-                html.Span(f"{num}. {org}", style={"fontSize": "14px"}),
+                html.Span(f"{num}. {org}", style={"fontSize": "var(--text-sm)"}),
                 
             ], style={"marginBottom": "6px"})
 
@@ -488,7 +488,7 @@ def register_epmc_callbacks(app):
             abstract_component = html.P(abstract)
 
         card = dbc.Card([
-            dbc.CardHeader(html.H4(entry.get("title", "N/A"))),
+            dbc.CardHeader(html.H5(entry.get("title", "N/A"))),
             dbc.CardBody([
                 abstract_component,
                 html.Hr(),
@@ -496,24 +496,24 @@ def register_epmc_callbacks(app):
                 html.Hr(),
 
                 # Authors collapsible
-                html.H6("Authors: ", className="fw-bold"),
+                html.H5("Authors: ", className="fw-bold"),
                 
                 html.Div([
                     html.Span(first_author_text),
                     html.Span(className="methods-toggle-chevron"),
                 ], id="author-collapse-button", n_clicks=0, className="methods-toggle", style={
-                    "fontSize": "14px",
+                    "fontSize": "var(--text-sm)",
                     "marginBottom": "0.5rem",
                 }),
                 dbc.Collapse(
-                    html.P(all_authors_text, style={"fontSize": "14px", "color": COLORS["dark"], "marginTop": "8px"}),
+                    html.P(all_authors_text, style={"fontSize": "var(--text-sm)", "color": COLORS["dark"], "marginTop": "8px"}),
                     id="author-collapse",
                     is_open=False,
                 ),
                 html.Hr(),
 
                 # Affiliations collapsible
-                html.H6("Affiliations: ", className="fw-bold"),
+                html.H5("Affiliations: ", className="fw-bold"),
                 
                 html.Div([
                     first_aff_component,
@@ -522,7 +522,7 @@ def register_epmc_callbacks(app):
                     }),
                 ], id="aff-collapse-button", n_clicks=0, className="methods-toggle", style={
                     "cursor": "pointer" if rest_aff_components else "default",
-                    "fontSize": "13px",
+                    "fontSize": "var(--text-sm)",
                     "marginBottom": "0.5rem",
                 }),
                 dbc.Collapse(

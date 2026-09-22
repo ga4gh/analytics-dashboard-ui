@@ -55,6 +55,8 @@
         if (!helpers) return; // hbar_mobile_labels.js hasn't run its top-level code yet
         if (window.matchMedia(BREAKPOINT).matches) return; // mobile handles these charts itself
 
+        // Width/height sync now lives in chart_resize_sync.js, shared across
+        // every chart on desktop rather than just these 5.
         CHART_IDS.forEach(function (id) {
             var gd = helpers.getPlotlyDiv(id);
             if (!gd || !gd._fullLayout || !gd._fullLayout.legend) return;
