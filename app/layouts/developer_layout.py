@@ -4,6 +4,9 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
+from app.utils.ga4gh_theme import WORKSTREAM_COLORS, COLORS, IMPLEMENTATIONS_COLOR, PYPI_COLOR, chart_toolbar, chart_info_icon
+from app.constants.constants import STYLE_HEIGHT_3X
+
 
 # ---------------------------------------------------------------------------
 # Figure builders
@@ -24,6 +27,7 @@ def _repos_by_workstream_figure(gh_df: pd.DataFrame) -> go.Figure:
     counts = ws.value_counts().reset_index()
     counts.columns = ["workstream", "count"]
     counts = counts.sort_values("count", ascending=True)
+    bar_colors = counts["workstream"].map(WORKSTREAM_COLORS).fillna(COLORS["darkblue"])
 
     fig = px.bar(
         counts,
@@ -32,14 +36,14 @@ def _repos_by_workstream_figure(gh_df: pd.DataFrame) -> go.Figure:
         orientation="h",
         labels={"count": "Repositories", "workstream": "Work Stream"},
         template="simple_white",
-        color_discrete_sequence=["#1b75bb"],
     )
-    fig.update_traces(hovertemplate="%{y}<br>Repos: %{x}<extra></extra>")
+    fig.update_traces(marker_color=bar_colors, hovertemplate="%{y}<br>Repos: %{x}<extra></extra>")
     fig.update_layout(
         height=420,
         margin={"l": 10, "r": 20, "t": 30, "b": 50},
-        xaxis={"title": "Number of Repositories"},
+        xaxis={"title": "Number of Repositories", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -68,15 +72,16 @@ def _pypi_releases_per_year_figure(first_releases: list) -> go.Figure:
         y="count",
         labels={"release_year": "Year", "count": "Packages"},
         template="simple_white",
-        color_discrete_sequence=["#6a4c93"],
+        color_discrete_sequence=[PYPI_COLOR],
     )
     fig.update_traces(hovertemplate="Year: %{x}<br>Packages: %{y}<extra></extra>")
     fig.update_layout(
         height=380,
         margin={"l": 40, "r": 20, "t": 30, "b": 50},
         xaxis={"tickmode": "linear", "dtick": 1, "title": "Year"},
-        yaxis={"title": "New Packages Released"},
+        yaxis={"title": "New Packages Released", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         bargap=0.25,
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -105,14 +110,15 @@ def _standards_service_count_figure(services_df: pd.DataFrame) -> go.Figure:
         orientation="h",
         labels={"services": "Registered Services", "standard": "GA4GH Standard"},
         template="simple_white",
-        color_discrete_sequence=["#2a9d8f"],
+        color_discrete_sequence=[IMPLEMENTATIONS_COLOR],
     )
     fig.update_traces(hovertemplate="%{y}<br>Services: %{x}<extra></extra>")
     fig.update_layout(
         height=420,
         margin={"l": 10, "r": 20, "t": 30, "b": 50},
-        xaxis={"title": "Number of Registered Services"},
+        xaxis={"title": "Number of Registered Services", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -143,47 +149,50 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    html.H5("GitHub Repositories by Work Stream",
-                                            style={"marginBottom": "8px"}),
+                                    chart_toolbar("dev-repos-by-workstream"),
+                                    html.Div([html.Span("GitHub Repositories by Work Stream")] + chart_info_icon("dev-repos-by-workstream", "Count of GA4GH GitHub repositories grouped by Work Stream. Shows where development effort is concentrated across the GA4GH ecosystem."), className="chart-heading"),
                                     dcc.Graph(
                                         id="dev-repos-by-workstream",
                                         figure=fig_workstream,
-                                        config={"displayModeBar": False},
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Count of GA4GH GitHub repositories grouped by Work Stream.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    html.H5("PyPI Packages Released Per Year",
-                                            style={"marginBottom": "8px"}),
+                                    chart_toolbar("dev-pypi-releases-per-year"),
+                                    html.Div([html.Span("PyPI Packages Released Per Year")] + chart_info_icon("dev-pypi-releases-per-year", "Year-by-year count of new GA4GH-related Python packages first published to PyPI. Reflects the growth of the GA4GH open-source software ecosystem."), className="chart-heading"),
                                     dcc.Graph(
                                         id="dev-pypi-releases-per-year",
                                         figure=fig_pypi,
-                                        config={"displayModeBar": False},
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Number of new GA4GH-related PyPI packages first published each year.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
+                        className="d-flex",
                         md=6,
                     ),
                 ],
+                className="mb-4 chart-cards-row",
             ),
 
             # Row 2: GA4GH standards by registered service count (full width)
@@ -192,16 +201,16 @@ def get_developer_charts_section(gh_df: pd.DataFrame, first_releases: list,
                     dbc.Card(
                         dbc.CardBody(
                             html.Figure([
-                                html.H5("GA4GH Standards by Registered Service Count",
-                                        style={"marginBottom": "8px"}),
+                                chart_toolbar("dev-standards-service-count"),
+                                html.Div([html.Span("GA4GH Standards by Registered Service Count")] + chart_info_icon("dev-standards-service-count", "Number of publicly registered services implementing each GA4GH standard, as reported in the GA4GH Service Registry. Indicates real-world adoption of each standard."), className="chart-heading"),
                                 dcc.Graph(
                                     id="dev-standards-service-count",
                                     figure=fig_standards,
-                                    config={"displayModeBar": False},
+                                    style={"height": STYLE_HEIGHT_3X},
                                 ),
                                 html.Figcaption(
                                     "Number of services registered in the GA4GH Implementation Registry per standard.",
-                                    style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                    style={"color": COLORS["grey"], "marginTop": "6px"},
                                 ),
                             ])
                         ),

@@ -6,6 +6,8 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
+from app.utils.ga4gh_theme import COLORS, IMPLEMENTATIONS_COLOR, chart_toolbar, chart_info_icon
+
 LATITUDE=0
 LONGITUDE=1
 
@@ -99,15 +101,16 @@ def _make_service_map_figure(st_df, s_df, d_df):
     )
 
     fig.update_geos(
-        showland = True, landcolor='#DAECC1',
-        showocean=True, oceancolor='#BBDFF1',
-        showlakes=True, lakecolor='#BBDFF1',
-        showcountries=True, countrycolor='#999999',
+        showland = True, landcolor=COLORS["green_light"],
+        showocean=True, oceancolor="rgba(79, 174, 220, 0.31)",
+        showlakes=True, lakecolor="rgba(79, 174, 220, 0.31)",
+        showcountries=True, countrycolor=COLORS["grey"],
     )
 
     fig.update_traces(
-        marker=dict(color='#fe800e', size=12.5, opacity=1.0),
-        hovertemplate=HOVERTEMPLATE
+        marker=dict(color=IMPLEMENTATIONS_COLOR, size=12.5, opacity=1.0),
+        hovertemplate=HOVERTEMPLATE,
+        hoverlabel=dict(bgcolor='rgba(54, 54, 54, 0.92)', font_color='white', font_size=13),
     )
 
     return fig
@@ -119,14 +122,29 @@ def get_service_map_layout(standards_df, services_df, deployments_df):
 
     fig = _make_service_map_figure(st_df, s_df, d_df)
 
+
+
     return dbc.Card(
-        dbc.CardBody([
-            html.H4("Map of Registered GA4GH Services"),
-            html.Figure([
-                dcc.Graph(id="service_map", figure=fig),
-                html.Figcaption("Interactive map of registered services implementing GA4GH API specifications.")
-            ])
-        ]),
+        dbc.CardBody(
+            [
+                chart_toolbar("service_map", is_map=True),
+                html.Div([html.Span("Map of Registered GA4GH Services")] + chart_info_icon("service_map", "World map of services registered in the GA4GH Service Registry. Each marker represents a publicly accessible service implementing a GA4GH standard. Click a marker to see service details."), className="chart-heading"),
+                dcc.Graph(
+                    id="service_map",
+                    figure=fig,
+                    config={"displayModeBar": False},
+                    responsive=True,
+                    style={"height": "340px"},
+                ),
+                dcc.Store(id="service_map-zoom-clamp-dummy"),
+                html.Figcaption(
+                    "Interactive map of registered services implementing GA4GH API specifications.",
+                    className="chart-figcaption",
+                ),
+            ],
+            id="service-map-card-body",
+            style={"position": "relative"},
+        ),
         className="mb-4 shadow-sm",
         style={"borderRadius": "12px"},
     )

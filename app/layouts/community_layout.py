@@ -4,17 +4,13 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import dcc, html
 
+from app.utils.ga4gh_theme import COLORS, COLORWAY, GITHUB_COLOR, chart_toolbar, chart_info_icon
+from app.constants.constants import STYLE_HEIGHT_3X
+
 
 # ---------------------------------------------------------------------------
 # Figure builders
 # ---------------------------------------------------------------------------
-
-_STATUS_COLORS = {
-    "Active":            "#2a9d8f",
-    "Moderate activity": "#f4a261",
-    "Inactive":          "#e76f51",
-    "Archived":          "#adb5bd",
-}
 
 _STATUS_ORDER = ["Active", "Moderate activity", "Inactive", "Archived"]
 
@@ -43,18 +39,22 @@ def _workstream_activity_figure(gh_df: pd.DataFrame) -> go.Figure:
         color="activity_status",
         orientation="h",
         category_orders={"activity_status": _STATUS_ORDER},
-        color_discrete_map=_STATUS_COLORS,
+        color_discrete_sequence=COLORWAY,
         labels={"count": "Repositories", "workstream": "Work Stream", "activity_status": "Status"},
         template="simple_white",
     )
     fig.update_traces(hovertemplate="%{y} — %{fullData.name}<br>Repos: %{x}<extra></extra>")
     fig.update_layout(
         height=440,
-        margin={"l": 10, "r": 20, "t": 30, "b": 50},
-        xaxis={"title": "Number of Repositories"},
+        margin={"l": 10, "r": 20, "t": 30, "b": 90},
+        xaxis={"title": "Number of Repositories", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
-        legend={"title": "Activity Status", "orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+        # px.bar auto-titles the legend from the color= column name
+        # ("activity_status") — an explicit "" overrides that default,
+        # merely omitting a "title" key does not.
+        legend={"title": {"text": ""}, "orientation": "h", "yanchor": "top", "y": -0.15, "xanchor": "center", "x": 0.5},
         barmode="stack",
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -76,7 +76,7 @@ def _top_repos_interest_figure(gh_interest_df: pd.DataFrame) -> go.Figure:
         orientation="h",
         labels={"total_interest": "Community Interest Score", "name": "Repository"},
         template="simple_white",
-        color_discrete_sequence=["#1b75bb"],
+        color_discrete_sequence=[GITHUB_COLOR],
         custom_data=["stargazers_count", "forks_count", "subscribers_count"],
     )
     fig.update_traces(
@@ -91,8 +91,9 @@ def _top_repos_interest_figure(gh_interest_df: pd.DataFrame) -> go.Figure:
     fig.update_layout(
         height=400,
         margin={"l": 10, "r": 20, "t": 30, "b": 50},
-        xaxis={"title": "Stars + Forks + Watchers"},
+        xaxis={"title": "Stars + Forks + Watchers", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
         yaxis={"title": "", "automargin": True},
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
@@ -124,47 +125,50 @@ def get_community_charts_section(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    html.H5("GitHub Repositories by Work Stream & Activity",
-                                            style={"marginBottom": "8px"}),
+                                    chart_toolbar("community-workstream-activity"),
+                                    html.Div([html.Span("GitHub Repositories by Work Stream & Activity")] + chart_info_icon("community-workstream-activity", "Stacked bar chart showing the activity status breakdown for repositories within each GA4GH work stream — Active (pushed < 1 year), Moderate (1–3 years), Inactive (3+ years), or Archived."), className="chart-heading"),
                                     dcc.Graph(
                                         id="community-workstream-activity",
                                         figure=fig_workstream,
-                                        config={"displayModeBar": False},
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Activity status breakdown per GA4GH work stream — Active (pushed within 1 year), Moderate (1–3 years), Inactive (3+ years), Archived.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
-                        md=7,
+                        className="d-flex",
+                        md=6,
                     ),
                     dbc.Col(
                         dbc.Card(
                             dbc.CardBody(
                                 html.Figure([
-                                    html.H5("Top 10 Repos by Community Interest",
-                                            style={"marginBottom": "8px"}),
+                                    chart_toolbar("community-top-repos-interest"),
+                                    html.Div([html.Span("Top 10 Repos by Community Interest")] + chart_info_icon("community-top-repos-interest", "The 10 GA4GH repositories with the highest combined community interest score, calculated from stars, forks, and watchers. Highlights the most widely adopted projects."), className="chart-heading"),
                                     dcc.Graph(
                                         id="community-top-repos-interest",
                                         figure=fig_interest,
-                                        config={"displayModeBar": False},
+                                        style={"height": STYLE_HEIGHT_3X},
                                     ),
                                     html.Figcaption(
                                         "Ranked by combined stars, forks, and watchers count.",
-                                        style={"fontSize": "13px", "color": "#777", "marginTop": "6px"},
+                                        style={"color": COLORS["grey"], "marginTop": "6px"},
                                     ),
                                 ])
                             ),
-                            className="mb-4 shadow-sm",
+                            className="shadow-sm h-100 w-100",
                             style={"borderRadius": "12px"},
                         ),
-                        md=5,
+                        className="d-flex",
+                        md=6,
                     ),
                 ],
+                className="mb-4 chart-cards-row",
             ),
         ],
         id="community-charts",
