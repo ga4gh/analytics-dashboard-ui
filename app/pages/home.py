@@ -665,7 +665,7 @@ html.Div(
                 dbc.Col(
                     indicator_card(
                         f"{_epmc_unique_countries:,}",
-                        "Total Countries",
+                        "Total countries represented by author affiliations",
                         "border-red",
                         target_id="epmc",
                     ),
