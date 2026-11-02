@@ -46,3 +46,8 @@ COUNTRIES_WHITELIST = [
     "Vietnam",
     "Indonesia",
 ]
+
+STYLE_HEIGHT_1X = "140px"
+STYLE_HEIGHT_2X = "280px"
+STYLE_HEIGHT_3X = "420px"
+STYLE_HEIGHT_4X = "560px"

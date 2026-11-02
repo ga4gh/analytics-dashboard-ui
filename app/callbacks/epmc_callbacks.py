@@ -1,4 +1,4 @@
-from dash import Input, Output, State
+from dash import Input, Output, State, ALL, ctx, no_update
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
@@ -9,12 +9,15 @@ import plotly.graph_objects as go
 
 from app.services.epmc_client import prepare_epmc_data, get_affiliations_by_article
 from app.constants.constants import COUNTRIES_WHITELIST
+from app.utils.ga4gh_theme import COLORWAY, COLORS, PUBLICATIONS_COLOR, HEATMAP_COLORWAY
 
 
-def fig_epmc_countries_pie(countries_df):
-    """Pie chart – article count by affiliation country."""
+def _prepare_countries_df(countries_df):
+    """Shared column-normalize + whitelist-filter + sort for the countries
+    pie and its legend — both must land on the exact same row order/set so
+    legend swatches line up with pie slices and hidden_labels toggles agree."""
     if countries_df is None or countries_df.empty:
-        return go.Figure().update_layout(title="No country data available")
+        return None
 
     cols = list(countries_df.columns)
     if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
@@ -30,60 +33,195 @@ def fig_epmc_countries_pie(countries_df):
     df["country_normalized"] = df["country"].astype(str).str.strip()
     df["country_lower"] = df["country_normalized"].str.lower()
     df = df[df["country_lower"].isin(whitelist)].copy()
-
     if df.empty:
-        return go.Figure().update_layout(title="No country data available (after filtering)")
+        return None
 
-    counts = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
-    total = counts.sum()
-    if total <= 0:
+    df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0.0)
+    return df.sort_values("count", ascending=False).reset_index(drop=True)
+
+
+def fig_epmc_countries_pie(countries_df, hidden_labels=None, top_n=None):
+    """Pie chart – article count by affiliation country.
+
+    hidden_labels: collection of country names currently toggled off in the
+    legend.  Percentages are recalculated against the visible-only total so
+    the displayed values stay correct after toggling.
+    top_n: if set, only the top N countries by count are shown.
+    """
+    df = _prepare_countries_df(countries_df)
+    if df is not None and top_n is not None:
+        df = df.head(top_n)
+    if df is None:
+        return go.Figure().update_layout(title="No country data available")
+
+    hidden = set(hidden_labels) if hidden_labels else set()
+    visible_mask = ~df["country_normalized"].isin(hidden)
+    visible_total = df.loc[visible_mask, "count"].sum()
+    if visible_total <= 0:
+        visible_total = df["count"].sum()
+    if visible_total <= 0:
         return go.Figure().update_layout(title="No country data available (zero total)")
 
-    df = df.copy()
-    df["count"] = counts
-    df = df.sort_values("count", ascending=False).reset_index(drop=True)
-
-    percents = (df["count"] / total * 100)
     slice_text = []
     hover_text = []
-    for cn, cnt, pct in zip(df["country_normalized"], df["count"], percents):
-        pct_fmt = f"{pct:.1f}%"
-        if pct > 5.0:
-            slice_text.append(f"{cn}<br>{pct_fmt}")
+    for cn, cnt, is_vis in zip(df["country_normalized"], df["count"], visible_mask):
+        if not is_vis:
+            slice_text.append("")
+            hover_text.append("")
         else:
-            slice_text.append(f"{pct_fmt}")
-        hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
+            pct = cnt / visible_total * 100
+            pct_fmt = f"{pct:.1f}%"
+            if pct > 25.0:
+                slice_text.append(f"{cn}<br>{pct_fmt}")
+            elif pct > 5.0:
+                slice_text.append(pct_fmt)
+            else:
+                slice_text.append("")
+            hover_text.append(f"{cn}: {int(cnt)} ({pct_fmt})")
 
-    text_positions = ["outside" if "<br>" in t else "inside" for t in slice_text]
+    # Always "inside", matching every other pie chart in the app (see
+    # funder_layout.py / researcher_layout.py's textposition="inside") —
+    # previously slices >5% (the top 3 countries) went "outside" instead.
+
+    slice_colors = [COLORWAY[i % len(COLORWAY)] for i in range(len(df))]
 
     fig = go.Figure(
         data=[
             go.Pie(
                 labels=df["country_normalized"],
                 values=df["count"],
-                hole=0.2,
+                hole=1/3,
                 text=slice_text,
                 textinfo="text",
                 hovertext=hover_text,
                 hoverinfo="text",
                 sort=False,
-                textposition=text_positions,
-                domain=dict(x=[0, 1], y=[0, 0.9]),
+                textposition="inside",
+                insidetextfont=dict(color="white"),
+                domain=dict(x=[0, 1], y=[0, 1]),
+                marker=dict(colors=slice_colors),
             )
         ]
     )
     fig.update_layout(
-        title={"text": "Affiliation - Countries Represented", "x": 0.5},
         template="simple_white",
-        height=700,
-        margin=dict(l=20, r=20, t=80, b=80),
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.1,
-            xanchor="center",
-            x=0.5,
-        ),
+        autosize=True,  # paired with config.responsive + .chart-aspect-square
+        margin=dict(l=0, r=0, t=0, b=0),
+        # Plotly's own legend forces a scrollbar once a single legend passes
+        # ~35 entries (this pie's country count), regardless of how much
+        # space it's given — confirmed by testing at absurd margins/widths/
+        # orientations, none of which disengage it. showlegend=False here;
+        # build_countries_legend below renders a plain HTML replacement
+        # instead, with clicks wired to the same hidden_labels mechanism.
+        showlegend=False,
+        hoverlabel=dict(font_color="white"),
+    )
+    if hidden:
+        fig.update_layout(hiddenlabels=list(hidden))
+    return fig
+
+
+def build_countries_legend(countries_df, hidden_labels=None, top_n=None):
+    """Custom HTML replacement for fig_epmc_countries_pie's legend.
+
+    Mirrors the pie's own country order/colors exactly (same whitelist
+    filter, same sort, same COLORWAY cycling) so swatches line
+    up with their slices. Each item is independently clickable — toggling it
+    in/out of epmc-countries-hidden-store, which both this function and
+    fig_epmc_countries_pie read to stay in sync.
+    top_n: if set, only the top N countries by count are shown.
+    """
+    df = _prepare_countries_df(countries_df)
+    if df is None:
+        return []
+    if top_n is not None:
+        df = df.head(top_n)
+
+    hidden = set(hidden_labels) if hidden_labels else set()
+
+    items = []
+    for i, cn in enumerate(df["country_normalized"]):
+        color = COLORWAY[i % len(COLORWAY)]
+        is_hidden = cn in hidden
+        items.append(
+            html.Button(
+                [
+                    html.Span(className="country-legend-swatch", style={"backgroundColor": color}),
+                    html.Span(cn, className="country-legend-label"),
+                ],
+                id={"type": "country-legend-item", "country": cn},
+                n_clicks=0,
+                className="country-legend-item" + (" country-legend-item--hidden" if is_hidden else ""),
+            )
+        )
+    return items
+
+
+def fig_epmc_countries_choropleth(countries_df):
+    """Choropleth world map — each country's % share of total author affiliations."""
+    if countries_df is None or countries_df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    cols = list(countries_df.columns)
+    if "country" in [c.lower() for c in cols] and "count" in [c.lower() for c in cols]:
+        country_col = next(c for c in cols if c.lower() == "country")
+        count_col   = next(c for c in cols if c.lower() == "count")
+        df = countries_df[[country_col, count_col]].copy()
+        df.columns = ["country", "count"]
+    else:
+        df = countries_df.iloc[:, :2].copy()
+        df.columns = ["country", "count"]
+
+    whitelist = {c.strip().lower() for c in COUNTRIES_WHITELIST}
+    df["country"] = df["country"].astype(str).str.strip()
+    df = df[df["country"].str.lower().isin(whitelist)].copy()
+    df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0)
+
+    if df.empty:
+        return go.Figure().update_layout(title="No country data available")
+
+    total = df["count"].sum()
+    df["pct"] = (df["count"] / total * 100).round(2)
+    df["hover_text"] = df.apply(
+        lambda r: f"{r['country']}<br>{r['pct']}% of author affiliations", axis=1
+    )
+
+    fig = px.choropleth(
+        df,
+        locations="country",
+        locationmode="country names",
+        color="pct",
+        # Reversed so low share reads as purple, high share as white.
+        color_continuous_scale=list(reversed(HEATMAP_COLORWAY)),
+        custom_data=["pct"],
+        labels={"pct": "Share (%)", "country": "Country"},
+        template="simple_white",
+    )
+    fig.update_traces(
+        hovertemplate="<b>%{location}</b><br>%{customdata[0]:.2f}% of author affiliations<extra></extra>",
+        marker_line_color=COLORS["grey"],
+        marker_line_width=0.5,
+    )
+    fig.update_layout(
+        autosize=True,
+        margin={"l": 0, "r": 0, "t": 28, "b": 0},
+        coloraxis_colorbar={
+            "title": "Share (%)",
+            "thickness": 12,
+            "ticksuffix": "%",
+        },
+        hoverlabel=dict(font_color="white"),
+    )
+    fig.update_geos(
+        # No-data countries show this landcolor, not HEATMAP_COLORWAY.
+        showland=True,    landcolor=COLORS["darkblue"],
+        showocean=True,   oceancolor="rgba(79, 174, 220, 0.31)",
+        showlakes=True,   lakecolor="rgba(79, 174, 220, 0.31)",
+        showcountries=True, countrycolor=COLORS["grey"],
+        projection_type="natural earth",
+        showframe=False,
+        # Crops empty polar extremes so the populated landmass fills the width.
+        lataxis_range=[-58, 85],
     )
     return fig
 
@@ -98,68 +236,51 @@ def fig_epmc_top_authors_bar(authors_data, top_n=15):
         return go.Figure().update_layout(title="No author data available")
 
     df = df.head(top_n).copy()
-    df = df.sort_values("author_count", ascending=True)
+    df = df.sort_values("author_count", ascending=False)
 
     fig = px.bar(
         df,
         x="author_count",
         y="author",
         orientation="h",
-        title=f"Top {top_n} Europe PMC Authors",
         template="simple_white",
         labels={"author_count": "Total Publication", "author": "Author Name"},
     )
-
-    fig.update_traces(marker_line_width=0)
+    fig.update_traces(marker_line_width=0, marker_color=PUBLICATIONS_COLOR)
     fig.update_layout(
         yaxis=dict(automargin=True, tickfont=dict(size=9)),
-        xaxis=dict(title="count"),
-        margin=dict(l=240, r=40, t=60, b=40),
-        height=max(400, 25 * len(df)),
+        xaxis=dict(title="count", showgrid=True, gridcolor=COLORS["lightgrey"]),
+        margin=dict(l=5, r=20, t=10, b=10),
         xaxis_title="Publication Count",
-        yaxis_title="Author Name",
+        yaxis_title="",
+        hoverlabel=dict(font_color="white"),
     )
     return fig
 
 
 def build_most_cited_rows(entries_df):
     """Build rows for the Most Cited GA4GH Publications table."""
-    most_cited_rows = []
     try:
-        candidates = []
-        if entries_df is not None and not entries_df.empty and "raw_json" in entries_df.columns:
-            for raw in entries_df["raw_json"]:
-                try:
-                    obj = json.loads(raw)
-                except Exception:
-                    continue
-                title = obj.get("title") or obj.get("name") or ""
-                cited = obj.get("cited_by_count")
-                try:
-                    cited_count = int(cited) if cited is not None else 0
-                except Exception:
-                    cited_count = 0
-                doi = obj.get("doi") or ""
-                doi_url = f"https://doi.org/{doi}" if doi else None
-                candidates.append({"title": title, "cited_by_count": cited_count, "doi_url": doi_url})
-
-        if candidates:
-            counts_df = pd.DataFrame.from_records(candidates)
-            counts_df = counts_df.sort_values("cited_by_count", ascending=False).head(20)
-            for _, row in counts_df.iterrows():
-                doi_url = row.get("doi_url")
-                title = str(row.get("title") or "")
-                article_link = f"[View]({doi_url})" if doi_url else ""
-                most_cited_rows.append(
-                    {
-                        "article_link": article_link,
-                        "title": title,
-                        "cited_by_count": int(row["cited_by_count"]),
-                    }
-                )
+        if entries_df is None or entries_df.empty:
+            return []
+        needed = {"title", "cited_by_count", "doi"}
+        if not needed.issubset(entries_df.columns):
+            return []
+        df = entries_df[list(needed)].copy()
+        df["cited_by_count"] = pd.to_numeric(df["cited_by_count"], errors="coerce").fillna(0).astype(int)
+        df = df.sort_values("cited_by_count", ascending=False).head(10)
+        rows = []
+        for _, row in df.iterrows():
+            doi = str(row.get("doi") or "")
+            doi_url = f"https://doi.org/{doi}" if doi else None
+            rows.append({
+                "article_link":   f"[View]({doi_url})" if doi_url else "",
+                "title":          str(row.get("title") or ""),
+                "cited_by_count": int(row["cited_by_count"]),
+            })
+        return rows
     except Exception:
-        most_cited_rows = []
-    return most_cited_rows
+        return []
 
 
 def register_epmc_callbacks(app):
@@ -188,17 +309,10 @@ def register_epmc_callbacks(app):
         if year_filter and "pub_year" in filtered.columns:
             filtered = filtered[filtered["pub_year"].astype(str) == str(year_filter)]
         
-        if affiliation_filter and "raw_json" in filtered.columns:
-            def _has_affiliation(raw):
-                try:
-                    obj = json.loads(raw) if isinstance(raw, str) else raw
-                except Exception:
-                    return False
-                aff = obj.get("affiliation") or obj.get("affiliations") or ""
-                if isinstance(aff, list):
-                    aff = " ".join([str(a) for a in aff if a])
-                return affiliation_filter.lower() in aff.lower()
-            filtered = filtered[filtered["raw_json"].apply(_has_affiliation)]
+        if affiliation_filter and "affiliation" in filtered.columns:
+            filtered = filtered[
+                filtered["affiliation"].astype(str).str.contains(affiliation_filter, case=False, na=False)
+            ]
         
         # Sort by pub_year descending (most recent first)
         if "pub_year" in filtered.columns:
@@ -235,40 +349,30 @@ def register_epmc_callbacks(app):
         Output("epmc-entry-details", "children"),
         Output("first-author-store", "data"),
         Output("first-affiliation-store", "data"),
-        Input("epmc-entries-table", "selected_rows"),
+        Input("epmc-entries-table", "active_cell"),
         Input("epmc-table-search", "value"),
         Input("epmc-year-filter", "value"),
         Input("epmc-affiliation-filter", "value"),
+        Input("epmc-entries-table", "page_current"),
     )
-    def show_epmc_details(selected_rows, search_value, year_filter, affiliation_filter):
-        if not selected_rows or entries_df.empty:
+    def show_epmc_details(active_cell, search_value, year_filter, affiliation_filter, page_current):
+        if not active_cell or entries_df.empty:
             return dbc.Alert("Select an entry to see details", color="info"), None, None
 
+        row_idx = (page_current or 0) * 15 + active_cell["row"]
         filtered_df = get_filtered_sorted_df(search_value, year_filter, affiliation_filter)
-        if filtered_df.empty or selected_rows[0] >= len(filtered_df):
+        if filtered_df.empty or row_idx >= len(filtered_df):
             return dbc.Alert("Select an entry to see details", color="info"), None, None
 
-        entry = filtered_df.iloc[selected_rows[0]]
+        entry = filtered_df.iloc[row_idx]
 
-        raw = entry.get("raw_json") or "{}"
-        try:
-            parsed = json.loads(raw) if isinstance(raw, str) else raw
-        except Exception:
-            parsed = {}
+        abstract  = entry.get("abstract_text") or "No abstract available"
+        pub_year  = entry.get("pub_year") or "N/A"
+        language  = entry.get("language") or "N/A"
+        doi       = entry.get("doi") or ""
+        doi_url   = f"https://doi.org/{doi}" if doi else None
+        pm_id     = entry.get("pm_id") or None
 
-        abstract = parsed.get("abstract_text") or parsed.get("abstract") or "No abstract available"
-        pub_year = entry.get("pub_year") or parsed.get("pub_year") or parsed.get("year") or "N/A"
-        language = parsed.get("language") or parsed.get("lang") or "N/A"
-        doi = entry.get("doi") or parsed.get("doi") or ""
-        doi_url = f"https://doi.org/{doi}" if doi else None
-
-        pm_id = (
-            parsed.get("pm_id")
-            or parsed.get("pmid")
-            or parsed.get("pmId")
-            or parsed.get("article_id")
-            or parsed.get("id")
-        )
         affiliation_rows = get_affiliations_by_article(pm_id) if pm_id else []
         affiliation_rows = [r for r in affiliation_rows if isinstance(r, dict)]
 
@@ -357,7 +461,7 @@ def register_epmc_callbacks(app):
         def aff_item(num, org):
             author_labels = ", ".join(aff_to_authors.get(num, []))
             return html.Div([
-                html.Span(f"{num}. {org}", style={"fontSize": "14px"}),
+                html.Span(f"{num}. {org}", style={"fontSize": "var(--text-sm)"}),
                 
             ], style={"marginBottom": "6px"})
 
@@ -384,7 +488,7 @@ def register_epmc_callbacks(app):
             abstract_component = html.P(abstract)
 
         card = dbc.Card([
-            dbc.CardHeader(html.H4(entry.get("title", "N/A"))),
+            dbc.CardHeader(html.H5(entry.get("title", "N/A"))),
             dbc.CardBody([
                 abstract_component,
                 html.Hr(),
@@ -392,40 +496,33 @@ def register_epmc_callbacks(app):
                 html.Hr(),
 
                 # Authors collapsible
-                html.H6("Authors: ", className="fw-bold"),
+                html.H5("Authors: ", className="fw-bold"),
                 
                 html.Div([
-                    html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
                     html.Span(first_author_text),
-                ], id="author-collapse-button", n_clicks=0, style={
-                    "color": "#0d9cf0",
-                    "cursor": "pointer",
-                    "fontWeight": "600",
-                    "fontSize": "14px",
-                    "display": "inline-flex",
-                    "alignItems": "center",
+                    html.Span(className="methods-toggle-chevron"),
+                ], id="author-collapse-button", n_clicks=0, className="methods-toggle", style={
+                    "fontSize": "var(--text-sm)",
                     "marginBottom": "0.5rem",
                 }),
                 dbc.Collapse(
-                    html.P(all_authors_text, style={"fontSize": "14px", "color": "#555", "marginTop": "8px"}),
+                    html.P(all_authors_text, style={"fontSize": "var(--text-sm)", "color": COLORS["dark"], "marginTop": "8px"}),
                     id="author-collapse",
                     is_open=False,
                 ),
                 html.Hr(),
 
                 # Affiliations collapsible
-                html.H6("Affiliations: ", className="fw-bold"),
+                html.H5("Affiliations: ", className="fw-bold"),
                 
                 html.Div([
-                    html.Span("▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
                     first_aff_component,
-                ], id="aff-collapse-button", n_clicks=0, style={
-                    "color": "#0d9cf0",
-                    "cursor": "pointer",
-                    "fontWeight": "600",
-                    "fontSize": "13px",
-                    "display": "inline-flex" if rest_aff_components else "none",
-                    "alignItems": "center",
+                    html.Span(className="methods-toggle-chevron", style={
+                        "display": "inline-flex" if rest_aff_components else "none",
+                    }),
+                ], id="aff-collapse-button", n_clicks=0, className="methods-toggle", style={
+                    "cursor": "pointer" if rest_aff_components else "default",
+                    "fontSize": "var(--text-sm)",
                     "marginBottom": "0.5rem",
                 }),
                 dbc.Collapse(
@@ -436,11 +533,10 @@ def register_epmc_callbacks(app):
 
                 html.Br(),
                 dbc.Button(
-                    "View Article",
+                    html.Span("View Article", className="btn-text"),
                     href=doi_url,
                     target="_blank",
-                    color="primary",
-                    className="me-2",
+                    className="ga4gh-btn-dark",
                     disabled=not doi_url,
                 ),
             ]),
@@ -453,16 +549,74 @@ def register_epmc_callbacks(app):
     # -----------------------
     @app.callback(
         Output("epmc-countries-pie", "figure"),
+        Output("epmc-countries-legend", "children"),
         Output("epmc-authors-bar", "figure"),
+        Output("epmc-authors-bar", "style"),
         Output("epmc-authors-card-body", "style"),
-        Input("epmc-top-n-slider", "value"),  # Responds to slider but uses same cached authors
+        Output("epmc-authors-bar-title", "children"),
+        Input("epmc-top-n-slider", "value"),
+        Input("epmc-top-countries-slider", "value"),
+        Input("epmc-countries-hidden-store", "data"),
     )
-    def update_epmc_graphs(top_n):
-        fig_pie = fig_epmc_countries_pie(countries_df)
-        # Use pre-fetched top_authors_default (no API call needed)
+    def update_epmc_graphs(top_n, top_countries, hidden_countries):
+        # Legend-item click — only rebuild the pie + legend with updated percentages
+        if ctx.triggered_id == "epmc-countries-hidden-store":
+            return (
+                fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries, top_n=top_countries),
+                build_countries_legend(countries_df, hidden_labels=hidden_countries, top_n=top_countries),
+                no_update, no_update, no_update, no_update,
+            )
+
+        fig_pie = fig_epmc_countries_pie(countries_df, hidden_labels=hidden_countries, top_n=top_countries)
+        legend_children = build_countries_legend(countries_df, hidden_labels=hidden_countries, top_n=top_countries)
         fig_bar = fig_epmc_top_authors_bar(top_authors_default, top_n)
-        graph_height = max(400, 25 * min(top_n, len(top_authors_default)))
-        return fig_pie, fig_bar, {"minHeight": f"{graph_height + 96}px"}
+        # An explicit height directly on the Graph is required: dcc.Graph
+        # renders in responsive mode (height:100%) with no CSS height of its
+        # own, so it sizes off this card's ancestor container instead of its
+        # own figure.layout.height — that indirection tracks growth fine but
+        # never shrinks back down, since nothing ever forces the ancestor
+        # smaller once Plotly's responsive engine has rendered it larger.
+        return (
+            fig_pie,
+            legend_children,
+            fig_bar,
+            no_update,
+            no_update,
+            f"Top {top_n} Europe PMC Authors",
+        )
+
+    @app.callback(
+        Output("epmc-countries-hidden-store", "data"),
+        Input({"type": "country-legend-item", "country": ALL}, "n_clicks"),
+        State("epmc-countries-hidden-store", "data"),
+        prevent_initial_call=True,
+    )
+    def toggle_country_legend_item(_n_clicks_list, hidden_data):
+        # Despite prevent_initial_call=True, this pattern-matching ALL
+        # callback still fires once (reproduced: twice, in fact) the moment
+        # update_epmc_graphs first populates the 35 legend buttons — every
+        # n_clicks is still 0 then, but ctx.triggered lists all of them as
+        # "triggered" and ctx.triggered_id arbitrarily resolves to the first
+        # one, which would otherwise mark it hidden before any real click.
+        # A genuine click's triggered entry always has value >= 1, so this
+        # guard (not just "is there a triggered entry") is what actually
+        # distinguishes a real click from that spurious mount-time firing.
+        if not ctx.triggered or not ctx.triggered[0].get("value"):
+            return no_update
+        prop_id = ctx.triggered[0]["prop_id"].rsplit(".", 1)[0]
+        try:
+            triggered = json.loads(prop_id)
+        except (ValueError, TypeError):
+            return no_update
+        if not isinstance(triggered, dict):
+            return no_update
+        country = triggered.get("country")
+        hidden = set(hidden_data or [])
+        if country in hidden:
+            hidden.discard(country)
+        else:
+            hidden.add(country)
+        return sorted(hidden)
     
     @app.callback(
         Output("author-collapse", "is_open"),
@@ -473,9 +627,10 @@ def register_epmc_callbacks(app):
     )
     def toggle_author_collapse(n, is_open, first_author):
         new_state = not is_open if n else is_open
+        chevron_class = "methods-toggle-chevron is-open" if new_state else "methods-toggle-chevron"
         label = [
-            html.Span("▼ " if new_state else "▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
             html.Span(first_author or "Authors"),
+            html.Span(className=chevron_class),
         ]
         return new_state, label
 
@@ -489,8 +644,36 @@ def register_epmc_callbacks(app):
     )
     def toggle_aff_collapse(n, is_open, first_affiliation):
         new_state = not is_open if n else is_open
+        chevron_class = "methods-toggle-chevron is-open" if new_state else "methods-toggle-chevron"
         label = [
-            html.Span("▼ " if new_state else "▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
             html.Span(first_affiliation or "Affiliations"),
+            html.Span(className=chevron_class),
         ]
         return new_state, label
+
+    # -----------------------
+    # Interactive YoY growth KPI
+    # -----------------------
+    @app.callback(
+        Output("yoy-growth-value", "children"),
+        Input("yoy-year-selector", "value"),
+        State("yearly-pub-counts", "data"),
+    )
+    def update_yoy_growth(selected_year, yearly_counts):
+        if not selected_year or not yearly_counts:
+            return "N/A"
+        curr = yearly_counts.get(str(selected_year)) or yearly_counts.get(selected_year)
+        prev = yearly_counts.get(str(selected_year - 1)) or yearly_counts.get(selected_year - 1)
+        if curr is None or prev is None or prev == 0:
+            return "N/A"
+        pct = round((curr - prev) / prev * 100, 1)
+        return f"+{pct}%" if pct >= 0 else f"{pct}%"
+
+    @app.callback(
+        Output("epmc-download", "data"),
+        Input("epmc-export-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def export_epmc_csv(n_clicks):
+        return dcc.send_data_frame(entries_df.to_csv, "epmc_publications.csv", index=False)
+

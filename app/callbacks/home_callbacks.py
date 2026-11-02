@@ -70,10 +70,10 @@ def register_home_callbacks(app):
     def toggle_collapse(n, is_open):
         new_state = not is_open if n else is_open
 
+        chevron_class = "methods-toggle-chevron is-open" if new_state else "methods-toggle-chevron"
         label = [
-            html.Span("▼ " if new_state else "▶ ", style={"fontSize": "12px", "marginRight": "4px"}),
             html.Span("Show methods and terms "),
-            html.Span("▼", style={"fontSize": "12px"}),
+            html.Span(className=chevron_class),
         ]
 
         return new_state, label

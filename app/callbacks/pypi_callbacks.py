@@ -1,4 +1,4 @@
-from dash import Input, Output
+from dash import Input, Output, dcc
 import pandas as pd
 import plotly.express as px
 
@@ -6,11 +6,13 @@ from app.services.pypi_client import get_pypi_details
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
+from app.utils.ga4gh_theme import COLORWAY, COLORS
+
 
 PYPI_CATEGORY_COLORS = {
-    "Implementation": "#1f77b4",
-    "GA4GH Standard": "#ff7f0e",
-    "GA4GH mentions": "#2ca02c",
+    "Implementation": COLORWAY[0],
+    "GA4GH Standard": COLORWAY[1],
+    "GA4GH mentions": COLORWAY[2],
 }
 
 def register_pypi_callbacks(app):
@@ -40,6 +42,7 @@ def register_pypi_callbacks(app):
     # -----------------------
     @app.callback(
         Output("datatable-bar", "figure"),
+        Output("datatable-bar-title", "children"),
         Input("filter-author", "value"),
         Input("filter-email", "value"),
         Input("filter-category", "value"),
@@ -75,30 +78,31 @@ def register_pypi_callbacks(app):
 
         # Customize layout
         fig.update_layout(
-            title={
-                "text": f"Top {top_n} Package Versions Count",
-                "x": 0.5,
-                "xanchor": "center",
-                "font": {"size": 20, "color": "#2C3E50"}
-            },
-            xaxis={"title": "Project Name", "tickangle": -45},
-            yaxis={"title": "Versions Count"},
-            plot_bgcolor="#f9f9f9",
-            paper_bgcolor="#ffffff",
-            margin={"b": 120},
+            xaxis={"title": "Project Name", "tickangle": -45, "automargin": True},
+            yaxis={"title": "Versions Count", "showgrid": True, "gridcolor": COLORS["lightgrey"]},
+            plot_bgcolor=COLORS["white"],
+            paper_bgcolor=COLORS["white"],
+            margin={"t": 20, "b": 300},
+            # autosize (not a fixed/default height) — paired with
+            # config={"responsive": True} on the dcc.Graph, this lets the
+            # chart fill and resize with its card the same way its row
+            # sibling category-distribution already does.
+            autosize=True,
             legend={
-                "title": "Category",
-                "orientation": "v",  # vertical
+                # px.bar auto-titles the legend from the color= column name
+                # ("category") — an explicit "" overrides that default,
+                # merely omitting a "title" key here does not.
+                "title": {"text": ""},
+                "orientation": "h",
                 "yanchor": "top",
-                "y": 1,
-                "xanchor": "right",
-                "x": 1.02,
-                "bordercolor": "#ccc",
-                "borderwidth": 1
-            }
+                "y": -0.55,
+                "xanchor": "center",
+                "x": 0.5,
+            },
+            hoverlabel={"font": {"color": "white"}},
         )
 
-        return fig
+        return fig, f"Top {top_n} Package Versions Count"
 
     # -----------------------
     # Update pie chart based on filters
@@ -132,40 +136,52 @@ def register_pypi_callbacks(app):
                 "labels": cat_counts["category"],
                 "values": cat_counts["count"],
                 "type": "pie",
-                "hole": 0.4,
+                "hole": 1/3,
                 "textinfo": "label+percent",
+                # "inside" avoids automargin shrinking the pie for an
+                # outside label, which breaks pie_autofit.js's width sizing.
+                "textposition": "inside",
+                "insidetextorientation": "horizontal",  # matches the other pies
+                "textfont": {"color": "white"},
                 "hoverinfo": "label+value+percent",
                 "marker": {
                     "colors": [
-                        PYPI_CATEGORY_COLORS.get(cat, "#9aa0a6")
+                        PYPI_CATEGORY_COLORS.get(cat, COLORS["grey"])
                         for cat in cat_counts["category"]
                     ]
                 },
             }],
             "layout": {
-                "title": {"text": "Category Distribution", "x": 0.5, "xanchor": "center", "font": {"size": 20, "color": "#2C3E50"}},
-                "plot_bgcolor": "#f9f9f9",
-                "paper_bgcolor": "#ffffff"
+                "plot_bgcolor": COLORS["white"],
+                "paper_bgcolor": COLORS["white"],
+                "legend": {"orientation": "h", "yanchor": "top", "y": -0.1, "xanchor": "center", "x": 0.5},
+                "autosize": True,  # paired with config.responsive + .chart-aspect-tall
+                "margin": {"l": 20, "r": 20, "t": 30, "b": 20},
+                "hoverlabel": {"font": {"color": "white"}},
             }
         }
         return fig
     
     @app.callback(
         Output("pypi-project-details", "children"),
-        Input("projects-table", "selected_rows")
+        Input("projects-table", "active_cell"),
+        Input("projects-table", "page_current"),
     )
-    def show_project_details(selected_rows):
+    def show_project_details(active_cell, page_current):
 
-        if not selected_rows:
+        if not active_cell:
             return dbc.Alert("Select a project to see details", color="info")
         pypi_details = _pypi_df
-        project = pypi_details.iloc[selected_rows[0]]
+        row_idx = (page_current or 0) * 15 + active_cell["row"]
+        if row_idx >= len(pypi_details):
+            return dbc.Alert("Select a project to see details", color="info")
+        project = pypi_details.iloc[row_idx]
         github_url = project.get("github_url")
         versions_count = project.get("versions_count")
 
         return dbc.Card([
 
-            dbc.CardHeader(html.H4(project["project_name"])),
+            dbc.CardHeader(html.H5(project["project_name"])),
 
             dbc.CardBody([
 
@@ -180,33 +196,40 @@ def register_pypi_callbacks(app):
 
                 html.Br(),
 
-                dbc.Button(
-                    "View on PyPI",
-                    href=project.get("package_url"),
-                    target="_blank",
-                    color="primary",
-                    className="me-2"
-                ),
+                html.Div([
+                    dbc.Button(
+                        html.Span("View on PyPI", className="btn-text"),
+                        href=project.get("package_url"),
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not project.get("package_url"),
+                    ),
 
-                dbc.Button(
-                    "Latest Release",
-                    href=project.get("release_url"),
-                    target="_blank",
-                    color="secondary",
-                    className="me-2"
-                ),
+                    dbc.Button(
+                        html.Span("Latest Release", className="btn-text"),
+                        href=project.get("release_url"),
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not project.get("release_url"),
+                    ),
 
-                dbc.Button(
-                    "View on GitHub",
-                    href=github_url,
-                    target="_blank",
-                    color="dark",
-                    className="me-2",
-                    disabled=not github_url
-                )
+                    dbc.Button(
+                        html.Span("View on GitHub", className="btn-text"),
+                        href=github_url,
+                        target="_blank",
+                        className="ga4gh-btn-dark",
+                        disabled=not github_url,
+                    ),
+                ], className="pypi-details-buttons")
 
             ])
 
         ], style={"boxShadow": "0 4px 10px rgba(0,0,0,0.1)"})
-        
-    
+
+    @app.callback(
+        Output("pypi-download", "data"),
+        Input("pypi-export-btn", "n_clicks"),
+        prevent_initial_call=True,
+    )
+    def export_pypi_csv(n_clicks):
+        return dcc.send_data_frame(_pypi_df.to_csv, "pypi_packages.csv", index=False)
